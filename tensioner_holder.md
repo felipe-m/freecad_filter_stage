@@ -492,27 +492,27 @@ Final hole:
     #   X..(__::___|_______|__::___)   |___::___|/
     #
     fcd10_shank1 =  doc.addObject("Part::Cylinder",'bolthole1_st10')
-    fcd10_shank1.Radius = kidler.aluprof_bolt_r_tol
+    fcd10_shank1.Radius = kidler.boltaluprof_r_tol
     fcd10_shank1.Height = kidler.hold_bas_h + 2.
     fcd10_shank1.Placement.Base = FreeCAD.Vector(kidler.aluprof_w/2.,
                                                  kidler.aluprof_w/2.,
                                                  -1) 
     fcd10_head1 =  doc.addObject("Part::Cylinder",'boltheadhole1_st10')
-    fcd10_head1.Radius = kidler.aluprof_bolt_head_r_tol
-    fcd10_head1.Height = kidler.aluprof_bolt_head_l
+    fcd10_head1.Radius = kidler.boltaluprof_head_r_tol
+    fcd10_head1.Height = kidler.boltaluprof_head_l
     fcd10_head1.Placement.Base = FreeCAD.Vector(kidler.aluprof_w/2.,
                                                 kidler.aluprof_w/2.,
                                                 kidler.hold_bas_h) 
     fcd10_shank2 =  doc.addObject("Part::Cylinder",'bolthole2_st10')
-    fcd10_shank2.Radius = kidler.aluprof_bolt_r_tol
+    fcd10_shank2.Radius = kidler.boltaluprof_r_tol
     fcd10_shank2.Height = kidler.hold_bas_h + 2.
     fcd10_shank2.Placement.Base = FreeCAD.Vector(
                                         kidler.hold_bas_w-kidler.aluprof_w/2.,
                                         kidler.aluprof_w/2.,
                                         -1) 
     fcd10_head2 =  doc.addObject("Part::Cylinder",'boltheadhole2_st10')
-    fcd10_head2.Radius = kidler.aluprof_bolt_head_r_tol
-    fcd10_head2.Height = kidler.aluprof_bolt_head_l
+    fcd10_head2.Radius = kidler.boltaluprof_head_r_tol
+    fcd10_head2.Height = kidler.boltaluprof_head_l
     fcd10_head2.Placement.Base = FreeCAD.Vector(
                                         kidler.hold_bas_w-kidler.aluprof_w/2.,
                                         kidler.aluprof_w/2.,

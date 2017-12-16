@@ -8,7 +8,7 @@ The source file: [idler_tensioner.py](src/idler_tensioner.py)
 
 The resulting FreeCAD model: [idler_tensioner.FCStd](freecad/idler_tensioner.FCStd)
 
-This tutorial can be compared with the [OpenSCAD tutorial](https://github.com/felipe-m/oscad_filter_stage) for this [Idler Tensioner](https://github.com/felipe-m/oscad_filter_stage/blob/master/idler_tensioner.md): 
+This tutorial can be compared with the [OpenSCAD tutorial](https://github.com/felipe-m/oscad_filter_stage) for this [Idler Tensioner](https://github.com/felipe-m/oscad_filter_stage/blob/master/idler_tensioner.md) 
 
 With FreeCAD you can navigate through the model:
 

@@ -71,9 +71,6 @@ sys.path.append(filepath)
 sys.path.append(filepath + '/' + 'comps')
 #sys.path.append(filepath + '/../../' + 'comps')
 
-import kcomp   # import material constants and other constants
-import fcfun   # import my functions for freecad. FreeCad Functions
-import comps   # import my CAD components
 import kidler  # import constants for the idler tensioner and holder
 
 # to make a comparision of equality in floats, less than this number
@@ -280,9 +277,9 @@ def tensioner_holder():
     fcd06.Width = kidler.tens_l_inside+1
     fcd06.Height = kidler.tens_h_tol
     fcd06.Placement.Base = (  fcd03.Placement.Base 
-                            + FreeCAD.Vector(kidler.wall_thick-kcomp.TOL/2.,
+                            + FreeCAD.Vector(kidler.wall_thick-kidler.TOL/2.,
                                              kidler.hold_l-kidler.tens_l_inside,
-                                             kidler.tens_pos_h--kcomp.TOL/2.))
+                                             kidler.tens_pos_h--kidler.TOL/2.))
 
     # chamfer:
     edgechmf_list = []
@@ -296,8 +293,8 @@ def tensioner_holder():
             if (abs(v0.Z -v1.Z) < mindif  or
                 kidler.opt_tens_chmf == 1):
                 edgechmf_list.append((edge_ind+1, # numbered starting in 1
-                                      2*kidler.in_fillet-kcomp.TOL,
-                                      2*kidler.in_fillet-kcomp.TOL))
+                                      2*kidler.in_fillet-kidler.TOL,
+                                      2*kidler.in_fillet-kidler.TOL))
     fcd06chmf = doc.addObject ("Part::Chamfer", 'tens_hole_chmf_st06')
     fcd06chmf.Base = fcd06
     fcd06chmf.Edges = edgechmf_list
@@ -432,27 +429,27 @@ def tensioner_holder():
     #   X..(__::___|_______|__::___)   |___::___|/
     #
     fcd10_shank1 =  doc.addObject("Part::Cylinder",'bolthole1_st10')
-    fcd10_shank1.Radius = kidler.aluprof_bolt_r_tol
+    fcd10_shank1.Radius = kidler.boltaluprof_r_tol
     fcd10_shank1.Height = kidler.hold_bas_h + 2.
     fcd10_shank1.Placement.Base = FreeCAD.Vector(kidler.aluprof_w/2.,
                                                  kidler.aluprof_w/2.,
                                                  -1) 
     fcd10_head1 =  doc.addObject("Part::Cylinder",'boltheadhole1_st10')
-    fcd10_head1.Radius = kidler.aluprof_bolt_head_r_tol
-    fcd10_head1.Height = kidler.aluprof_bolt_head_l
+    fcd10_head1.Radius = kidler.boltaluprof_head_r_tol
+    fcd10_head1.Height = kidler.boltaluprof_head_l
     fcd10_head1.Placement.Base = FreeCAD.Vector(kidler.aluprof_w/2.,
                                                 kidler.aluprof_w/2.,
                                                 kidler.hold_bas_h) 
     fcd10_shank2 =  doc.addObject("Part::Cylinder",'bolthole2_st10')
-    fcd10_shank2.Radius = kidler.aluprof_bolt_r_tol
+    fcd10_shank2.Radius = kidler.boltaluprof_r_tol
     fcd10_shank2.Height = kidler.hold_bas_h + 2.
     fcd10_shank2.Placement.Base = FreeCAD.Vector(
                                         kidler.hold_bas_w-kidler.aluprof_w/2.,
                                         kidler.aluprof_w/2.,
                                         -1) 
     fcd10_head2 =  doc.addObject("Part::Cylinder",'boltheadhole2_st10')
-    fcd10_head2.Radius = kidler.aluprof_bolt_head_r_tol
-    fcd10_head2.Height = kidler.aluprof_bolt_head_l
+    fcd10_head2.Radius = kidler.boltaluprof_head_r_tol
+    fcd10_head2.Height = kidler.boltaluprof_head_l
     fcd10_head2.Placement.Base = FreeCAD.Vector(
                                         kidler.hold_bas_w-kidler.aluprof_w/2.,
                                         kidler.aluprof_w/2.,

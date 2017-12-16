@@ -15,6 +15,10 @@ import partgroup
 #  -----------------------------------------------------------------------
 #  ----------- variables that can be changed -----------------------------
 
+# Tolerance in mm
+TOL = 0.4
+STOL = TOL / 2.0       # smaller tolerance
+
 #  Thickness of the walls
 wall_thick = 5.
 
@@ -73,7 +77,7 @@ in_fillet = 2.
 aluprof_w = 30.
 
 #  bolt size to attach the piece to the aluminum profile
-aluprof_bolt_d = 4.
+boltaluprof_d = 4.
 
 #  height of the holder base
 #
@@ -97,11 +101,11 @@ opt_tens_chmf = 1
 #  - step 07 in idler_holder.scad:
 hold_hole_2sides = 1
 
-#  The position where the GT2 starts, from the lower profile
+#  The position where the belt starts, from the lower profile
 #  Considering that the filter holder and guide are in a higher
 #  aluminum profile than the filter_idler. See picture below (at the end)
 
-gt2_pos_h = aluprof_w + 3.5
+belt_pos_h = aluprof_w + 3.5
 
 #  the shank diameter for the idler pulley bolt, 
 boltidler_d = 4 # typical 3 or 4 (metric 3 or metric 4)
@@ -144,16 +148,16 @@ nut_space = kcomp.NUT_HOLE_MULT_H + d_nuttens['l_tol']
 nut_holder_total = nut_space + 2* nut_holder_thick
 
 # the apotheme of the nut
-tensnut_ap_tol = (d_nuttens['a2']+kcomp.STOL)/2.
+tensnut_ap_tol = (d_nuttens['a2']+STOL)/2.
 
 # --------- end of tensioner bolt and nut values
 
 # --------- bolt to attach to the aluminum profile
 # dictionary of the bolt
-d_aluprof_bolt = kcomp.D912[aluprof_bolt_d]
-aluprof_bolt_head_r_tol = d_aluprof_bolt['head_r_tol']
-aluprof_bolt_r_tol = d_aluprof_bolt['shank_r_tol']
-aluprof_bolt_head_l = d_aluprof_bolt['head_l']
+d_boltaluprof = kcomp.D912[boltaluprof_d]
+boltaluprof_head_r_tol = d_boltaluprof['head_r_tol']
+boltaluprof_r_tol = d_boltaluprof['shank_r_tol']
+boltaluprof_head_l = d_boltaluprof['head_l']
 
 # --------- end of tensioner bolt and nut values
 
@@ -166,13 +170,13 @@ tens_l = (  nut_holder_total
           + pulley_stroke_dist)
 tens_w = 2 * idler_r_xtr 
 
-tens_w_tol = tens_w + kcomp.TOL
-tens_h_tol = tens_h + kcomp.TOL
+tens_w_tol = tens_w + TOL
+tens_h_tol = tens_h + TOL
 
 
-#  Vertical position of the gt2 pulley and the tensioner
+#  Vertical position of the belt pulley and the tensioner
 #                              Z   Z
-# idler holder:                :   :
+# tensioner holder:            :   :
 #               _______        :   :____________
 #              /. ___ .\       :   |  ._______ .|
 #              |.| O |.|       :   |::|_______| |...
@@ -189,7 +193,7 @@ tens_h_tol = tens_h + kcomp.TOL
 #       |  --  |______| |_======_  = largewasher_thick  :
 #        \__________________::___|.: wall_thick         :
 #                                    :                  :
-#                                    :                  + gt2_pos_h
+#                                    :                  + belt_pos_h
 #                                    :                  :
 #                                    +tens_pos_h        :
 #                                    :                  :
@@ -198,7 +202,7 @@ tens_h_tol = tens_h + kcomp.TOL
 #                           alu_prof
 # 
 
-tens_pos_h = gt2_pos_h - wall_thick -largewasher_thick 
+tens_pos_h = belt_pos_h - wall_thick -largewasher_thick 
 
 #  The part of the tensioner that will be inside
 tens_l_inside = tens_l - 2 * idler_r_xtr
