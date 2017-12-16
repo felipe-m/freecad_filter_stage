@@ -207,7 +207,7 @@ tens_pos_h = belt_pos_h - wall_thick -largewasher_thick
 #  The part of the tensioner that will be inside
 tens_l_inside = tens_l - 2 * idler_r_xtr
 
-#  the height to the beggining of the pulley + pulley height +
+# tensioner holder dimensions:
 
 hold_w = tens_w + 2*wall_thick
 hold_l = tens_l_inside + wall_thick
