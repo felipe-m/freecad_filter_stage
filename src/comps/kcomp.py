@@ -377,32 +377,93 @@ class HollowCyl(object):
         self.r_out  = self.d_out/2.   # outer radius
 
 # ----------------------------- Idler pulley components --------
+# this may be an error, it is not a name list, is a objects list
 # this is a name list from botton to top that shows the component
 # order to make an idler pulley out of washers and bearings
 
+"""
+idler pulley with the one for the bolt
+
+     with dots goes the bolt head, not in the group
+             .....
+           _:_____:_        bolt head
+       ___|_________|___    regular washer
+      |_________________|   large washer
+          |_________|       regular washer
+          |         |       bearing
+          |_________|   
+       ___|_________|___    regular washer
+      |_________________|   large washer
+
+ 
+"""
+
+
 #idlepull_name_list = [
 idpull4_nlist = [
-            HollowCyl (part = 'washer', size = 6, kind= 'large'),
-            HollowCyl (part = 'washer', size = 4, kind= 'regular'),
-            HollowCyl (part = 'bearing', size = 624), # 624ZZ
-            HollowCyl (part = 'washer', size = 4, kind= 'regular'),
-            HollowCyl (part = 'washer', size = 6, kind= 'large'),
-            HollowCyl (part = 'washer', size = 4, kind= 'large')
+        HollowCyl (part = 'washer', size = 6, kind= 'large'), #bottom
+        HollowCyl (part = 'washer', size = 4, kind= 'regular'),
+        HollowCyl (part = 'bearing', size = 624), # 624ZZ
+        HollowCyl (part = 'washer', size = 4, kind= 'regular'),
+        HollowCyl (part = 'washer', size = 6, kind= 'large'),
+        HollowCyl (part = 'washer', size = 4, kind= 'large') #top for the bolt
               ]
 
 idpull3_nlist = [
-            HollowCyl (part = 'washer', size = 4, kind= 'large'),
-            HollowCyl (part = 'washer', size = 3, kind= 'regular'),
-            HollowCyl (part = 'bearing', size = 603), # 603ZZ
-            HollowCyl (part = 'washer', size = 3, kind= 'regular'),
-            HollowCyl (part = 'washer', size = 4, kind= 'large'),
-            HollowCyl (part = 'washer', size = 3, kind= 'large')
-              ]
+        HollowCyl (part = 'washer', size = 4, kind= 'large'),
+        HollowCyl (part = 'washer', size = 3, kind= 'regular'),
+        HollowCyl (part = 'bearing', size = 603), # 603ZZ
+        HollowCyl (part = 'washer', size = 3, kind= 'regular'),
+        HollowCyl (part = 'washer', size = 4, kind= 'large'),
+        HollowCyl (part = 'washer', size = 3, kind= 'large') #top for the bolt
+           ]
 
 # idler pulley list will be different depending on the size of the bolt that
 # holds them
 
 idpull_dict = { 3: idpull3_nlist, 4: idpull4_nlist }
+
+"""
+idler pulley without the washer for the bolt because it is between a holder,
+The holder is in dots, not in the group
+            .......
+  ..........:.....:........     bolt head
+                           :    Holder for the pulley group
+  ....._________________...:
+      |_________________|       large washer
+          |_________|           regular washer
+          |         |           bearing
+          |_________|   
+       ___|_________|___        regular washer
+  ....|_________________|..     large washer
+                           :
+  .........................:    Holder for the pulley group
+            :.....:             nut
+              :.:               bolt shank
+ 
+So it is symmetrical from bottom to top
+"""
+
+idpull4min_list = [
+        HollowCyl (part = 'washer', size = 6, kind= 'large'), #bottom
+        HollowCyl (part = 'washer', size = 4, kind= 'regular'),
+        HollowCyl (part = 'bearing', size = 624), # 624ZZ
+        HollowCyl (part = 'washer', size = 4, kind= 'regular'),
+        HollowCyl (part = 'washer', size = 6, kind= 'large'),
+        HollowCyl (part = 'washer', size = 4, kind= 'large') #top for the bolt
+              ]
+
+idpull3min_list = [
+        HollowCyl (part = 'washer', size = 4, kind= 'large'), #bottom
+        HollowCyl (part = 'washer', size = 3, kind= 'regular'),
+        HollowCyl (part = 'bearing', size = 603), # 603ZZ
+        HollowCyl (part = 'washer', size = 3, kind= 'regular'),
+        HollowCyl (part = 'washer', size = 4, kind= 'large') # top
+           ]
+
+
+idpullmin_dict = { 3: idpull3min_list, 4: idpull4min_list }
+
 
 # from an idlepull_name_list, returns the maximum diameter of its bearings
 # check that it is the same as getmaxbeardiam in partgroup.py
