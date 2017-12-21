@@ -381,7 +381,7 @@ fcd_idler_tens.ViewObject.ShapeColor = fcfun.LSKYBLUE
 
 # ---------- export to stl
 stlPath = filepath + '/../stl/'
-stlFileName = stlPath + 'ilder_tensioner' + '.stl'
+stlFileName = stlPath + 'idler_tensioner' + '.stl'
 # rotate to print without support:
 fcd_idler_tens.Placement.Rotation = (
                     FreeCAD.Rotation(FreeCAD.Vector(0,1,0), -90))
@@ -393,6 +393,6 @@ fcd_idler_tens.Placement.Rotation = (
 
 # save the FreeCAD file
 freecadPath = filepath + '/../freecad/'
-freecadFileName = freecadPath + 'ilder_tensioner' + '.FCStd'
+freecadFileName = freecadPath + 'idler_tensioner' + '.FCStd'
 doc.saveAs (freecadFileName)
 

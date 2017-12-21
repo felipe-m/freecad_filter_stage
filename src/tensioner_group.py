@@ -62,8 +62,8 @@ filepath = os.getcwd()
 # to get the components
 # In FreeCAD can be added: Preferences->General->Macro->Macro path
 sys.path.append(filepath) 
-#sys.path.append(filepath + '/' + 'comps')
-sys.path.append(filepath + '/../../' + 'comps')
+sys.path.append(filepath + '/' + 'comps')
+#sys.path.append(filepath + '/../../' + 'comps')
 
 import kcomp   # import material constants and other constants
 import fcfun   # import my functions for freecad. FreeCad Functions
