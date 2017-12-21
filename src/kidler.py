@@ -124,7 +124,7 @@ d_boltidler = kcomp.D912[boltidler_d]
 boltidler_r_tol = d_boltidler['shank_r_tol']
 
 # the idler group list resulting from this bolt:
-idlerpulley_l = kcomp.idpull_dict[boltidler_d]
+idlerpulley_l = kcomp.idpullmin_dict[boltidler_d]
 
 idler_h = partgroup.getgroupheight(idlerpulley_l)
 idler_r = partgroup.getmaxwashdiam(idlerpulley_l)/2.

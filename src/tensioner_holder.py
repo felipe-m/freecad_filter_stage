@@ -232,8 +232,8 @@ def tensioner_holder():
     #                                                               
     edgechmf_list = []
     # option B: using more material (probably sturdier)
-    chmf_rad = min(kidler.hold_l - kidler.hold_bas_l,
-                   kidler.hold_h - (kidler.tens_h+2*kidler.wall_thick))
+    #chmf_rad = min(kidler.hold_l - kidler.hold_bas_l,
+    #              kidler.hold_h - (kidler.tens_h+2*kidler.wall_thick))
     # option A: using less material
     chmf_rad = min(kidler.hold_l-kidler.hold_bas_l+ kidler.hold_bas_h,
                    kidler.hold_h - (kidler.tens_h+2*kidler.wall_thick))
@@ -279,7 +279,7 @@ def tensioner_holder():
     fcd06.Placement.Base = (  fcd03.Placement.Base 
                             + FreeCAD.Vector(kidler.wall_thick-kidler.TOL/2.,
                                              kidler.hold_l-kidler.tens_l_inside,
-                                             kidler.tens_pos_h--kidler.TOL/2.))
+                                             kidler.tens_pos_h-kidler.TOL/2.))
 
     # chamfer:
     edgechmf_list = []
@@ -308,8 +308,8 @@ def tensioner_holder():
     #                                         Z      Z
     #                                         :      :
     #                          _______        :      :____________
-    #                         /. ___ .\       :      |  ._______ .|
-    #                         |.|   |.|       :      | :|_______| |
+    #                         /  ___  \       :      |  ._______ .|
+    #                         |:|   |:|       :      | :|_______| |
     #                         | |___| |       :      |  ..........|
     #                         |_______|       :      |            |      
     #                  _______|       |_______:      |________   /  
@@ -342,8 +342,8 @@ def tensioner_holder():
     #                                         Z      Z
     #                                         :      :
     #                          _______        :      :____________
-    #                         /. ___ .\       :      |  ._______ .|
-    #                         |.| O |.|       :      |::|_______| |
+    #                         /  ___  \       :      |  ._______ .|
+    #                         |:| O |:|       :      |::|_______| |
     #                         | |___| |       :      |  ..........|
     #                         |_______|       :      |            |      
     #                  _______|       |_______:      |________   /  
@@ -371,8 +371,8 @@ def tensioner_holder():
     #                             Z   Z
     #                             :   :
     #              _______        :   :____________
-    #             /. ___ .\       :   |  ._______ .|
-    #             |.| O |.|       :   |::|_______| |...
+    #             /  ___  \       :   |  ._______ .|
+    #             |:| O |:|       :   |::|_______| |...
     #            /| |___| |\      :   |  ..........|... tens_h/2 -tensnut_ap_tol
     #           / |_______| \     :   |            |  :+tens_pos_h
     #      ____/__|       |__\____:   |________   /   :  ...
@@ -421,8 +421,8 @@ def tensioner_holder():
     #                              Z   Z
     #                              :   :
     #               _______        :   :____________
-    #              /. ___ .\       :   |  ._______ .|
-    #              |.| O |.|       :   |::|_______| |
+    #              /  ___  \       :   |  ._______ .|
+    #              |:| O |:|       :   |::|_______| |
     #             /| |___| |\      :   |  ..........|
     #            / |_______| \     :   |            |
     #       ____/__|       |__\____:   |________   /
