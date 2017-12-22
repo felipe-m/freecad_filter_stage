@@ -92,7 +92,7 @@ class Tensioner (object):
     :+hold_h              /| |___| |\       1,2   |________      |---
     :                    / |_______| \            |        |    /      
     :             . ____/  |       |  \____       |________|  /
-    :..hold_bas_h:.|_::____|_______|____::_|0     |___::___|/......>fc_axis_l
+    :..hold_bas_h:.|_::____|_______|____::_|0     |___::___|/......>axis_l
                                                   0    1           2: pos_l
    
    
@@ -221,6 +221,10 @@ class Tensioner (object):
     -----------------------
     All the parameters are attributes
 
+    fco_l : list of FreeCAD objects
+        list of all the FreeCAD objects that are in this piece:
+        tensioner_holder, idler_holder, idler
+
     -- bolt idler attributes --
     d_boltidler : dictionary
         dictionary of the bolt for the idler pulley. see kcomp
@@ -277,8 +281,17 @@ class Tensioner (object):
         tensioner holder
     tens_pos_h : float 
         vertical distance from the bottom of the base of the idler tensioner
-    vh_0to_tens_cen: FreeCAD.Vector
+    vh_0to_tens0: FreeCAD.Vector
         Vector along axis_h from the base to the center of the tensioner
+    vl_0to_tens0: FreeCAD.Vector
+        Vector along axis_l from the base to the center of the tensioner
+    pos_tens0: FreeCAD.Vector
+        absolute position of the center of the tensioner.
+        The center of the tensioner is:
+        - at its symmetry point along axis_w and axis_h
+        - at the lower point along axis_l
+        - considering that the tensioner is all the way inside. So actually
+          that point is at the tensioner holder
     tens_l_inside : float 
         the part of the tensioner that will be inside when it is all the way in
         
@@ -294,6 +307,14 @@ class Tensioner (object):
     hold_bas_l : float
         tensioner holder base length (along axis_l)
 
+    -- tensioner holder attributes created in tensioner_holder method
+    shp_tens_hold : shape
+        Shape of the tensioner holder
+    fco_tens_hold : FreeCAD object
+        FreeCAD object of the tensioner holder
+    axprn_tens_hold: FreeCAD.Vector
+        FreeCAD vector for the best direction to print.
+        It has to be aligned with axis Z
 
 
     Idler Tensioner arguments drawings:
@@ -350,11 +371,11 @@ class Tensioner (object):
           _______________________
          /      ______   ___::___|
         |  __  |      | | _______  
-        |:|  |:|      | ||_______|.......................bottom side of small
+        *:|  |:|      | ||_______|.......................bottom side of small
         |  --  |______| |_======_                       :  washer just below
          \__________________::___|.: wall_thick         :  the bearing
                                      :                  :
-                                     :                  + belt_pos_h
+        * pos_tens0                  :                  + belt_pos_h
                                      :                  :
                                      +tens_pos_h        :
                                      :                  :
@@ -418,6 +439,16 @@ class Tensioner (object):
             :
             :
           axis_l
+
+
+     pos_tens0: is at point 0 in the drawing, considering the tensioner all the
+                way inside
+         ________                    _____________________
+        |___::___|                 /      _____     __:_:_|
+        |    ....|                |  _   /     \   /             
+        |   0....|                0:|_|:|       | |        
+        |________|                |      \_____/   \______
+        |___::___|                 \__________________:_:_|
 
   
     """
@@ -580,14 +611,34 @@ class Tensioner (object):
         pos0 = pos + (l0to[pos_l] + w0to[pos_w] + h0to[pos_h]).negative()
         self.pos0 = pos0
 
-        self.tensioner_holder()
+        # position of the origin of the tensioner
+        self.vh_0to_tens0 = DraftVecUtils.scale(axis_h,
+                                                self.tens_pos_h + self.tens_h/2)
+        self.vl_0to_tens0 = DraftVecUtils.scale(axis_l, wall_thick)
+        self.pos_tens0 = pos + self.vl_0to_tens0 + self.vh_0to_tens0 
+        
+
+        self.fco_l = []   # list of freecad objects of this class
+        fco_tens_hold = self.tensioner_holder()
+        self.fco_l.append(fco_tens_hold)  # add to the FreeCAD object list
+
+        #self.idler_tensioner()
 
         # normal axes to print
-        self.tens_axis_prn = axis_w # for the idler tensioner
-        self.hold_axis_prn = axis_l # for the tensioner holder
+        self.axprn_idl_tens = axis_w # for the idler tensioner
+        self.axprn_tens_hold = axis_l # for the tensioner holder
 
+
+    # ---------------------------------------------------------
     # -------------------- tensioner holder -------------------
+    # ---------------------------------------------------------
     def tensioner_holder(self):
+        """ Creates the tensioner holder shape and FreeCAD object
+        Returns the FreeCAD object created
+        """
+        # bring the active document
+        doc = FreeCAD.ActiveDocument
+
         # --------------- step 01 --------------------------- 
         #    the base, to attach it to the aluminum profiles
         #    
@@ -622,11 +673,10 @@ class Tensioner (object):
         #                 (_______________________)... axis_w
         #                f3                        f1
         #
-        print self.in_fillet
         bas_fil_r = self.in_fillet
         if self.hold_bas_h/2. <= self.in_fillet:
-            logger.warning("Radius of holder base fillet is larger than")
-            logger.warning("2 x base height, making fillet smaller")
+            logger.debug("Radius of holder base fillet is larger than")
+            logger.debug("2 x base height, making fillet smaller")
             bas_fil_r = self.hold_bas_h /2. - 0.1
         # fillet along axis_l :
         shp02 = fcfun.shp_filletchamfer_dir (shp=shp01, fc_axis=self.axis_l,
@@ -746,8 +796,8 @@ class Tensioner (object):
         #                        axis_h                  :  ....+.....
         #                       ___:___                  :_:__________:
         #                      /  ___  \                 |  ..........|
-        #                      | |   | |                 | :          |
-        #            ..........| |_A_| |                 | A..........|
+        #                      | | A | |                 | A          |
+        #            ..........| |___| |                 | :..........|
         # tens_pos_h +         |_______|                 |            |      
         #            :  _______|       |_______          |________   /  
         #            :.(_______|_______|_______).axis_w  |________|/....axis_l
@@ -760,12 +810,7 @@ class Tensioner (object):
         #                                                    hold_l
         #
 
-        # position of point A:
-        pos06 = (  self.pos0
-                 + DraftVecUtils.scale(self.axis_l,
-                                       self.hold_l-self.tens_l_inside)
-                 #+ self.h0to[1]):
-                 + DraftVecUtils.scale(self.axis_h, self.tens_pos_h))
+        # position of point A is pos_tens0
         if self.opt_tens_chmf == 0: # no optional chamfer, only along axis_w
             edge_dir = self.axis_w
         else:
@@ -777,7 +822,7 @@ class Tensioner (object):
                                box_h = self.tens_h,
                                axis_d = self.axis_l,
                                axis_h = self.axis_h,
-                               cd = 0, ch=0,
+                               cd=0, cw=1, ch=1,
                                xtr_w = kcomp.TOL/2.,  #tolerances on each side
                                xtr_nw = kcomp.TOL/2.,
                                xtr_h = kcomp.TOL/2.,
@@ -787,7 +832,7 @@ class Tensioner (object):
                                plane_fill = self.axis_l.negative(),
                                both_planes = 0,
                                edge_dir = edge_dir,
-                               pos = pos06)
+                               pos = self.pos_tens0)
         #    --------------- step 07 --------------------------- 
         #    A hole to be able to see inside, could be on one side or both
         #
@@ -819,15 +864,9 @@ class Tensioner (object):
             hold_hole_w = self.wall_thick
         # position of point 7:
         # height of point 7, is the center of the tensioner:
-        vh_0to_tens_cen = DraftVecUtils.scale(self.axis_h,
-                                              self.tens_pos_h + self.tens_h/2)
-        self.vh_0to_tens_cen = vh_0to_tens_cen
-        pos07 = (  self.pos0
-                 + DraftVecUtils.scale(self.axis_l,
-                                       self.wall_thick + self.nut_holder_thick)
-                 + DraftVecUtils.scale(self.axis_w, -self.hold_w/2.)
-                 # vector along h from base to tensioner center:
-                 + vh_0to_tens_cen)
+        pos07 = (  self.pos_tens0
+                 + DraftVecUtils.scale(self.axis_l, self.nut_holder_thick)
+                 + DraftVecUtils.scale(self.axis_w, -self.hold_w/2.))
         shp07 = fcfun.shp_box_dir_xtr (
                                        box_w = hold_hole_w,
                                        box_d =  self.hold_l
@@ -852,11 +891,11 @@ class Tensioner (object):
         #   _______|       |_______       |________   /  
         #  (_______|_______|_______)      |________|/......> axis_l
         #
-        pos08 = self.pos0 + vh_0to_tens_cen
         shp08 = fcfun.shp_cylcenxtr (r = self.bolttens_r_tol,
                                      h = self.wall_thick,
-                                     normal = self.axis_l,
-                                     ch = 0, xtr_top=1, xtr_bot=1, pos = pos08)
+                                     normal = self.axis_l.negative(),
+                                     ch = 0, xtr_top=1, xtr_bot=1,
+                                     pos = self.pos_tens0)
         #    --------------- step 09 --------------------------- 
         #    09a: Fuse all the elements to cut
         #    09b: Cut the box with the elements to cut
@@ -945,35 +984,69 @@ class Tensioner (object):
         shp10_final = shp09d.cut(shp10_bolts)
         shp10_final = shp10_final.removeSplitter()
 
+        self.shp_tens_hold = shp10_final
+
+        # --- FreeCAD object creation
+        fco = doc.addObject("Part::Feature", self.name + '_holder' )
+        fco.Shape = shp10_final
+        self.fco_tens_hold = fco
+        return fco
+
+    # ---------------------------------------------------------
+    # -------------------- idler pulley tensioner -------------
+    # ---------------------------------------------------------
+    def idler_tensioner(self):
+        """ Creates the idler pulley tensioner shape and FreeCAD object
+        Returns the FreeCAD object created
+        """
+        # bring the active document
+        doc = FreeCAD.ActiveDocument
 
 
+        #  --------------- step 01-04 ------------------------      
+        #  rectangular cuboid with basic dimensions, but chamfered
+        #  at the inner end
+        # 
+        #           Z
+        #           :.....tens_l.......
+        #           : ________________:
+        #            /               /|
+        #           /               / |
+        #       .. /_______________/  |..............Y     .
+        #       : /                |  /     . 
+        # tens_h  |                | /     . tens_w
+        #       :. \_______________|/......
+        #        .
+        #       .
+        #      X 
+        #
 
-        Part.show(shp10_final)
+        #shp01chmf = fcfun.shp_boxcen(self.tens_w, self.tens_l, self.tens_h)
+        #Part.show(shp01chmf)
+           
 
+         
+
+    # ----- 
+    #def baseplace (self, position = (0,0,0)):
+    #    #self.base_place = position
+    #    #vpos = FreeCAD.Vector(position)
+    #    #self.
+
+    # ----- Export to STL method
+    #def export_stl(self, fco_i = 0):
+    """ exports to stl the piece or the pieces to print
+    Save them in a STL file
+    Parameters:
+    -----------
+    fco_i : int
+        index of the piece to print
+        0: all the pieces
+        1: the tensioner holder
+        2: the idler tensioner
     """
-            shp06a = fcfun.shp_box_dir_xtr(
-                               box_w = self.tens_w,
-                               box_d = self.hold_l,
-                               box_h = self.tens_h,
-                               fc_axis_h = self.axis_h,
-                               fc_axis_d = self.axis_l,
-                               cw=1, cd=0, ch=0,
-                               xtr_w = kcomp.TOL/2.,  #tolerances on each side
-                               xtr_nw = kcomp.TOL/2.,
-                               xtr_h = kcomp.TOL/2.,
-                               xtr_nh = kcomp.TOL/2.,
-                               pos=self.pos06)
-            # list of points that are on edges to be chamfered
-            pts_list = [pos06]
-            pts_list.append(pos06
 
-            shp06 = fcfun.shp_filletchamfer_dirpts (shp=shp06a,
-                                                fc_axis=self.axis_w,
-                                                fc_pts=pts_list,
-                                                fillet = 1,
-                                                radius=self.in_fillet)
-
-    """
+        #rotation 
 
     """
           axis_h
@@ -1125,7 +1198,7 @@ IDLER_TENS = { 'boltidler_d' : boltidler_d,
 
 
 
-doc = FreeCAD.newDocument()
+#doc = FreeCAD.newDocument()
 Tensioner()
 
 
