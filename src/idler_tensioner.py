@@ -302,7 +302,7 @@ def idler_tens ():
     #      : nut_holder_total      :
     #      :                       :
     #      :...... tens_l .........:
-    #                       
+    #
     #oscad: translate ([tens_w/2, -1, tens_h/2])
     pos07 = FreeCAD.Vector(kidler.tens_w/2,
                            -1,

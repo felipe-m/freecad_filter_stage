@@ -10,7 +10,7 @@
 # ----------------------------------------------------------------------------
 
 
-#                        fc_axis_h            fc_axis_h 
+#                           axis_h            axis_h 
 #                            :                  :
 # ....................... ___:___               :______________
 # :                      |  ___  |     pos_h:   |  __________  |---
@@ -18,7 +18,7 @@
 # :+hold_h              /| |___| |\       1,2   |________      |---
 # :                    / |_______| \            |        |    /      
 # :             . ____/  |       |  \____       |________|  /
-# :..hold_bas_h:.|_::____|_______|____::_|0     |___::___|/......fc_axis_l
+# :..hold_bas_h:.|_::____|_______|____::_|0     |___::___|/......axis_l
 #                                               0    1           2: pos_l
 #
 #
@@ -28,7 +28,7 @@
 #              aluprof_w :    wall_thick  :
 #                :..+....:      +         :
 #                :       :     : :        :
-#       pos_w:   2__1____:___0_:_:________:........fc_axis_w
+#       pos_w:   2__1____:___0_:_:________:........axis_w
 #                |    |  | :   : |  |     |    :
 #                |  O |  | :   : |  |  O  |    + hold_bas_l
 #                |____|__| :   : |__|_____|....:
@@ -38,7 +38,7 @@
 #                           \_/
 #                            :
 #                            :
-#                        fc_axis_l
+#                           axis_l
 
 # the group is referenced on 3 perpendicular axis:
 # - fc_axis_l: length
@@ -157,6 +157,7 @@ class Tensioner (object):
     pulley_stroke_dist : float
         Distance along axis_l from between the end of the pulley and the stroke
         Not including the pulley. See picture dimensions
+        if 0: it will be the same as wall_thick
     nut_holder_thick : float
         Length of the space along axis_l above and below the nut, for the bolt
     in_fillet: float
@@ -186,7 +187,7 @@ class Tensioner (object):
         length vector of coordenate system
     axis_w : FreeCAD.Vector
         width vector of coordenate system
-        if V0: it will be calculated using the cross product: axis_h x axis_w
+        if V0: it will be calculated using the cross product: axis_l x axis_h
     axis_h : FreeCAD.Vector
         height vector of coordenate system
     pos_l : int
@@ -495,7 +496,7 @@ class Tensioner (object):
         axis_l = DraftVecUtils.scaleTo(axis_l,1)
         axis_h = DraftVecUtils.scaleTo(axis_h,1)
         if axis_w == V0:
-            axis_w = axis_h.cross(axis_l)
+            axis_w = axis_l.cross(axis_h)
         else:
             axis_w = DraftVecUtils.scaleTo(axis_w,1)
         self.axis_l = axis_l
@@ -503,6 +504,10 @@ class Tensioner (object):
         self.axis_h = axis_h
 
         # ---------------------- calculated values:
+        if pulley_stroke_dist == 0: # default value
+            pulley_stroke_dist = wall_thick
+            self.pulley_stroke_dist = pulley_stroke_dist
+
         # --- idler pulley values
         # dictionary of the bolt for the idler pulley
         d_boltidler = kcomp.D912[boltidler_d]
@@ -622,7 +627,8 @@ class Tensioner (object):
         fco_tens_hold = self.tensioner_holder()
         self.fco_l.append(fco_tens_hold)  # add to the FreeCAD object list
 
-        #self.idler_tensioner()
+        fco_idl_tens = self.idler_tensioner()
+        self.fco_l.append(fco_tens_hold)  # add to the FreeCAD object list
 
         # normal axes to print
         self.axprn_idl_tens = axis_w # for the idler tensioner
@@ -1007,25 +1013,257 @@ class Tensioner (object):
         #  rectangular cuboid with basic dimensions, but chamfered
         #  at the inner end
         # 
-        #           Z
-        #           :.....tens_l.......
-        #           : ________________:
-        #            /               /|
+        #       axis_h
+        #          : .....tens_l.......
+        #          : : ________________:
+        #          : /               /|
         #           /               / |
-        #       .. /_______________/  |..............Y     .
+        #       .. /_______________/  |.......
         #       : /                |  /     . 
         # tens_h  |                | /     . tens_w
         #       :. \_______________|/......
-        #        .
-        #       .
-        #      X 
         #
+        #
+        #     0: shows the position of pos_tens0
+        #
+        #                axis_h       axis_h
+        #                  :            :
+        #         .... ____:____        : ______________________
+        #         :   |.........|     ch2/                      |
+        #         :   |:       :|       |                       |      
+        #  tens_h +   |:   0   :|       0                       |-----> axis_l
+        #         :   |:.......:|       |                       |
+        #         :...|_________|     ch1\______________________|
+        #             :         :       :                       :
+        #             :.tens_h..:       :...... tens_l .........:
+        #
+        #              ____0____ ....> axis_w
+        #          ch3/_________\ch4
+        #             |         |          chamfer ch3 and ch4 are optional
+        #             |         |          Depend on opt_tens_chmf
+        #             |         |
+        #             |         |
+        #             |         |
+        #             |         |
+        #             |.........|
+        #             |         |
+        #             |         |
+        #             |         |
+        #             |_________|
+        #                  :
+        #                  :
+        #                  V
+        #                 axis_l
 
-        #shp01chmf = fcfun.shp_boxcen(self.tens_w, self.tens_l, self.tens_h)
-        #Part.show(shp01chmf)
-           
+        if self.opt_tens_chmf == 0: # no optional chamfer, only along axis_w
+            edge_dir = self.axis_w
+        else:
+            edge_dir = V0
+   
+        shp01chmf = fcfun.shp_boxdir_fillchmfplane(
+                               box_w = self.tens_w,
+                               box_d = self.tens_l,
+                               box_h = self.tens_h,
+                               axis_d = self.axis_l,
+                               axis_h = self.axis_h,
+                               cd=0, cw=1, ch=1,
+                               # no tolerances, this is the piece
+                               fillet = 0, # chamfer
+                               radius = 2*self.in_fillet,
+                               plane_fill = self.axis_l.negative(),
+                               both_planes = 0,
+                               edge_dir = edge_dir,
+                               pos = self.pos_tens0)
+        #  --------------- step 02 ---------------------------  
+        # Space for the idler pulley
+        #    axis_h
+        #      :
+        #      :_______________________
+        #      |                 ______|....
+        #      |                /          + idler_h
+        #      |               |       2   :----------->axis_l
+        #      |                \______....:
+        #      |_______________________|...wall_thick
+        #                      :       :
+        #                      :.......:
+        #                         +
+        #                       2 * idler_r_xtr
+        #
+        # pos02 is at the end, and the box will be drawn along axis_l.negative()
+        pos02 = self.pos_tens0 + DraftVecUtils.scale(self.axis_l, self.tens_l)
+        # maybe should be advisable to have tolerance, but usually, the 
+        # washers have tolerances, and usually are less thick than the nominal
+        idler_h_hole =  self.idler_h # + kcomp.TOL
+        shp02cut = fcfun.shp_boxdir_fillchmfplane(
+                               box_w = self.tens_w,
+                               box_d = 2*self.idler_r_xtr,
+                               box_h = idler_h_hole,
+                               axis_d = self.axis_l.negative(),
+                               axis_h = self.axis_h,
+                               cd=0, cw=1, ch=1,
+                               xtr_w = 1,
+                               xtr_nw = 1,
+                               xtr_nd = 1, # extra along axis_l (positive)
+                               fillet = 0, # chamfer
+                               radius = self.in_fillet,
+                               plane_fill = self.axis_l.negative(),
+                               both_planes = 0,
+                               edge_dir = self.axis_w,
+                               pos = pos02)
+        shp02 = shp01chmf.cut(shp02cut)
+        shp02 = shp02.removeSplitter() # refine shape
+        #  --------------- step 03 --------------------------- 
+        # Fillets at the idler end:
+        #
+        #    axis_h
+        #      :
+        #      :_______________________f2
+        #      |                 ______|
+        #      |                /      f4
+        #      |               |       2    ------> axis_l
+        #      |                \______f3...
+        #      |_______________________|....+ wall_thick.....> Y
+        #      :                       f1
+        #      :...... tens_l .........:
+        #
+        pt_f1 = pos02 + DraftVecUtils.scale(self.axis_h, -self.tens_h/2.)
+        pt_f2 = pos02 + DraftVecUtils.scale(self.axis_h,  self.tens_h/2.)
+        pt_f3 = pos02 + DraftVecUtils.scale(self.axis_h, -idler_h_hole/2.)
+        pt_f4 = pos02 + DraftVecUtils.scale(self.axis_h,  idler_h_hole/2.)
+        shp03 = fcfun.shp_filletchamfer_dirpts (
+                                            shp=shp02,
+                                            fc_axis=self.axis_w,
+                                            fc_pts=[pt_f1,pt_f2, pt_f3, pt_f4],
+                                            fillet = 1,
+                                            radius=self.in_fillet)
+        #  --------------- step 04 done at step 01 ------------------------ 
 
-         
+        #  --------------- step 05 --------------------------- 
+        # Shank hole for the idler pulley:
+
+        #    axis_h                  idler_r_xtr
+        #      :                    .+..
+        #      : ___________________:__:
+        #       /                __:_:_|
+        #      |                /             
+        #      |               |        ----------> axis_l
+        #      |                \______
+        #       \__________________:_:_|
+        #      :                       :
+        #      :...... tens_l .........:
+        #                     
+        pos05 = (self.pos_tens0 + DraftVecUtils.scale(self.axis_l,
+                                      self.tens_l-self.idler_r_xtr))
+        shp05 = fcfun.shp_cylcenxtr (r = self.boltidler_r_tol,
+                                     h = self.tens_h,
+                                     normal = self.axis_h,
+                                     ch = 1, xtr_top = 1, xtr_bot = 1,
+                                     pos = pos05)
+        #  --------------- step 06 --------------------------- 
+        # Hole for the leadscrew (stroke):
+
+        #    axis_h
+        #      :
+        #      : ______________________
+        #       /      _____     __:_:_|
+        #      |    f2/     \f4 /             
+        #      |     |       | |        -------> axis_l
+        #      |    f1\_____/f3 \______
+        #       \__________________:_:_|
+        #      :     :       :         :
+        #      :     :.......:         :
+        #      :     :   +             :
+        #      :.....:  tens_stroke    :
+        #      :  +                    :
+        #      : nut_holder_total      :
+        #      :                       :
+        #      :...... tens_l .........:
+        # 
+        pos06 = (self.pos_tens0 + DraftVecUtils.scale(self.axis_l,
+                                            self.nut_holder_total))
+        shp06a = fcfun.shp_box_dir_xtr(box_w = self.tens_w,
+                                       box_d = self.tens_stroke,
+                                       box_h = self.idler_h,
+                                       fc_axis_h = self.axis_h,
+                                       fc_axis_d = self.axis_l,
+                                       xtr_w = 1, xtr_nw = 1,
+                                       cw=1, cd=0, ch=1, pos=pos06)
+        shp06 =  fcfun.shp_filletchamfer_dir (shp=shp06a,
+                                              fc_axis=self.axis_w,
+                                              fillet = 0, radius=self.in_fillet)
+
+        #  --------------- step 07 --------------------------- 
+        # Hole for the leadscrew shank at the beginning
+
+        #    axis_h
+        #      :
+        #      : ______________________
+        #       /      _____     __:_:_|
+        #      |      /     \   /
+        #      |:::::|       | |        ---->axis_l
+        #      |      \_____/   \______
+        #       \__________________:_:_|
+        #      :     :                 :
+        #      :     :                 :
+        #      :     :                 :
+        #      :.....:                 :
+        #      :  +                    :
+        #      : nut_holder_total      :
+        #      :                       :
+        #      :...... tens_l .........:
+        #
+        shp07 = fcfun.shp_cylcenxtr (r = self.bolttens_r_tol,
+                                     h = self.nut_holder_total,
+                                     normal = self.axis_l,
+                                     ch = 0, xtr_top = 1, xtr_bot = 1,
+                                     pos = self.pos_tens0)
+        #  --------------- step 08 --------------------------- 
+        # Hole for the leadscrew nut
+
+        #    axis_h
+        #      :
+        #      : ______________________
+        #       /      _____     __:_:_|
+        #      |  _   /     \   /
+        #      |:|_|:|       | |       -----> axis_l
+        #      |      \_____/   \______
+        #       \__________________:_:_|
+        #      : :   :                 :
+        #      :+    :                 :
+        #      :nut_holder_thick       :
+        #      :.....:                 :
+        #      :  +                    :
+        #      : nut_holder_total      :
+        #      :                       :
+        #      :...... tens_l .........:
+
+        pos08 = (self.pos_tens0 + DraftVecUtils.scale(self.axis_l,
+                                           self.nut_holder_thick))
+        shp08 = fcfun.shp_nuthole (
+                               nut_r = self.bolttens_r_tol + kcomp.STOL,
+                               nut_h = self.nut_space,
+                               hole_h = self.tens_w/2,
+                               xtr_nut = 1, xtr_hole = 1, 
+                               fc_axis_nut = self.axis_l,
+                               fc_axis_hole = self.axis_w,
+                               ref_nut_ax = 2, # pos not centered on axis nut 
+                               # pos at center of nut on axis hole 
+                               ref_hole_ax = 1, 
+                               pos = pos08)
+
+        # --------- step 09:
+        # --------- Last step, union and cut of the steps 05, 06, 07, 08
+        shp09cut = fcfun.fuseshplist([shp05, shp06, shp07, shp08])
+        shp09_final = shp03.cut(shp09cut)
+
+        self.shp_idl_tens = shp09_final
+
+        # --- FreeCAD object creation
+        fco = doc.addObject("Part::Feature", 'idler_' + self.name)
+        fco.Shape = shp09_final
+        self.fco_idl_tens = fco
+        return fco
+
 
     # ----- 
     #def baseplace (self, position = (0,0,0)):
@@ -1198,7 +1436,7 @@ IDLER_TENS = { 'boltidler_d' : boltidler_d,
 
 
 
-#doc = FreeCAD.newDocument()
+doc = FreeCAD.newDocument()
 Tensioner()
 
 
