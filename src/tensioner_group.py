@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# -- Group of idler tensioner and its holder
+# -- Set of idler tensioner and its holder
 # ----------------------------------------------------------------------------
 # -- (c) Felipe Machado
 # -- Area of Electronic Technology. Rey Juan Carlos University (urjc.es)
@@ -40,7 +40,7 @@
 #                            :
 #                           axis_l
 
-# the group is referenced on 3 perpendicular axis:
+# the tensioner set is referenced on 3 perpendicular axis:
 # - fc_axis_l: length
 # - fc_axis_w: width
 # - fc_axis_h: height
@@ -78,7 +78,7 @@ logger = logging.getLogger(__name__)
 
 class Tensioner (object):
     """
-    Creates a belt tensioner group:
+    Creates a belt tensioner set:
     - holder
     - idler tensioner
     - idler pulley
@@ -114,7 +114,7 @@ class Tensioner (object):
                                :
                              axis_l
 
-    The group is referenced along 3 perpendicular axis
+    The set is referenced along 3 perpendicular axis
       (cartesian coordinate systems):
       - axis_l: length
       - axis_w: width
@@ -225,6 +225,15 @@ class Tensioner (object):
     fco_l : list of FreeCAD objects
         list of all the FreeCAD objects that are in this piece:
         tensioner_holder, idler_holder, idler
+
+    place : FreeCAD.Vector
+        Position of the tensioner set.
+        There is the parameter pos, where the piece is built and can be at
+        any position.
+        Once the piece is built, its placement (Placement.Base) is at V0:
+        FreeCAD.Vector(0,0,0), however it can be located at any place, since
+        pos could have been set anywhere.
+        The attribute place will move again the whole piece, including its parts
 
     -- bolt idler attributes --
     d_boltidler : dictionary
@@ -476,7 +485,7 @@ class Tensioner (object):
                  pos_w = 0,
                  pos_h = 0,
                  pos = V0,
-                 wfco = 1,
+                 #wfco = 1,
                  name= "tensioner"):
 
         # bring the active document:
@@ -502,6 +511,9 @@ class Tensioner (object):
         self.axis_l = axis_l
         self.axis_w = axis_w
         self.axis_h = axis_h
+
+        # placement of the piece at V0, altough pos can set it anywhere
+        self.place = V0
 
         # ---------------------- calculated values:
         if pulley_stroke_dist == 0: # default value
@@ -571,7 +583,7 @@ class Tensioner (object):
         # ------ vectors from the different position points
         # -- pos_l distances:
         # it doesnt depend on how much on the ratio the tensioner is inside
-        # it will be moved afterwards. So this will be commented
+        # it will be moved afterwards. So this is commented
         #        + (1-tens_in_ratio) * tens_stroke)
         # distance along axis_l from point 2 to point 0 (orig)
         dis_l_0to2 = (  self.hold_l
@@ -628,7 +640,8 @@ class Tensioner (object):
         self.fco_l.append(fco_tens_hold)  # add to the FreeCAD object list
 
         fco_idl_tens = self.idler_tensioner()
-        self.fco_l.append(fco_tens_hold)  # add to the FreeCAD object list
+        self.fco_l.append(fco_idl_tens)  # add to the FreeCAD object list
+        self.set_pos_tensioner()
 
         # normal axes to print
         self.axprn_idl_tens = axis_w # for the idler tensioner
@@ -1004,6 +1017,31 @@ class Tensioner (object):
     def idler_tensioner(self):
         """ Creates the idler pulley tensioner shape and FreeCAD object
         Returns the FreeCAD object created
+
+                           nut_space 
+                           .+..
+                           :  :
+           nut_holder_thick:  :nut_holder_thick
+                          +:  :+
+                         : :  : :    pulley_stroke_dist
+               :         : :  : :       .+.  2*idler_r_xtr
+               :         : :  : :      :  :...+....
+               :         : :  : :      :  :       :
+            ________     : :__:_:______:__:_______:.................
+           |___::___|     /      ______   ___::___|.....+wall_thick :
+           |    ....|    |  __  |      | |            :             + tens_h
+           |   ()...|    |:|  |:|      | |            + idler_h     :
+           |________|    |  --  |______| |________....:             :
+           |___::___|     \__________________::___|.................:
+           :        :    :      :      :          :
+           :........:    :      :...+..:          :
+               +         :......:  tens_stroke    :
+             tens_w      :  +                     :
+        (2*idler_r_xtr)  : nut_holder_tot         :
+                         :                        :
+                         :.........tens_l.........:
+
+
         """
         # bring the active document
         doc = FreeCAD.ActiveDocument
@@ -1264,12 +1302,43 @@ class Tensioner (object):
         self.fco_idl_tens = fco
         return fco
 
+    # ----- 
+    def set_pos_tensioner (self, new_tens_in_ratio = None):
+        """ Sets the tensioner place, depending on the attributes tens_in_ratio
+        and tens_stroke
+        Parameters:
+        -----------
+        new_tens_in_ratio : float [0,1]
+            ratio of the tensioner that is inside.
+            It can be any value from 0 to 1
+            0: maximum value outside (tens_stroke)
+            1: all the way inside
+        """
+        if new_tens_in_ratio is not None:
+            # set the new tens_in_ratio
+            self.tens_in_ratio = new_tens_in_ratio
+        tens_out = (1-self.tens_in_ratio) * self.tens_stroke
+        self.fco_idl_tens.Placement.Base = (self.place + 
+                                   DraftVecUtils.scale(self.axis_l, tens_out))
+
+
 
     # ----- 
-    #def baseplace (self, position = (0,0,0)):
-    #    #self.base_place = position
-    #    #vpos = FreeCAD.Vector(position)
-    #    #self.
+    def set_place (self, place = V0):
+        """ Sets a new placement for the whole set of pieces
+        Parameters:
+        -----------
+
+        place : FreeCAD.Vector
+            new position of the pieces
+        """
+        if type(place) is tuple:
+            place = FreeCAD.Vector(place) # change to FreeCAD.Vector
+        if type(place) is FreeCAD.Vector:
+            # set the new position for every freecad object
+            for fco_i in self.fco_l:
+                fco_i.Placement.Base = place
+            self.place = place
 
     # ----- Export to STL method
     #def export_stl(self, fco_i = 0):
@@ -1279,145 +1348,13 @@ class Tensioner (object):
     -----------
     fco_i : int
         index of the piece to print
-        0: all the pieces
+        0: all the printable pieces
         1: the tensioner holder
         2: the idler tensioner
     """
 
         #rotation 
 
-    """
-          axis_h
-            :
-            :                   nut_holder_thick
-            :                      +
-      .. ________                 : :_____________________
-      : |___::___|                 /      _____     __:_:_|
-      : |    ....|              ..|  _   /     \   /             
-      : |   ()...|    bolttens_d..|:|_|:|       | |        
-      : |________|                |      \_____/   \______
-      :.|___::___|                 \__________________:_:_|.....> axis_l
-                                  :     :       : :       :
-                                  :     :       : :.......:
-                                  :     :       : :  +    :
-                                  :     :       :.:       :
-                                  :     :       :+        :
-                                  :     :.......:pulley_stroke_dist
-                                  :     :   +             :
-                                  :.....:  tens_stroke    :
-                                  :  +                    :
-                                  : nut_holder_total      :
-                                  :                       :
-                                  :...... tens_l .........:
-
-    """
-
-
-#                        fc_axis_h            fc_axis_h 
-#                            :                  :
-#                         ___:___               :______________
-#                        |  ___  |              |  __________  |---
-#                        | |   | |              | |__________| |   |
-#                       /| |___| |\             |________      |---
-#                      / |_______| \            |        |    /      
-#              .. ____/  |       |  \____       |________|  /
-#              ..|_::____|_______|____::_|      |___::___|/......fc_axis_l
-#
-#
-#
-#
-#                 .... hold_bas_w ........
-#                :        .hold_w.        :
-#                :       :    wall_thick  :
-#                :       :      +         :
-#                :       :     : :        :
-#                :_______:_____:_:________:........fc_axis_w
-#                |    |  | :   : |  |     |    :
-#                |  O |  | :   : |  |  O  |    + hold_bas_l
-#                |____|__| :   : |__|_____|....:
-#                        | :   : |
-#                        |_:___:_|
-#                          |   |
-#                           \_/
-#                            :
-#                            :
-#                        fc_axis_l
-
-
-
-
-
-#
-#  Tensioner holder:
-#                    ________   
-#                   /______ /|  
-#                  |  ___  | |     Z               
-#                  | |   | |/\     :
-#                  | |___| |\ \    :
-#              ____|_______| \ \___:
-#      X....../___/ \       \ \/__/| 
-#             |______\_______\____|/
-#                                 .
-#                                .
-#                               .
-#                              Y
-#                                              Z      Z
-#                                              :      :
-#                               _______        :      :______________
-#                              |  ___  |       :      |  __________  |
-#                              | |   | |       :      | |__________| |
-#                             /| |___| |\      :      |________      |
-#                            / |_______| \     :      |        |    /      
-#                    .. ____/  |       |  \____:      |________|  /
-#        hold_bas_h.+..|_::____|_______|____::_|      |___::___|/......Y
-# 
-#                       .... hold_bas_w ........
-#                      :        .hold_w.        :
-#                      :       :    wall_thick  :
-#                      :       :      +         :
-#                      :       :     : :        :
-#               X......:_______:_____:_:________:....
-#                      |    |  | :   : |  |     |    :
-#                      |  O |  | :   : |  |  O  |    + hold_bas_l
-#                      |____|__| :   : |__|_____|....:
-#                              | :   : |        :
-#                              |_:___:_|        :
-#                                               :
-#                                               :
-#                                               :
-#                                               Y
-# 
-# Idler tensioner:
-# 
-#           Z
-#           :              ........ tens_l ........
-#           :             :                        :
-#          .. ________       _______________________
-#          : |___::___|     /      ______   ___::___|
-#          : |    ....|    |  __  |      | |
-#   tens_h + |   ()...|    |:|  |:|      | |         
-#          : |________|    |  --  |______| |________
-#          :.|___::___|     \__________________::___|.......> Y
-# 
-# 
-#             ________ ....> X
-#            |___::___|
-#            |  ......|
-#            |  :.....|
-#            |   ::   |
-#            |........|
-#            |        |
-#            |        |
-#            |........|
-#            |........|
-#            |        |
-#            |   ()   |
-#            |        |
-#            |________|
-#            :        :
-#            :........:
-#                +
-#               tens_w
 
 
 
@@ -1437,248 +1374,5 @@ IDLER_TENS = { 'boltidler_d' : boltidler_d,
 
 
 doc = FreeCAD.newDocument()
-Tensioner()
+h = Tensioner()
 
-
-class IdlerTens (object):
-
-    """
-    Makes a tensioner for an idler pulley
-    Arguments:
-    boltidler_d : diameter of the bolt that holds the idler pulley
-    wall_thick  : general thickness of the walls
-    tens_stroke : tensioner stroke (length)
-    pulley_stroke_dist : distance from the end of the pulley to the end point
-                         of the stroke (when closest to the idler pulley)
-    nut_holder_thick : the thickness on both sides outside of the space for the
-                       nut for the tensioner
-    bolttens_d : diameter of the bolt for the tensioner
-    nut_space_h_times : the space for the nut height, will be calculated
-                      multipliying this multiplier by the nut height, 
-    in_fillet : inner fillet
-             
-    fc_axis_h = axis on the height direction
-    fc_axis_l = axis on the length direction
-    fc_axis_w = axis on the width direction, pointing to the nut hole
-                if V0, it doesnt matter and it will be calculated by the
-                cross product of fc_axis_l x fc_axis_h
-    ref_h : reference on the height direction
-             1: reference at the middle of the idler
-             2: reference at the base on height
-    ref_l: 1: reference at the back
-           2:  reference at the back axis of the bolt of the idler pulley
-    pos: FreeCAD Vector for the position of the reference point
-    name: name of the FreeCAD object
-
-             fc_axis_h
-               :
-               :
-            ________       _______________________
-           |___::___|     /      ______   ___::___|
-           |    ....|    |  __  |      | |
-           |   ()...|    1:|  |:|      | |   2     .......> fc_axis_l
-           |________|    |  --  |______| |________
-           |___::___|    2\__________________::___|
-
-
-            ________ ....> fc_axis_w
-           |___::___|
-           |  ......|
-           |  :.....|
-           |   ::   |
-           |........|
-           |        |
-           |        |
-           |........|
-           |........|
-           |        |
-           |   ()   |
-           |        |
-           |________|
-           :        :
-           :        :
-
-                           nut_space 
-                           .+..
-                           :  :
-           nut_holder_thick:  :nut_holder_thick
-                          +:  :+
-                         : :  : :    pulley_stroke_dist
-               :         : :  : :       .+.  2*idler_r_xtr
-               :         : :  : :      :  :...+....
-               :         : :  : :      :  :       :
-            ________     : :__:_:______:__:_______:.................
-           |___::___|     /      ______   ___::___|.....+wall_thick :
-           |    ....|    |  __  |      | |            :             + tens_h
-           |   ()...|    |:|  |:|      | |            + idler_h     :
-           |________|    |  --  |______| |________....:             :
-           |___::___|     \__________________::___|.................:
-           :        :    :      :      :          :
-           :........:    :      :...+..:          :
-               +         :......:  tens_stroke    :
-             tens_w      :  +                     :
-        (2*idler_r_xtr)  : nut_holder_tot         :
-                         :                        :
-                         :.........tens_l.........:
-
-
-
-
-    """
-
-    def __init__(self,
-                 boltidler_d,
-                 wall_thick = 3.,
-                 tens_stroke = 20.,
-                 pulley_stroke_dist = 6.,
-                 nut_holder_thick = 3.,
-                 bolttens_d = 3.,
-                 nut_space_h_times = 2.,
-                 in_fillet = 2.,
-                 fc_axis_h = VZ,
-                 fc_axis_l = VY,
-                 fc_axis_w = V0,
-                 ref_h = 1,
-                 ref_l = 1,
-                 pos = V0,
-                 wfco = 1,
-                 name= "idler_tens"):
-
-
-        # normalize de axis
-        axis_h = DraftVecUtils.scaleTo(fc_axis_h,1)
-        axis_l = DraftVecUtils.scaleTo(fc_axis_l,1)
-        if fc_axis_w == V0:
-            axis_w = axis_l.cross(axis_h)
-        else:
-            axis_w = DraftVecUtils.scaleTo(fc_axis_w,1)
-
-        nut_space = nut_space_h_mult * kcomp.NUT_D934_L[bolttens_d] + kcomp.TOL;
-        nut_holder_total = nut_space + 2*nut_holder_thick;
-
-        self.tens_l = (  nut_holder_total
-                  + tensioner_stroke
-                  + 2 * idler_r_xtr
-                  + pulley_stroke_dist)
-        self.tens_h = idler_h + 2*wall_thick
-        self.tens_w = 2 * idler_r_xtr
-
-
-
-
-
-class IdlerHolder (object):
-
-
-
-    """
-
-                  fc_axis_h
-                ___:____   
-               /___:__ /|  
-              |  ___  | |                    
-              | |   | |/\   
-              | |___| |\ \
-              |_______| \ \___
-          ___/ \       \ \/__/| 
-         |______\_______\____|/...... fc_axis_w 
-                  .
-                 .
-                .
-           fc_axis_l
-                              fc_axis_h
-                                  :
-                             . ___:___                ______________
-                              |  ___  |              |  __________  |
-                              | |   | |              | |__________| |
-                             /| |___| |\             |________      |
-                            / |_______| \            |        |    /      
-                    .. ____/  |       |  \____       |________|  /
-        hold_bas_h.+..|_::____|_______|____::_|      |___::___|/
- 
-                       .... hold_base_w .......
-                      :        .hold_w.        :
-                      :       :    wall_thick  :
-                      :       :      +         :
-                      :       :     : :        :
-                    ..:_______:_____:_:________:
-                   :  |    |  | :   : |  |     |
-         hold_bas_l+  |  O |  | :   : |  |  O  |.....fc_axis_w
-                   :..|____|__| :   : |__|_____|
-                              | :   : |
-                 .............|_:___:_|
-                                  :
-                                  :
-                                  :
-                               fc_axis_l
-
-
-                              fc_axis_h
-                                  :
-                             . ___:___                ______________
-                              |  ___  |              |  __________  |
-                              | |   | |              | |__________| |
-                             /| |___| |\             |________      |
-                            / |_______| \            |        |    /      
-                    .. ____/  |       |  \____       |________|  /
-     holder_base_z.+..|_::____|_______|____::_|      |___::___|/
- 
-
-
-                      :________________________
-                      |    |  | :   : |  |     |
-                      |  O |  | :   : |  |  O  |
-                      |____|__| :   : |__|_____|
-                              | :   : |
-                              |_:___:_|
-
-
-                                 ref_h
-                               ___:___                ______________
-                              |  ___  |              |  __________  |
-                              | | 1 | |              | |__________| |
-                             /| |___| |\             |________      |
-                            / |_______| \            |        |    /      
-                       ____/  |       |  \____       |________|  /
-                      |_::____|___2___|____::_|      2___1:___|/  ref_l
- 
-
-
-                      :________________________
-                      |    |  | :   : |  |     |
-                      |  2 |  | : 1 : |  |  O  | ref_w
-                      |____|__| :   : |__|_____|
-                              | :   : |
-                              |_:___:_|
-
-
-                   ___:___          
-                  |  ___  |         
-                  | | 1 | |         
-                 /| |___| |\       
-                / |_______| \      
-           ____/  |       |  \____ ...
-          |_::____|___2___|____::_|..: holder_base_z
-
-
-
-    fc_axis_h = axis on the height direction
-    fc_axis_l = axis on the length
-    fc_axis_w = width (perpendicular) dimension
-    ref_h :  1: reference at the middle of the idler
-             2: reference at the base on height
-    ref_l: 1: reference at the bolt position on fc_axis_l
-           2  reference at the back
-    ref_w: 1: reference at the center (symmetry)
-           2: reference at the bolt hole
-
-    """
-
-    # separation of the upper side (it is not defined). Change it
-    # measured for sk12 is 1.2
-    up_sep_dist = 1.2
-
-    # tolerances for holes 
-    holtol = 1.1
-
-    #def __init__(self, size,

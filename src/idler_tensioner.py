@@ -335,7 +335,6 @@ def idler_tens ():
     #      : nut_holder_total      :
     #      :                       :
     #      :...... tens_l .........:
-    #                       
 
     #oscad: tens_w/2-1 to have more tolerance, so it is a little bit deeper
     #oscad: translate ([tens_w/2-1, nut_holder_thick, tens_h/2])
