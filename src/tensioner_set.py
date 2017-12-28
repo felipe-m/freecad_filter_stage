@@ -235,6 +235,19 @@ class Tensioner (object):
         pos could have been set anywhere.
         The attribute place will move again the whole piece, including its parts
 
+    color : Tuple of 3 elements, each of them from 0 to 1
+        They define the RGB colors.
+        0: no color on that channel
+        1: full intesity on that channel
+
+    -- print axes (best direction to print, pointing upwards) 
+    prnt_ax_l : list of FreeCAD.Vector
+        with the same order and index than fco_l
+    prnt_ax_idl_tens : FreeCAD.Vector
+        Best axis to print for the idler tensioner
+    prnt_ax_tens_hold : FreeCAD.Vector
+        Best axis to print for the tensioner holder
+
     -- bolt idler attributes --
     d_boltidler : dictionary
         dictionary of the bolt for the idler pulley. see kcomp
@@ -325,7 +338,6 @@ class Tensioner (object):
     axprn_tens_hold: FreeCAD.Vector
         FreeCAD vector for the best direction to print.
         It has to be aligned with axis Z
-
 
     Idler Tensioner arguments drawings:
     -----------------------------------
@@ -636,16 +648,19 @@ class Tensioner (object):
         
 
         self.fco_l = []   # list of freecad objects of this class
+        self.prnt_ax_l = []   # list of FreeCAD.Vector axes to print
+
+        # tensioner holder
         fco_tens_hold = self.tensioner_holder()
         self.fco_l.append(fco_tens_hold)  # add to the FreeCAD object list
+        self.prnt_ax_l.append(self.prnt_ax_tens_hold) # axis to print
 
         fco_idl_tens = self.idler_tensioner()
         self.fco_l.append(fco_idl_tens)  # add to the FreeCAD object list
-        self.set_pos_tensioner()
+        self.prnt_ax_l.append(self.prnt_ax_idl_tens) # axis to print
 
-        # normal axes to print
-        self.axprn_idl_tens = axis_w # for the idler tensioner
-        self.axprn_tens_hold = axis_l # for the tensioner holder
+        self.set_pos_tensioner() # set the position of the tensioner
+
 
 
     # ---------------------------------------------------------
@@ -1009,6 +1024,8 @@ class Tensioner (object):
         fco = doc.addObject("Part::Feature", self.name + '_holder' )
         fco.Shape = shp10_final
         self.fco_tens_hold = fco
+        # normal axes to print without support
+        self.prnt_ax_tens_hold = self.axis_l
         return fco
 
     # ---------------------------------------------------------
@@ -1300,8 +1317,13 @@ class Tensioner (object):
         fco = doc.addObject("Part::Feature", 'idler_' + self.name)
         fco.Shape = shp09_final
         self.fco_idl_tens = fco
+        # normal axes to print without support
+        self.prnt_ax_idl_tens = self.axis_w
         return fco
 
+    # ---------------------------------------------------------
+    # -------------------- Other methods ----------------------
+    # ---------------------------------------------------------
     # ----- 
     def set_pos_tensioner (self, new_tens_in_ratio = None):
         """ Sets the tensioner place, depending on the attributes tens_in_ratio
@@ -1322,10 +1344,34 @@ class Tensioner (object):
                                    DraftVecUtils.scale(self.axis_l, tens_out))
 
 
+    # ----- 
+    def set_color (self, color = (1.,1.,1.), fco_i = 0):
+        """ Sets a new color for the whole set of pieces or for the selected
+        pieces
+
+        Parameters:
+        -----------
+        fco_i : int
+            index of the piece to change the color
+            0: all the pieces
+            1: the tensioner holder
+            2: the idler tensioner
+            3: the idler pulley
+
+        """
+        # just in case the value is 0 or 1, and it is an int
+        color = (float(color[0]),float(color[1]), float(color[2]))
+        if fco_i == 0:
+            self.color = color #only if all the pieces have the same color
+            for fco_ind in self.fco_l:
+                fco_ind.ViewObject.ShapeColor = color
+        else:
+            self.fco_l[fco_i-1].ViewObject.ShapeColor = color
 
     # ----- 
     def set_place (self, place = V0):
         """ Sets a new placement for the whole set of pieces
+
         Parameters:
         -----------
 
@@ -1339,19 +1385,22 @@ class Tensioner (object):
             for fco_i in self.fco_l:
                 fco_i.Placement.Base = place
             self.place = place
+            # set the position of the tensioner
+            self.set_pos_tensioner()
 
     # ----- Export to STL method
-    #def export_stl(self, fco_i = 0):
-    """ exports to stl the piece or the pieces to print
-    Save them in a STL file
-    Parameters:
-    -----------
-    fco_i : int
-        index of the piece to print
-        0: all the printable pieces
-        1: the tensioner holder
-        2: the idler tensioner
-    """
+    def export_stl(self, fco_i = 0):
+        """ exports to stl the piece or the pieces to print
+        Save them in a STL file
+
+        Parameters:
+        -----------
+        fco_i : int
+            index of the piece to print
+            0: all the printable pieces
+            1: the tensioner holder
+            2: the idler tensioner
+        """
 
         #rotation 
 
@@ -1374,5 +1423,5 @@ IDLER_TENS = { 'boltidler_d' : boltidler_d,
 
 
 doc = FreeCAD.newDocument()
-h = Tensioner()
+h = Tensioner(axis_l=VYN, axis_h = VX, pos=FreeCAD.Vector(-10,5,20))
 
