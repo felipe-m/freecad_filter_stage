@@ -51,6 +51,7 @@ import os
 import sys
 import inspect
 import logging
+import math
 import FreeCAD
 import FreeCADGui
 import Part
@@ -62,8 +63,14 @@ filepath = os.getcwd()
 # to get the components
 # In FreeCAD can be added: Preferences->General->Macro->Macro path
 sys.path.append(filepath) 
-sys.path.append(filepath + '/' + 'comps')
-#sys.path.append(filepath + '/../../' + 'comps')
+#sys.path.append(filepath + '/' + 'comps')
+sys.path.append(filepath + '/../../' + 'comps')
+
+# path to save the FreeCAD files
+fcad_path = filepath + '/../freecad/'
+
+# path to save the STL files
+stl_path = filepath + '/../stl/'
 
 import kcomp   # import material constants and other constants
 import fcfun   # import my functions for freecad. FreeCad Functions
@@ -223,8 +230,18 @@ class Tensioner (object):
     All the parameters are attributes
 
     fco_l : list of FreeCAD objects
-        list of all the FreeCAD objects that are in this piece:
+        list of all the FreeCAD objects that are in this set:
         tensioner_holder, idler_holder, idler
+
+    name_l : list of str
+        list of all the names (prefixes) of the pieces FreeCAD objects that
+        are in this set:
+        tensioner_holder, idler_holder, idler
+        with the same order and index than fco_l
+
+    pos0_l : list of FreeCAD.Vector
+        Absolute position of the origin of the different parts
+        with the same order and index than fco_l
 
     place : FreeCAD.Vector
         Position of the tensioner set.
@@ -243,6 +260,7 @@ class Tensioner (object):
     -- print axes (best direction to print, pointing upwards) 
     prnt_ax_l : list of FreeCAD.Vector
         with the same order and index than fco_l
+
     prnt_ax_idl_tens : FreeCAD.Vector
         Best axis to print for the idler tensioner
     prnt_ax_tens_hold : FreeCAD.Vector
@@ -511,6 +529,9 @@ class Tensioner (object):
         #for key, value in inspect.getargspec(__init__):
             #setattr(self, key, value)
 
+        print pos
+        print self.pos
+
         # normalize axes:
         # axis_l.normalize() could be used, but would change the vector
         # used as parameter
@@ -647,20 +668,28 @@ class Tensioner (object):
         self.pos_tens0 = pos + self.vl_0to_tens0 + self.vh_0to_tens0 
         
 
+        # these 3 list are synchronized in their indexes, so the index
+        # refers to the same object in the 3 lists
         self.fco_l = []   # list of freecad objects of this class
+        self.name_l = []   # list of names (prefixes) of the pieces
+        # list of positions of the origin of the different parts
+        self.pos0_l = []
         self.prnt_ax_l = []   # list of FreeCAD.Vector axes to print
 
         # tensioner holder
         fco_tens_hold = self.tensioner_holder()
         self.fco_l.append(fco_tens_hold)  # add to the FreeCAD object list
+        self.name_l.append('tensioner_holder')
+        self.pos0_l.append(pos0)
         self.prnt_ax_l.append(self.prnt_ax_tens_hold) # axis to print
 
         fco_idl_tens = self.idler_tensioner()
         self.fco_l.append(fco_idl_tens)  # add to the FreeCAD object list
+        self.name_l.append('idler_tensioner')
+        self.pos0_l.append(self.pos_tens0)
         self.prnt_ax_l.append(self.prnt_ax_idl_tens) # axis to print
 
         self.set_pos_tensioner() # set the position of the tensioner
-
 
 
     # ---------------------------------------------------------
@@ -1345,13 +1374,15 @@ class Tensioner (object):
 
 
     # ----- 
-    def set_color (self, color = (1.,1.,1.), fco_i = 0):
+    def set_color (self, color = (1.,1.,1.), part_i = 0):
         """ Sets a new color for the whole set of pieces or for the selected
         pieces
 
         Parameters:
         -----------
-        fco_i : int
+        color : tuple of 3 floats from 0. to 1.
+            RGB colors
+        part_i : int
             index of the piece to change the color
             0: all the pieces
             1: the tensioner holder
@@ -1361,12 +1392,12 @@ class Tensioner (object):
         """
         # just in case the value is 0 or 1, and it is an int
         color = (float(color[0]),float(color[1]), float(color[2]))
-        if fco_i == 0:
+        if part_i == 0:
             self.color = color #only if all the pieces have the same color
-            for fco_ind in self.fco_l:
-                fco_ind.ViewObject.ShapeColor = color
+            for fco_i in self.fco_l:
+                fco_i.ViewObject.ShapeColor = color
         else:
-            self.fco_l[fco_i-1].ViewObject.ShapeColor = color
+            self.fco_l[part_i-1].ViewObject.ShapeColor = color
 
     # ----- 
     def set_place (self, place = V0):
@@ -1389,22 +1420,76 @@ class Tensioner (object):
             self.set_pos_tensioner()
 
     # ----- Export to STL method
-    def export_stl(self, fco_i = 0):
+    def export_stl(self, part_i = 0, name = "set_"):
         """ exports to stl the piece or the pieces to print
         Save them in a STL file
 
         Parameters:
-        -----------
-        fco_i : int
+
+        part_i : int
             index of the piece to print
             0: all the printable pieces
             1: the tensioner holder
             2: the idler tensioner
+
+        name : str
+            Name or prefix of the piece
         """
 
-        #rotation 
+        doc = FreeCAD.ActiveDocument
+        if part_i == 0:
+            for fco_i, name_i, prnt_ax_i in zip(self.fco_l, self.name_l,
+                                                self.prnt_ax_l):
+                rotation = fcfun.get_rot(prnt_ax_i, VZ)
+                shp = fco_i.Shape
+                shp.Placement.Base = self.pos.negative() + self.place.negative()
+                shp.Placement.Rotation = rotation
+                Part.show(shp)
+                shp.Placement.Base = self.pos + self.place
+                shp.Placement.Rotation = fcfun.V0ROT
+        else:
+            fco_i = self.fco_l[part_i - 1]
+            prnt_ax_i = self.prnt_ax_l[part_i - 1]
+            name_i = name + self.name_l[part_i - 1]
+            pos0_i = self.pos0_l[part_i - 1]
+            rotation = FreeCAD.Rotation(prnt_ax_i, VZ)
+            shp = fco_i.Shape
+            # ----------- moving the shape doesnt work:
+            # I think that is because it is bound to a FreeCAD object
+            #shp.Placement.Base = self.pos.negative() + self.place.negative()
+            #shp.translate (self.pos.negative() + self.place.negative())
+            #shp.rotate (V0, rotation.Axis, math.degrees(rotation.Angle))
+            #shp.Placement.Base = self.place
+            #shp.Placement.Rotation = fcfun.V0ROT
+            # ----------- option 1. making a copy of the shape
+            # and then deleting it (nullify)
+            #shp_cpy = shp.copy()
+            #shp_cpy.translate (pos0_i.negative() + self.place.negative())
+            #shp_cpy.rotate (V0, rotation.Axis, math.degrees(rotation.Angle))
+            #shp_cpy.exportStl(stl_path + name_i + 'shp.stl')
+            #shp_cpy.nullify()
+            # ----------- option 2. moving the freecad object
+            fco_i.Placement.Base = pos0_i.negative() + self.place.negative()
+            fco_i.Placement.Rotation = rotation
+            doc.recompute()
+            fco_i.Shape.exportStl(stl_path + name_i + '.stl')
+            fco_i.Placement.Base = self.place
+            fco_i.Placement.Rotation = V0ROT
+            self.set_pos_tensioner() # position of the tensioner
+            doc.recompute()
 
+    def save_fcad(self, name = "tensioner_set"):
+        """ Save the FreeCAD document
 
+        """
+        doc = FreeCAD.ActiveDocument
+        if name is not None:
+            name = name
+        else:
+            name = self.name
+        fcad_filename = fcad_path + name + '.FCStd'
+        print fcad_filename
+        doc.saveAs (fcad_filename)
 
 
 """
@@ -1423,5 +1508,12 @@ IDLER_TENS = { 'boltidler_d' : boltidler_d,
 
 
 doc = FreeCAD.newDocument()
-h = Tensioner(axis_l=VYN, axis_h = VX, pos=FreeCAD.Vector(-10,5,20))
+h = Tensioner(axis_l=VX, axis_h = VZ, pos=FreeCAD.Vector(0,0,0))
+h.set_color(fcfun.LSKYBLUE,1) #tensioner holder light sky blue
+h.set_color(fcfun.ORANGE,2) #idler tensioner orange
+h.set_pos_tensioner(0.5) # have the tensioner have way out
+h.export_stl(1) # export the tensioner holder to STL
+h.export_stl(2) # export the idler tensioner to STL
+h.save_fcad() # save FreeCAD document
+
 
