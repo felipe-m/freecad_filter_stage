@@ -203,7 +203,8 @@ class Washer (CylHole):
                  name = ''):
 
         # sets the object name if not already set by a child class
-        self.metric = int(2 * r_in)
+        if not hasattr(self, 'metric'):
+            self.metric = int(2 * r_in)
         default_name = 'washer' + str(self.metric)
         self.set_name (name, default_name, change = 0)
 
@@ -222,9 +223,126 @@ class Washer (CylHole):
                 setattr(self, i, values[i])
 
 
+
+
+class Din125Washer (Washer):
+    """ Din 125 Washer, this is the small washer
+
+    Parameters:
+    -----------
+    metric : int (maybe float: 2.5)
+ 
+    axis_h : FreeCAD.Vector
+        vector along the cylinder height
+    pos_h : int
+        location of pos along axis_h (0,1)
+        0: the cylinder pos is at its base
+        1: the cylinder pos is centered along its height
+    tol : float
+        Tolerance for the inner and outer radius.
+        It is the tolerance for the diameter, so the radius will be added/subs
+        have of this tolerance
+        tol will be added to the inner radius (so it will be larger)
+        tol will be substracted to the outer radius (so it will be smaller)
+    model_type : int
+        type of model:
+        exact, rough
+    pos : FreeCAD.Vector
+        Position of the cylinder, taking into account where the center is
+
+    Attributes:
+    -----------
+    All the parameters and attributes of father class CylHole
+
+    metric : int or float (in case of M2.5) or even str for inches ?
+        Metric of the washer
+
+    model_type : int
+    """
+    def __init__(self, metric, axis_h, pos_h, tol = 0, pos = V0,
+                 model_type = 0, # exact
+                 name = ''):
+
+        # sets the object name if not already set by a child class
+        self.metric = metric
+        default_name = 'din125_washer_m' + str(self.metric)
+        self.set_name (name, default_name, change = 0)
+
+        washer_dict = kcomp.D125[metric]
+        Washer.__init__(self,
+                        r_out = washer_dict['do']/2.,
+                        r_in = washer_dict['di']/2.,
+                        h = washer_dict['t'],
+                        axis_h = axis_h,
+                        pos_h = pos_h,
+                        tol = tol, pos = pos,
+                        model_type = model_type)
+
+
+class Din9021Washer (Washer):
+    """ Din 9021 Washer, this is the larger washer
+
+    Parameters:
+    -----------
+    metric : int (maybe float: 2.5)
+ 
+    axis_h : FreeCAD.Vector
+        vector along the cylinder height
+    pos_h : int
+        location of pos along axis_h (0,1)
+        0: the cylinder pos is at its base
+        1: the cylinder pos is centered along its height
+    tol : float
+        Tolerance for the inner and outer radius.
+        It is the tolerance for the diameter, so the radius will be added/subs
+        have of this tolerance
+        tol will be added to the inner radius (so it will be larger)
+        tol will be substracted to the outer radius (so it will be smaller)
+    model_type : int
+        type of model:
+        exact, rough
+    pos : FreeCAD.Vector
+        Position of the cylinder, taking into account where the center is
+
+    Attributes:
+    -----------
+    All the parameters and attributes of father class CylHole
+
+    metric : int or float (in case of M2.5) or even str for inches ?
+        Metric of the washer
+
+    model_type : int
+    """
+    def __init__(self, metric, axis_h, pos_h, tol = 0, pos = V0,
+                 model_type = 0, # exact
+                 name = ''):
+
+        # sets the object name if not already set by a child class
+        self.metric = metric
+        default_name = 'din9021_washer_m' + str(self.metric)
+        self.set_name (name, default_name, change = 0)
+
+        washer_dict = kcomp.D9021[metric]
+        Washer.__init__(self,
+                        r_out = washer_dict['do']/2.,
+                        r_in = washer_dict['di']/2.,
+                        h = washer_dict['t'],
+                        axis_h = axis_h,
+                        pos_h = pos_h,
+                        tol = tol, pos = pos,
+                        model_type = model_type)
+
+
+
+
 doc = FreeCAD.newDocument()
-sp_washer = Washer( r_out = 10., r_in=5., h=20.,
+washer = Din125Washer( metric = 5,
                     axis_h = VZ, pos_h = 0, tol = 0, pos = V0,
+                    model_type = 0, # exact
+                    name = '')
+wash = Din9021Washer( metric = 5,
+                    axis_h = VZ, pos_h = 0, tol = 0,
+                    pos = washer.pos + DraftVecUtils.scale(VZ,washer.h),
                     model_type = 0, # exact
                     name = '')
 
