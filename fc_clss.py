@@ -87,7 +87,7 @@ class SinglePart (object):
 
     """
     def __init__(self, axis_d = None, axis_w = None, axis_h = None,
-                 model_type = 2, tol = kcomp.TOL):
+                 model_type = 0, tol = kcomp.TOL):
         # bring the active document
         self.doc = FreeCAD.ActiveDocument
 
@@ -111,10 +111,6 @@ class SinglePart (object):
 
         self.tol = tol
         self.model_type = model_type
-        # default values
-        self.print_ax = V0
-        self.shp = None
-        self.fco = None
 
     def set_color (self, color = (1.,1.,1.)):
         """ Sets a new color for the piece
@@ -128,7 +124,49 @@ class SinglePart (object):
         """
         # just in case the value is 0 or 1, and it is an int
         self.color = (float(color[0]),float(color[1]), float(color[2]))
-        self.fco_.ViewObject.ShapeColor = self.color
+        self.fco.ViewObject.ShapeColor = self.color
+
+    def set_name (self, name = '', default_name = '', change = 0):
+        """ Sets the name attribute to the value of parameter name
+        if name is empty, it will take default_name.
+        if change == 1, it will change the self.name attribute to name, 
+            default_name
+        if change == 0, if self.name is not empty, it will preserve it
+
+        Parameters:
+        -----------
+        name : str
+            This is the name, but it can be empty.
+        default_name : str
+            This is the default_name, if not name
+        change : int
+            1: change the value of self.name
+            0: preserve the value of self.name if it exists
+
+        """
+        # attribute name has not been created
+        if (not hasattr(self, 'name') or  # attribute name has not been created
+            not self.name or              # attribute name is empty
+            change == 1):                 # attribute has te be changed
+            if not name:
+                self.name = default_name
+            else:
+                self.name = name
+
+    def create_fco (self, name = ''):
+        """ creates a FreeCAD object of the TopoShape in self.shp
+
+        Parameters:
+        -----------
+        name : str
+            it is optional if there is a self.name
+
+        """
+        if not name:
+            name = self.name
+        fco = fcfun.add_fcobj(self.shp, name, self.doc)
+        self.fco = fco
+
 
     # ----- 
     def set_place (self, place = V0):
