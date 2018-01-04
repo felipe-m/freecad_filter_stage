@@ -191,12 +191,12 @@ class Tensioner (object):
         0: only at one side
         1: at both sides
     axis_l : FreeCAD.Vector
-        length vector of coordenate system
+        length vector of coordinate system
     axis_w : FreeCAD.Vector
-        width vector of coordenate system
+        width vector of coordinate system
         if V0: it will be calculated using the cross product: axis_l x axis_h
     axis_h : FreeCAD.Vector
-        height vector of coordenate system
+        height vector of coordinate system
     pos_l : int
         location of pos along the axis_l (0,1,2)
         0: at the back of the holder
@@ -528,9 +528,6 @@ class Tensioner (object):
             setattr(self, i, values[i])
         #for key, value in inspect.getargspec(__init__):
             #setattr(self, key, value)
-
-        print pos
-        print self.pos
 
         # normalize axes:
         # axis_l.normalize() could be used, but would change the vector
@@ -1481,11 +1478,16 @@ class Tensioner (object):
     def save_fcad(self, name = "tensioner_set"):
         """ Save the FreeCAD document
 
+        Parameters:
+        -----------
+        name : str
+            if name = '' then it will take self.name
+
         """
         doc = FreeCAD.ActiveDocument
-        if name is not None:
+        if name:  
             name = name
-        else:
+        else: # if name == '' 
             name = self.name
         fcad_filename = fcad_path + name + '.FCStd'
         print fcad_filename
@@ -1511,7 +1513,7 @@ doc = FreeCAD.newDocument()
 h = Tensioner(axis_l=VX, axis_h = VZ, pos=FreeCAD.Vector(0,0,0))
 h.set_color(fcfun.LSKYBLUE,1) #tensioner holder light sky blue
 h.set_color(fcfun.ORANGE,2) #idler tensioner orange
-h.set_pos_tensioner(0.5) # have the tensioner have way out
+h.set_pos_tensioner(0.5) # have the tensioner half way out
 h.export_stl(1) # export the tensioner holder to STL
 h.export_stl(2) # export the idler tensioner to STL
 h.save_fcad() # save FreeCAD document

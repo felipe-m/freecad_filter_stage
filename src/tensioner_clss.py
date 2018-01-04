@@ -1,0 +1,190 @@
+# ----------------------------------------------------------------------------
+# -- Set of idler tensioner and its holder
+# ----------------------------------------------------------------------------
+# -- (c) Felipe Machado
+# -- Area of Electronic Technology. Rey Juan Carlos University (urjc.es)
+# -- https://github.com/felipe-m/freecad_filter_stage
+# -- December-2017
+# ----------------------------------------------------------------------------
+# --- LGPL Licence
+# ----------------------------------------------------------------------------
+
+
+#                           axis_h            axis_h 
+#                            :                  :
+# ....................... ___:___               :______________
+# :                      |  ___  |     pos_h:   |  __________  |---
+# :                      | |   | |        3     | |__________| | : |
+# :+hold_h              /| |___| |\       1,2   |________      |---
+# :                    / |_______| \            |        |    /      
+# :             . ____/  |       |  \____       |________|  /
+# :..hold_bas_h:.|_::____|_______|____::_|0     |___::___|/......axis_d
+#                                               0    1           2: pos_d
+#
+#
+#
+#                 .... hold_bas_w ........
+#                :        .hold_w.        :
+#              aluprof_w :    wall_thick  :
+#                :..+....:      +         :
+#                :       :     : :        :
+#       pos_w:   2__1____:___0_:_:________:........axis_w
+#                |    |  | :   : |  |     |    :
+#                |  O |  | :   : |  |  O  |    + hold_bas_d
+#                |____|__| :   : |__|_____|....:
+#                        | :   : |
+#                        |_:___:_|
+#                          |   |
+#                           \_/
+#                            :
+#                            :
+#                           axis_d
+
+# the tensioner set is referenced on 3 perpendicular axis:
+# - fc_axis_d: depth
+# - fc_axis_w: width
+# - fc_axis_h: height
+# There is a position of the piece:
+# - that can be in a different point
+
+import os
+import sys
+import inspect
+import logging
+import math
+import FreeCAD
+import FreeCADGui
+import Part
+import DraftVecUtils
+
+# to get the current directory. Freecad has to be executed from the same
+# directory this file is
+filepath = os.getcwd()
+# to get the components
+# In FreeCAD can be added: Preferences->General->Macro->Macro path
+sys.path.append(filepath) 
+#sys.path.append(filepath + '/' + 'comps')
+sys.path.append(filepath + '/../../' + 'comps')
+
+# path to save the FreeCAD files
+fcad_path = filepath + '/../freecad/'
+
+# path to save the STL files
+stl_path = filepath + '/../stl/'
+
+import kcomp   # import material constants and other constants
+import fcfun   # import my functions for freecad. FreeCad Functions
+import fc_clss # import my freecad classes 
+import comps   # import my CAD components
+import partgroup 
+
+from fcfun import V0, VX, VY, VZ, V0ROT
+from fcfun import VXN, VYN, VZN
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+class CylHole (fc_clss.SinglePart):
+    """ Cylinder with a inner hole
+
+    Parameters:
+    -----------
+    r_ext : float
+        external radius
+    r_int : float
+        internal radius
+    h : float
+        height
+    axis_h : FreeCAD.Vector
+        vector along the cylinder height
+
+    def __init__(washer_std
+    """
+
+class Washer (fc_clss.SinglePart):
+    """ Cylinder with a inner hole
+
+    Parameters:
+    -----------
+    r_out : float
+        external (outside) radius
+    r_in : float
+        internal radius
+    h : float
+        height
+    axis_h : FreeCAD.Vector
+        vector along the cylinder height
+    pos_h : int
+        location of pos along axis_h (0,1)
+        0: the cylinder pos is at its base
+        1: the cylinder pos is centered along its height
+    tol : float
+        Tolerance for the inner and outer radius.
+        It is the tolerance for the diameter, so the radius will be added/subs
+        have of this tolerance
+        tol will be added to the inner radius (so it will be larger)
+        tol will be substracted to the outer radius (so it will be smaller)
+        
+    model_type : int
+        type of model:
+        exact, rough
+    pos : FreeCAD.Vector
+        Position of the cylinder, taking into account where the center is
+
+    Attributes:
+    -----------
+    All the parameters and attributes of father class SinglePart
+
+    print_ax : FreeCAD.Vector
+        Best axis to print (normal direction, pointing upwards)
+    metric : int or float (in case of M2.5) or even str for inches ?
+        Metric of the washer
+
+    """
+    def __init__(self, r_out, r_in, h, axis_h, pos_h, tol = 0, pos = V0,
+                 model_type = 0, # exact
+                 name = ''):
+        #super().__init__(axis_d, axis_w, axis_h)
+        fc_clss.SinglePart.__init__(self, axis_h = axis_h, tol = tol)
+        #fc_clss.PartsSet.__init__(self, axis_d, axis_w, axis_h)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): # so we keep the attributes by PartsSet.init
+                setattr(self, i, values[i])
+
+        # normal axes to print without support
+        self.prnt_ax = self.axis_h
+
+        tol_r = self.tol /2.
+        shp_washer = fcfun.shp_cylhole_gen(r_out = r_out,
+                                           r_in = r_in,
+                                           h = h,
+                                           axis_h = self.axis_h,
+                                           pos_h = pos_h,
+                                           xtr_r_in = tol_r,
+                                           # outside tolerance is less
+                                           xtr_r_out = - tol_r,
+                                           pos = pos)
+        self.shp = shp_washer
+
+        # axis to print
+        self.print_ax = self.axis_h
+
+        # --- FreeCAD object creation
+        self.metric = int(2 * r_in)
+        if not name:
+            name = 'washer_m' + str(self.metric)
+        fco = fcfun.add_fcobj(shp_washer, name, self.doc)
+        self.fco = fco
+
+        
+
+doc = FreeCAD.newDocument()
+sp_washer = Washer( r_out = 10., r_in=5., h=20.,
+                    axis_h = VZ, pos_h = 0, tol = 0, pos = V0,
+                    model_type = 0, # exact
+                    name = '')
+
