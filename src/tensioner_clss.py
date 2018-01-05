@@ -99,8 +99,8 @@ class CylHole (fc_clss.SinglePart):
         vector along the cylinder height
     pos_h : int
         location of pos along axis_h (0,1)
-        0: the cylinder pos is at its base
-        1: the cylinder pos is centered along its height
+        0: the cylinder pos is centered along its height
+        1: the cylinder pos is at its base
     tol : float
         Tolerance for the inner and outer radius.
         It is the tolerance for the diameter, so the radius will be added/subs
@@ -175,8 +175,8 @@ class Washer (CylHole):
         vector along the cylinder height
     pos_h : int
         location of pos along axis_h (0,1)
-        0: the cylinder pos is at its base
-        1: the cylinder pos is centered along its height
+        0: the cylinder pos is centered along its height
+        1: the cylinder pos is at its base
     tol : float
         Tolerance for the inner and outer radius.
         It is the tolerance for the diameter, so the radius will be added/subs
@@ -337,11 +337,11 @@ class Din9021Washer (Washer):
 
 doc = FreeCAD.newDocument()
 washer = Din125Washer( metric = 5,
-                    axis_h = VZ, pos_h = 0, tol = 0, pos = V0,
+                    axis_h = VZ, pos_h = 1, tol = 0, pos = V0,
                     model_type = 0, # exact
                     name = '')
 wash = Din9021Washer( metric = 5,
-                    axis_h = VZ, pos_h = 0, tol = 0,
+                    axis_h = VZ, pos_h = 1, tol = 0,
                     pos = washer.pos + DraftVecUtils.scale(VZ,washer.h),
                     model_type = 0, # exact
                     name = '')
