@@ -96,19 +96,19 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
                       +:  :+
                      : :  : :    pulley_stroke_dist
            :         : :  : :       .+.
-           :         : :  : :      :  : idler_r_ext
-           :         : :  : :      :  :.+..
-           :         : :  : :      :  :   : idler_r_int
-           :         : :  : :      :  :   :.+...
-           :         : :  : :      :  :   :    :
-        ________     : :__:_:______:__:___:____:..................
+           :         : :  : :       : : idler_r_ext
+           :         : :  : :       : :.+..
+           :         : :  : :       : :   : idler_r_int
+           :         : :  : :       : :   :.+...
+           :         : :  : :       : :   :    :
+        ________     : :__:_:_______:_:___:____:..................
        |___::___|     /       ____     __:_:___|.....+wall_thick :
        |    ....|    |  __   /     \  |            :             + tens_h
        |   ()...|    |:|  |:|       | |            + idler_h     :
        |________|    |  --   \_____/  |________....:             :
        |___::___|     \__________________:_:___|.................:
-       :        :    :      :      :           :
-       :........:    :      :...+..:           :
+       :        :    :      :       :          :
+       :........:    :      :...+...:          :
            +         :......:  tens_stroke     :
          tens_w      :  +                      :
     (2*idler_r_int)  : nut_holder_tot          :
@@ -185,9 +185,6 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
         1: at the inner base: where the base of the pulley goes
         2: at the bottom of the piece
     pos : FreeCAD.Vector
-        position of the piece
-        
-    pos : FreeCAD.Vector
         Position of the cylinder, taking into account where the center is
 
     Attributes:
@@ -196,9 +193,9 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
 
     prnt_ax : FreeCAD.Vector
         Best axis to print (normal direction, pointing upwards)
-    h0_cen : int
     d0_cen : int
     w0_cen : int
+    h0_cen : int
         indicates if pos_h = 0 (pos_d, pos_w) is at the center along
         axis_h, axis_d, axis_w, or if it is at the end.
         1 : at the center (symmetrical, or almost symmetrical)
@@ -538,7 +535,89 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
         self.prnt_ax = self.axis_w
 
 
-shp= ShpIdlerTensioner(idler_h = 10. ,
+#shp= ShpIdlerTensioner(idler_h = 10. ,
+#                 idler_r_in  = 5,
+#                 idler_r_ext = 6,
+#                 in_fillet = 2.,
+#                 wall_thick = 5.,
+#                 tens_stroke = 20. ,
+#                 pulley_stroke_dist = 0,
+#                 nut_holder_thick = 4. ,
+#                 boltidler_d = 3,
+#                 bolttens_d = 3,
+#                 opt_tens_chmf = 1,
+#                 tol = kcomp.TOL,
+#                 axis_d = VX,
+#                 axis_w = VY,
+#                 axis_h = VZ,
+#                 pos_d = 0,
+#                 pos_w = 0,
+#                 pos_h = 0,
+#                 pos = V0)
+
+class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
+    """ Integration of a ShpIdlerTensioner object into a PartIlderTensioner
+    object, so it is a FreeCAD object that can be visualized in FreeCAD
+    """
+
+    def __init__(self,
+                 idler_h ,
+                 idler_r_in ,
+                 idler_r_ext ,
+                 in_fillet = 2.,
+                 wall_thick = 5.,
+                 tens_stroke = 20. ,
+                 pulley_stroke_dist = 0,
+                 nut_holder_thick = 4. ,
+                 boltidler_d = 3,
+                 bolttens_d = 3,
+                 opt_tens_chmf = 1,
+                 tol = kcomp.TOL,
+                 axis_d = VX,
+                 axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos = V0,
+                 model_type = 0, # exact
+                 name = ''):
+
+        default_name = 'idler_tensioner'
+        self.set_name (name, default_name, change = 0)
+        # First the shape is created
+        ShpIdlerTensioner.__init__(self,
+                                  idler_h = idler_h ,
+                                  idler_r_in  = idler_r_in,
+                                  idler_r_ext = idler_r_ext,
+                                  in_fillet = in_fillet,
+                                  wall_thick = wall_thick,
+                                  tens_stroke = tens_stroke,
+                                  pulley_stroke_dist = pulley_stroke_dist,
+                                  nut_holder_thick = nut_holder_thick ,
+                                  boltidler_d = boltidler_d,
+                                  bolttens_d = bolttens_d,
+                                  opt_tens_chmf = opt_tens_chmf,
+                                  tol = tol,
+                                  axis_d = axis_d,
+                                  axis_w = axis_w,
+                                  axis_h = axis_h,
+                                  pos_d = pos_d,
+                                  pos_w = pos_w,
+                                  pos_h = pos_h,
+                                  pos = V0)
+
+        # Then the Part
+        fc_clss.SinglePart.__init__(self)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): # so we keep the attributes by CylHole
+                setattr(self, i, values[i])
+
+part= PartIdlerTensioner(idler_h = 10. ,
                  idler_r_in  = 5,
                  idler_r_ext = 6,
                  in_fillet = 2.,
@@ -557,3 +636,156 @@ shp= ShpIdlerTensioner(idler_h = 10. ,
                  pos_w = 0,
                  pos_h = 0,
                  pos = V0)
+
+
+class IdlerTensionerSet (fc_clss.PartsSet):
+    """ Integration of a ShpIdlerTensioner object into a PartIlderTensioner
+    object, so it is a FreeCAD object that can be visualized in FreeCAD
+
+    Parameter:
+    ---------
+    in_fillet: float
+        radius of the inner fillets
+    pos_d : int
+        location of pos along the axis_d (0,1,2,3,4,5), see drawing
+        0: at the back of the holder
+        1: at the beginning of the hole for the nut (position for the nut)
+        2: at the beginning of the tensioner stroke hole
+        3: at the end of the tensioner stroke hole
+        4: at the inner end of the bearing. It didnt exist in ShpIdlerTensioner
+           Therefore, from this, numbers change compared with ShpIdlerTensioner
+        5: at the center of the idler pulley hole
+           (it is 4 in ShpIdlerTensioner)
+        6: at the end of the piece (it is 5 in ShpIdlerTensioner)
+    pos_w : int
+        location of pos along the axis_w (0,1) almost symmetrical
+        0: at the center of symmetry
+        1: at the end of the tensioner along axis_w
+        2: at the end of the larger washer along axis_w
+    pos_h : int
+        location of pos along the axis_h (0,1,2), symmetrical
+        0: at the center of symmetry
+        1: at the inner base: where the base of the pulley goes
+        2: at the bottom of the piece
+    pos : FreeCAD.Vector
+        position of the piece
+    See drawing:
+
+                      nut_holder_thick:  :nut_holder_thick
+                                     +:  :+
+                                    : :  : :    pulley_stroke_dist
+                                    : :  : :       .+.
+                                    : :  : :       : :
+                                    : :  : :       : :  boltidler_metric
+                                    : :  : :       : :   +
+        ________                    : :__:_:_______:_:__:_:___ ....
+       |___::___|                    /       ____     __:_:___|....+wall_thick
+       |    ....|                   |  __   /     \  |
+       |   ()...|  bolttens_metric::|:|  |:|       | |
+       |________|                   |  --   \_____/  |________
+       |___::___|                    \__________________:_:___|
+                                           :       :
+                                           :...+...:
+                                              tens_stroke
+
+       origin: pos_o is at point o
+
+
+          axis_h 
+            :                                             pos_h
+        ____:____              ____________________________
+       |___:_:___|            /       ____     _____:_:____|
+      |___________|          |       /     \  ||____:_:____|  large washer
+       |_________|           |      |       | |   |_:_:_|     regular wahser
+       |     ....|           |  ..  |       | |   | : : |     bearing
+       |   :o:   |->axis_w   o::  ::|       | |   | : : |   0 -----> axis_d
+       |_________|           |  ..  |       | |   |_:_:_|
+       |_________|           |      |       | | __|_:_:_|__ 1
+      |___________|          |       \_____/  ||___________|2
+       |___:_:___|            \_____________________:_:____|3
+      21    0                0  1   2       3     4  5     6 : pos_d 
+       pos_w
+
+
+       tensioner_width is the same as the ilder internal diameter
+
+
+
+    """
+
+    def __init__(self, 
+                 boltidler_metric = 3,
+                 bolttens_metric = 3,
+                 tens_stroke = 20. ,
+                 wall_thick = 5.,
+                 in_fillet = 2.,
+                 pulley_stroke_dist = 0,
+                 nut_holder_thick = 4. ,
+                 opt_tens_chmf = 1,
+                 tol = kcomp.TOL,
+                 axis_d = VX,
+                 axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos = V0,
+                 name = ''):
+
+        default_name = 'idler_tensioner_set'
+        self.set_name (name, default_name, change = 0)
+
+        fc_clss.PartsSet.__init__(self, axis_d = axis_d,
+                                  axis_w = axis_w, axis_h = axis_h)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): # so we keep the attributes by CylHole
+                setattr(self, i, values[i])
+
+        # pos_h/w = 0 are at the center, not pos_d
+        self.d0_cen = 0
+        self.w0_cen = 1
+        self.h0_cen = 1
+
+        # before creating the idler_pulley and the tensioner, we dont
+        # know their dimensions and positions. We could calculate them
+        # here, but it would be to calculate twice. Instead, we create
+        # them, and then move them and calculate the vectors h_o, d_o, w_o
+
+        # Creation of the ilder pulley, we put it in the center
+        pulley = fc_class.BearWashSet(metric = bolttens_metric,
+                                            axis_h = axis_h, pos_h = 0,
+                                            axis_d = axis_d, pos_d = 0,
+                                            axis_w = axis_w, pos_w = 0,
+                                            pos = pos)
+        #self.pulley_h =  pulley.tot_h
+        #self.pulley_r_in =  pulley.r_in
+        #self.pulley_r_ext =  pulley.r_ext
+        # Creation of the tensioner
+        ilder_tens_part =  PartIdlerTensioner(
+                                     idler_h     = pulley.tot_h ,
+                                     idler_r_in  = pulley.r_in,
+                                     idler_r_ext = pulley.r_ext,
+                                     in_fillet   = in_fillet,
+                                     wall_thick  = wall_thick,
+                                     tens_stroke = tens_stroke ,
+                                     pulley_stroke_dist = pulley_stroke_dist,
+                                     nut_holder_thick = nut_holder_thick,
+                                     boltidler_d = boltidler_metric,
+                                     bolttens_d  = bolttens_metric,
+                                     opt_tens_chmf = opt_tens_chmf,
+                                     tol    = tol,
+                                     axis_d = self.axis_d,
+                                     axis_w = self.axis_w,
+                                     axis_h = self.axis_h,
+                                     pos_d  = 0,
+                                     pos_w  = 0,
+                                     pos_h  = 0,
+                                     pos    = pos)
+
+        # Now we have to move them and calculate the distance vectors h_o,..
+        self.h_o[0] = V0
+        self.h_o[1] = pulley.h_o[2]
