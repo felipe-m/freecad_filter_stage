@@ -133,7 +133,7 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
     wall_thick : float
         Thickness of the walls
     tens_stroke : float
-        Length of the ilder tensioner body, the stroke. Not including the pulley
+        Length of the idler tensioner body, the stroke. Not including the pulley
         neither the space for the tensioner bolt
     pulley_stroke_dist : float
         Distance along axis_d from between the end of the pulley and the stroke
@@ -178,12 +178,12 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
     pos_w : int
         location of pos along the axis_w (0,1) almost symmetrical
         0: at the center of symmetry
-        1: at the end of the piece along axis_w
+        1: at the end of the piece along axis_w at the negative side
     pos_h : int
         location of pos along the axis_h (0,1,2), symmetrical
         0: at the center of symmetry
         1: at the inner base: where the base of the pulley goes
-        2: at the bottom of the piece
+        2: at the bottom of the piece (negative side of axis_h)
     pos : FreeCAD.Vector
         Position of the cylinder, taking into account where the center is
 
@@ -274,6 +274,8 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
         self.d_o[4] = self.vec_d(self.tens_d - idler_r_in)
         self.d_o[5] = self.vec_d(self.tens_d)
 
+        # these are negative because actually the pos_w indicates a negative
+        # position along axis_w
         self.w_o[0] = V0
         self.w_o[1] = self.vec_w(-self.tens_w/2.)
 
@@ -617,25 +619,25 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
             if not hasattr(self,i): # so we keep the attributes by CylHole
                 setattr(self, i, values[i])
 
-part= PartIdlerTensioner(idler_h = 10. ,
-                 idler_r_in  = 5,
-                 idler_r_ext = 6,
-                 in_fillet = 2.,
-                 wall_thick = 5.,
-                 tens_stroke = 20. ,
-                 pulley_stroke_dist = 0,
-                 nut_holder_thick = 4. ,
-                 boltidler_d = 3,
-                 bolttens_d = 3,
-                 opt_tens_chmf = 1,
-                 tol = kcomp.TOL,
-                 axis_d = VX,
-                 axis_w = VY,
-                 axis_h = VZ,
-                 pos_d = 0,
-                 pos_w = 0,
-                 pos_h = 0,
-                 pos = V0)
+#part= PartIdlerTensioner(idler_h = 10. ,
+#                 idler_r_in  = 5,
+#                 idler_r_ext = 6,
+#                 in_fillet = 2.,
+#                 wall_thick = 5.,
+#                 tens_stroke = 20. ,
+#                 pulley_stroke_dist = 0,
+#                 nut_holder_thick = 4. ,
+#                 boltidler_d = 3,
+#                 bolttens_d = 3,
+#                 opt_tens_chmf = 1,
+#                 tol = kcomp.TOL,
+#                 axis_d = VX,
+#                 axis_w = VY,
+#                 axis_h = VZ,
+#                 pos_d = 0,
+#                 pos_w = 0,
+#                 pos_h = 0,
+#                 pos = V0)
 
 
 class IdlerTensionerSet (fc_clss.PartsSet):
@@ -707,7 +709,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
        pos_w
 
 
-       tensioner_width is the same as the ilder internal diameter
+       tensioner_width is the same as the idler internal diameter
 
 
 
@@ -755,17 +757,19 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         # here, but it would be to calculate twice. Instead, we create
         # them, and then move them and calculate the vectors h_o, d_o, w_o
 
-        # Creation of the ilder pulley, we put it in the center
-        pulley = fc_class.BearWashSet(metric = bolttens_metric,
+        # Creation of the idler pulley, we put it in the center
+        pulley = fc_clss.BearWashSet(metric = bolttens_metric,
                                             axis_h = axis_h, pos_h = 0,
                                             axis_d = axis_d, pos_d = 0,
                                             axis_w = axis_w, pos_w = 0,
                                             pos = pos)
+        self.append_part(pulley)
         #self.pulley_h =  pulley.tot_h
         #self.pulley_r_in =  pulley.r_in
         #self.pulley_r_ext =  pulley.r_ext
-        # Creation of the tensioner
-        ilder_tens_part =  PartIdlerTensioner(
+        # Creation of the tensioner, with pos_h,d,w = 0 because we dont know
+        # the dimensions yet
+        idler_tens_part =  PartIdlerTensioner(
                                      idler_h     = pulley.tot_h ,
                                      idler_r_in  = pulley.r_in,
                                      idler_r_ext = pulley.r_ext,
@@ -785,7 +789,87 @@ class IdlerTensionerSet (fc_clss.PartsSet):
                                      pos_w  = 0,
                                      pos_h  = 0,
                                      pos    = pos)
+        self.append_part(idler_tens_part)
+
+        
 
         # Now we have to move them and calculate the distance vectors h_o,..
+        # pos_d, pos_w, pos_w: are different for the components and the set
+        #       axis_h 
+        #         :                                     pos_h for Pulley-\
+        #         :                           pos_h for idlerTensPart-\
+        #         :                         pos_h for TensionerSet-\
+        #     ____:____              ____________________________   3  2
+        #    |___:_:___|            /       ____     _____:_:____|  2  1  3
+        #   |___________|          |       /     \  ||____:_:____|        2
+        #    |_________|           |      |       | |   |_:_:_|     1     1
+        #    |     ....|           |  ..  |       | |   | : : |   
+        #    |   :o:   |           o::  ::|       | |   | : : |     0  0  0
+        #    |_________|           |  ..  |       | |   |_:_:_|          -1
+        #    |_________|           |      |       | | __|_:_:_|__  -1    -2
+        #   |___________|          |       \_____/  ||___________| -2 -1 -3
+        #    |___:_:___|            \_____________________:_:____| -3 -2
+        #  -21    0    12  TensSet 0  1   2       3     4  5     6 : pos_d 
+        #   -1    0    1 iTensPart 0  1   2       3        4     5
+        #  -32  -101   23   Pulley                  -3 -2-101 2  3  
+        #
+        #         |-->axis_w       |---> axis_d
+
+        # When pos_d,w,h are centered, d0_cen, w0_cen, h0_cen = 1
+        # h_o[1] is the distance from o to -1, or from 1 to o
+        self.d_o[0] = V0
+        self.d_o[1] = idler_tens_part.d_o[1]
+        self.d_o[2] = idler_tens_part.d_o[2]
+        self.d_o[3] = idler_tens_part.d_o[3]
+        # He have to add them because pulley.d_o is in opposite direction
+        # pulley.d_o[2] is the  distance from o to -2, or from 2 to o
+        #             pulley axis -->        + axis to pulley r_in  <--
+        self.d_o[4] = idler_tens_part.d_o[4] + pulley.d_o[2]
+        self.d_o[5] = idler_tens_part.d_o[4]
+        self.d_o[6] = idler_tens_part.d_o[5]
+
+        self.w_o[0] = V0
+        self.w_o[1] = pulley.w_o[2]
+        self.w_o[2] = pulley.w_o[3]
+
+        # h_o[1] is the distance from o to -1, or from 1 to o
         self.h_o[0] = V0
         self.h_o[1] = pulley.h_o[2]
+        self.h_o[2] = pulley.h_o[3]
+        self.h_o[3] = idler_tens_part.h_o[2]
+
+        # Now we place the idler tensioner according to pos_d,w,h
+        self.set_pos_o()
+
+        # Now we have the position where the origin is, but:
+        # - we havent located the idler_tensioner at pos_o
+        # - we havent located the pulley at pos_o + dist to axis
+
+        # we should have call PartIdlerTensioner (pos = self.pos_o)
+        # instead, we have it at (pos = self.pos)
+        # so we have to move PartIdlerTensioner self.pos_o - self.pos
+        self.add_part_place(idler_tens_part)
+
+        self.add_part_place(pulley, self.get_o_to_d(5))
+
+
+
+partset= IdlerTensionerSet (
+                 boltidler_metric = 3,
+                 bolttens_metric = 3,
+                 tens_stroke = 20. ,
+                 wall_thick = 5.,
+                 in_fillet = 2.,
+                 pulley_stroke_dist = 0,
+                 nut_holder_thick = 4. ,
+                 opt_tens_chmf = 1,
+                 tol = kcomp.TOL,
+                 axis_d = VX,
+                 axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos = V0,
+                 name = 't')
+
