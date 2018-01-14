@@ -224,7 +224,7 @@ D934 = { 3: D934_M3,
 # Mounting bolt radius with added tolerance
 #mbolt_r = tol * sk_12['mbolt']/2
 
-# ------------- DIN 125 Washers (wide) -----------------------
+# ------------- DIN 125 Washers (small) -----------------------
 
 # The Index reffers to the Metric (M3,...
 # Inner Diameter (of the hole). Minimum diameter.
@@ -256,6 +256,22 @@ WASH_D125_T  = {
                   7:   1.6,
                   8:   1.6,
                  10:   2.0 }
+
+D125 = {} # empty dictionary
+for (k_di, di), (k_do, do), (k_t, t) in zip(WASH_D125_DI.iteritems(),
+                                            WASH_D125_DO.iteritems(),
+                                            WASH_D125_T.iteritems()):
+    # creation of a 2 dimension dictionary
+    # for example: 
+    #              D125[4]['do']
+    # will give the outer diameter of the M4 DIN125 washer
+
+    # k_di, k_do, k_t should have the same value in each iteration
+    # these 2 sentences are equivalent
+    #D125[k_di] = dict([('di',di),('do',do), ('t',t)])
+    D125[k_di] = dict(di=di, do=do, t=t)
+    if not ((k_di == k_do) and (k_di == k_t)):
+        logger.error('Keys are not ordered')
 
 
 # ------------- DIN 9021 Washers (wide) -----------------------
@@ -290,6 +306,22 @@ WASH_D9021_T  = {
                   7:   2.0,
                   8:   2.0,
                  10:   2.5 }
+
+D9021 = {} # empty dictionary
+for (k_di, di), (k_do, do), (k_t, t) in zip(WASH_D9021_DI.iteritems(),
+                                            WASH_D9021_DO.iteritems(),
+                                            WASH_D9021_T.iteritems()):
+    # creation of a 2 dimension dictionary
+    # for example: 
+    #              D9021[4]['do']
+    # will give the outer diameter of the M4 DIN9021 washer
+
+    # k_di, k_do, k_t should have the same value in each iteration
+    # these 2 sentences are equivalent
+    #D9021[k_di] = dict([('di',di),('do',do), ('t',t)])
+    D9021[k_di] = dict(di=di, do=do, t=t)
+    if not ((k_di == k_do) and (k_di == k_t)):
+        logger.error('Keys are not ordered')
 
 # ------------- UNC Unified Coarse Thread
 # USA and Canada Standard Threads from Unified Thread Standard UTS
@@ -336,9 +368,26 @@ BEAR_DO = {
 BEAR_T  = {
             603:  5.0,
             673:  2.5,
-            608:  7.0,
-            624:  5.0
+            624:  5.0,
+            608:  7.0
           }
+
+BEARING = {} # empty dictionary
+for (k_ndi, di), (k_ndo, do), (k_nt, t) in zip(BEAR_DI.iteritems(),
+                                               BEAR_DO.iteritems(),
+                                               BEAR_T.iteritems()):
+    # creation of a 2 dimension dictionary
+    # for example: 
+    #              BEARING[603]['do']
+    # will give the outer diameter of the 603 bearing
+
+    # the keys: k_ndi, k_ndo, k_nt should have the same value in each iteration
+    # these 2 sentences are equivalent
+    #BEARING[k_ndi] = dict([('di',di),('do',do), ('t',t)])
+    BEARING[k_ndi] = dict(di=di, do=do, t=t)
+    if not ((k_ndi == k_ndo) and (k_ndi == k_nt)):
+        logger.error('Keys are not ordered')
+
 
 
 # to acces more easily to the dimensions of objects that are just

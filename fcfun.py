@@ -10,17 +10,17 @@
 # --- LGPL Licence
 # ----------------------------------------------------------------------------
 
-import FreeCAD;
-import Part;
-import math;
-import logging;
-import DraftVecUtils;
+import FreeCAD
+import Part
+import math
+import logging
+import DraftVecUtils
 
 #from FreeCAD import Base
 
 # ---------------------- can be taken away after debugging
-import os;
-import sys;
+import os
+import sys
 # directory this file is
 filepath = os.getcwd()
 import sys
@@ -30,7 +30,7 @@ sys.path.append(filepath)
 # ---------------------- can be taken away after debugging
 
 
-import kcomp # before was mat_cte
+import kcomp
 
 from kcomp import LAYER3D_H
 
@@ -1300,8 +1300,8 @@ def shp_cyl_gen (r, h, axis_h = VZ,
         It can be None
     pos_h : int
         location of pos along axis_h (0, 1)
-        0: the cylinder pos is at its base (not considering xtr_h)
-        1: the cylinder pos is centered along its height
+        0: the cylinder pos is centered along its height
+        1: the cylinder pos is at its base (not considering xtr_h)
     pos_ra : int
         location of pos along axis_ra (0, 1)
         0: pos is at the circunference center
@@ -1328,14 +1328,14 @@ def shp_cyl_gen (r, h, axis_h = VZ,
 
 
     
-    pos_h = 0, pos_ra = 0, pos_rb = 0
-    pos at x:
+    pos_h = 1, pos_ra = 0, pos_rb = 0
+    pos at 1:
             axis_rb
               :
               :
              . .    
            .     .
-         (    0    ) ---- axis_ra       This 0 will be pos0
+         (    o    ) ---- axis_ra       This o will be pos_o (origin)
            .     .
              . .    
 
@@ -1350,11 +1350,11 @@ def shp_cyl_gen (r, h, axis_h = VZ,
          |         |
          |         |
          |         |
-         |____x____|...............> axis_ra
-         :....0....:....: xtr_bot             This 0 will be pos0
+         |____1____|...............> axis_ra
+         :....o....:....: xtr_bot             This o will be pos_o
 
 
-    pos_h = 1, pos_ra = 1, pos_rb = 0
+    pos_h = 0, pos_ra = 1, pos_rb = 0
     pos at x:
 
        axis_rb
@@ -1378,10 +1378,10 @@ def shp_cyl_gen (r, h, axis_h = VZ,
          |         |
          |         |
          |_________|.....
-         :....0....:....: xtr_bot        This 0 will be pos0
+         :....o....:....: xtr_bot        This o will be pos_o
 
 
-    pos_h = 1, pos_ra = 1, pos_rb = 1
+    pos_h = 0, pos_ra = 1, pos_rb = 1
     pos at x:
 
        axis_rb
@@ -1405,44 +1405,44 @@ def shp_cyl_gen (r, h, axis_h = VZ,
         ||         |
         ||         |
         ||_________|.....
-        ::....0....:....: xtr_bot
+        ::....o....:....: xtr_bot
         :;
         xtr_r
 
    """
    
 
-    # calculate pos0, which is at the center of the circle and at the base
+    # calculate pos_o, which is at the center of the circle and at the base
     # counting xtr_bot if is is > 0
     axis_h = DraftVecUtils.scaleTo(axis_h, 1)
     
     if pos_ra == 0:
-        ra_to_pos0 = V0
+        ra_to_o = V0
     else:
         if axis_ra is not None:
             axis_ra = DraftVecUtils.scaleTo(axis_ra, 1)
-            ra_to_pos0 = DraftVecUtils.scale(axis_ra, r)
+            ra_to_o = DraftVecUtils.scale(axis_ra, r)
         else :
             logger.error('axis_ra not defined while pos_ra ==1')
 
     if pos_rb == 0:
-        rb_to_pos0 = V0
+        rb_to_o = V0
     else:
         if axis_rb is not None:
             axis_rb = DraftVecUtils.scaleTo(axis_rb, 1)
-            rb_to_pos0 = DraftVecUtils.scale(axis_rb, r)
+            rb_to_o = DraftVecUtils.scale(axis_rb, r)
         else :
             logger.error('axis_rb not defined while pos_rb ==1')
 
-    if pos_h == 1: # we have to move the circle half the height down + xtr_bot
-        h_to_pos0 = DraftVecUtils.scale(axis_h, -(h/2. + xtr_bot))
+    if pos_h == 0: # we have to move the circle half the height down + xtr_bot
+        h_to_o = DraftVecUtils.scale(axis_h, -(h/2. + xtr_bot))
     else:
-        h_to_pos0 = DraftVecUtils.scale(axis_h, - xtr_bot)
+        h_to_o = DraftVecUtils.scale(axis_h, - xtr_bot)
 
-    pos0 = pos + h_to_pos0 + ra_to_pos0 + rb_to_pos0
+    pos_o = pos + h_to_o + ra_to_o + rb_to_o
 
     cir =  Part.makeCircle (r + xtr_r,   # Radius
-                            pos0,        # Position
+                            pos_o,        # Position
                             axis_h)      # direction
 
     wire_cir = Part.Wire(cir)
@@ -1453,11 +1453,12 @@ def shp_cyl_gen (r, h, axis_h = VZ,
 
     return shpcyl
 
-#cyl = shp_cyl_gen (r=2, h=1, axis_h = VZ, 
+#cyl = shp_cyl_gen (r=2, h=2, axis_h = VZ, 
 #                       axis_ra = VX, axis_rb = VY,
-#                       pos_h = 0, pos_ra = 1, pos_rb = 1,
-#                       xtr_top=0, xtr_bot=1, xtr_r=1,
-#                       pos = FreeCAD.Vector(1,2,0))
+#                       pos_h = 1, pos_ra = 1, pos_rb = 0,
+#                       xtr_top=0, xtr_bot=1, xtr_r=2,
+#                       pos = V0)
+#                       #pos = FreeCAD.Vector(1,2,0))
 #Part.show(cyl)
 
 
@@ -1631,17 +1632,18 @@ def shp_cylhole_gen (r_out, r_in, h,
         vector along the cylinder height
     axis_ra : FreeCAD.Vector
         vector along the cylinder radius, a direction perpendicular to axis_h
-        only make sense if pos_ra = 0.
-        It can be None.
+        it is not necessary if pos_ra == 0
+        It can be None, but if None, axis_rb has to be None
     axis_rb : FreeCAD.Vector
         vector along the cylinder radius,
         a direction perpendicular to axis_h and axis_ra
-        only make sense if pos_rb = 0
+        it is not necessary if pos_ra == 0
         It can be None
     pos_h : int
         location of pos along axis_h (0, 1)
-        0: the cylinder pos is at its base (not considering xtr_h)
-        1: the cylinder pos is centered along its height
+        0: the cylinder pos is centered along its height, not considering
+           xtr_top, xtr_bot
+        1: the cylinder pos is at its base (not considering xtr_h)
     pos_ra : int
         location of pos along axis_ra (0, 1)
         0: pos is at the circunference center
@@ -1652,9 +1654,9 @@ def shp_cylhole_gen (r_out, r_in, h,
     pos_rb : int
         location of pos along axis_ra (0, 1)
         0: pos is at the circunference center
-        1: pos is at the inner circunsference, on axis_ra, at r_in from the
+        1: pos is at the inner circunsference, on axis_rb, at r_in from the
            circle center (not at r_in + xtr_r_in)
-        2: pos is at the outer circunsference, on axis_ra, at r_out from the
+        2: pos is at the outer circunsference, on axis_rb, at r_out from the
            circle center (not at r_out + xtr_r_out)
     xtr_top : float
         Extra height on top, it is not taken under consideration when
@@ -1676,8 +1678,8 @@ def shp_cylhole_gen (r_out, r_in, h,
 
 
     
-    pos_h = 0, pos_ra = 0, pos_rb = 0
-    pos at 0:
+    pos_h = 1, pos_ra = 0, pos_rb = 0
+    pos at 1:
             axis_rb
               :
               :
@@ -1695,11 +1697,11 @@ def shp_cylhole_gen (r_out, r_in, h,
          | :     : |
          | :     : |
          | :     : |
-         | :  1  : |     1: pos would be at 1, if pos_h == 1
+         | :  0  : |     0: pos would be at 0, if pos_h == 0
          | :     : |
          | :     : |
-         |_:__0__:_|....>axis_ra
-         :.:..*..:.:....: xtr_bot        This * will be pos0
+         |_:__1__:_|....>axis_ra
+         :.:..o..:.:....: xtr_bot        This o will be pos_o (orig)
          : :  :
          : :..:
          :  + :
@@ -1721,11 +1723,11 @@ def shp_cylhole_gen (r_out, r_in, h,
          | :     : |
          | :     : |
          | :     : |
-         2 1  0  : |....>axis_ra    (if pos_h == 1)
+         2 1  0  : |....>axis_ra    (if pos_h == 0)
          | :     : |
          | :     : |
          |_:_____:_|.....
-         :.:..*..:.:....: xtr_bot        This * will be pos0
+         :.:..o..:.:....: xtr_bot        This o will be pos_o (orig)
          : :  :
          : :..:
          :  + :
@@ -1738,55 +1740,56 @@ def shp_cylhole_gen (r_out, r_in, h,
    """
    
 
-    # calculate pos0, which is at the center of the circle and at the base
+    # calculate pos_o, which is at the center of the circle and at the base
     # counting xtr_bot it is is > 0
     axis_h = DraftVecUtils.scaleTo(axis_h, 1)
     
-    # vectors to pos0 along axis_h, from the pos_h points
-    h0to = {}
-    h0to[0] =  DraftVecUtils.scale(axis_h, xtr_bot)
-    h0to[1] =  DraftVecUtils.scale(axis_h, h/2. + xtr_bot)
+    # vectors from o (orig) along axis_h, to the pos_h points
+    h_o = {}
+    h_o[0] =  DraftVecUtils.scale(axis_h, h/2. + xtr_bot)
+    h_o[1] =  DraftVecUtils.scale(axis_h, xtr_bot)
 
-    # vectors to pos0 along axis_ra, from the pos_ra points
-    ra0to = {}
-    ra0to[0] = V0
+    # vectors from o (orig) along axis_ra, to the pos_ra points
+    ra_o = {}
+    ra_o[0] = V0
     if pos_ra != 0:
         if axis_ra is not None:
             axis_ra = DraftVecUtils.scaleTo(axis_ra, 1)
-            ra_to_pos0 = DraftVecUtils.scale(axis_ra, r)
-            ra0to[1] = DraftVecUtils.scale(axis_ra, r_in)
-            ra0to[2] = DraftVecUtils.scale(axis_ra, r_out)
+            ra_o[1] = DraftVecUtils.scale(axis_ra, - r_in)
+            ra_o[2] = DraftVecUtils.scale(axis_ra, - r_out)
         else :
             logger.error('axis_ra not defined while pos_ra ==1')
     
-    # vectors to pos0 along axis_rb, from the pos_rb points
-    rb0to = {}
-    rb0to[0] = V0
+    # vectors from o (orig) along axis_rb, to the pos_rb points
+    rb_o = {}
+    rb_o[0] = V0
     if pos_rb != 0:
         if axis_rb is not None:
             axis_rb = DraftVecUtils.scaleTo(axis_rb, 1)
-            rb_to_pos0 = DraftVecUtils.scale(axis_rb, r)
-            rb0to[1] = DraftVecUtils.scale(axis_rb, r_in)
-            rb0to[2] = DraftVecUtils.scale(axis_rb, r_out)
+            rb_o[1] = DraftVecUtils.scale(axis_rb, - r_in)
+            rb_o[2] = DraftVecUtils.scale(axis_rb, - r_out)
         else :
             logger.error('axis_rb not defined while pos_rb ==1')
 
-    pos0 = pos + (h0to[pos_h] + ra0to[pos_ra] + rb0to[pos_rb]).negative()
+    pos_o = pos + (h_o[pos_h] + ra_o[pos_ra] + rb_o[pos_rb]).negative()
 
     shp_hollowcyl = shp_cylholedir (r_out = r_out + xtr_r_out,
                                     r_in  = r_in + xtr_r_in,
                                     h =  h+xtr_bot+xtr_top,
                                     normal = axis_h,
-                                    pos = pos0)
+                                    pos = pos_o)
 
     return shp_hollowcyl
 
-#cyl = shp_cylhole_gen (r_in=2, r_out=5, h=4, axis_h = FreeCAD.Vector(1,1,0), 
-#                       #axis_ra = VX, axis_rb = VY,
-#                       pos_h = 0, # pos_ra = 0, pos_rb = 0,
+#cyl = shp_cylhole_gen (r_in=2, r_out=5, h=4,
+#                       #axis_h = FreeCAD.Vector(1,1,0), 
+#                       axis_h = VZ,
+#                       axis_ra = VX, axis_rb = VYN,
+#                       pos_h = 0,  pos_ra = 1, pos_rb = 2,
 #                       xtr_top=0, xtr_bot=1,
-#                       xtr_r_in=1, xtr_r_out=-1,
-#                       pos = FreeCAD.Vector(1,2,3))
+#                       xtr_r_in=0, xtr_r_out=-1,
+#                       pos = V0)
+#                       #pos = FreeCAD.Vector(1,2,3))
 #Part.show(cyl)
 
 def add2CylsHole (r1, h1, r2, h2, thick,
