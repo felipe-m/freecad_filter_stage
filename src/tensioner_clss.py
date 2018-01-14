@@ -384,6 +384,7 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
                                cd=0, cw=1, ch=1,
                                xtr_w = 1,
                                xtr_nw = 1,
+                               xtr_d = tol, # tol to fit the large washer
                                xtr_nd = 1, # extra along axis_d (positive)
                                pos = self.get_pos_d(5))
         shp02 = shp01chmf.cut(shp02cut)
@@ -607,7 +608,7 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
                                   pos_d = pos_d,
                                   pos_w = pos_w,
                                   pos_h = pos_h,
-                                  pos = V0)
+                                  pos = pos)
 
         # Then the Part
         fc_clss.SinglePart.__init__(self)
@@ -732,6 +733,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
                  pos_w = 0,
                  pos_h = 0,
                  pos = V0,
+                 group = 1,
                  name = ''):
 
         default_name = 'idler_tensioner_set'
@@ -857,14 +859,16 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         self.set_part_place(pulley, self.get_o_to_d(5))
 
         self.place_fcos()
+        if group == 1:
+            self.make_group()
 
 
 partset= IdlerTensionerSet (
                  boltidler_metric = 3,
                  bolttens_metric = 3,
                  tens_stroke = 20. ,
-                 wall_thick = 5.,
-                 in_fillet = 2.,
+                 wall_thick = 3.,
+                 in_fillet = 1.,
                  pulley_stroke_dist = 0,
                  nut_holder_thick = 4. ,
                  opt_tens_chmf = 1,
@@ -874,7 +878,7 @@ partset= IdlerTensionerSet (
                  axis_h = VZ,
                  pos_d = 0,
                  pos_w = 0,
-                 pos_h = 0,
-                 pos = V0,
-                 name = 't')
+                 pos_h = 3,
+                 pos = FreeCAD.Vector(3,10,5),
+                 name = 'tensioner_group')
 
