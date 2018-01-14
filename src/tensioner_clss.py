@@ -764,6 +764,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
                                             axis_w = axis_w, pos_w = 0,
                                             pos = pos)
         self.append_part(pulley)
+        pulley.parent = self
         #self.pulley_h =  pulley.tot_h
         #self.pulley_r_in =  pulley.r_in
         #self.pulley_r_ext =  pulley.r_ext
@@ -790,6 +791,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
                                      pos_h  = 0,
                                      pos    = pos)
         self.append_part(idler_tens_part)
+        idler_tens_part.parent = self
 
         
 
@@ -839,7 +841,9 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         self.h_o[3] = idler_tens_part.h_o[2]
 
         # Now we place the idler tensioner according to pos_d,w,h
-        self.set_pos_o()
+        # argument 1 means that pos_o wasnt in place and has to be
+        # adjusted
+        self.set_pos_o(adjust = 1)
 
         # Now we have the position where the origin is, but:
         # - we havent located the idler_tensioner at pos_o
@@ -848,10 +852,11 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         # we should have call PartIdlerTensioner (pos = self.pos_o)
         # instead, we have it at (pos = self.pos)
         # so we have to move PartIdlerTensioner self.pos_o - self.pos
-        self.add_part_place(idler_tens_part)
+        self.set_part_place(idler_tens_part)
 
-        self.add_part_place(pulley, self.get_o_to_d(5))
+        self.set_part_place(pulley, self.get_o_to_d(5))
 
+        self.place_fcos()
 
 
 partset= IdlerTensionerSet (
