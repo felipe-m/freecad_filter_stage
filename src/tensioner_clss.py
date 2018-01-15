@@ -1543,11 +1543,88 @@ class ShpTensionerHolder (shp_clss.Obj3D):
 
         self.shp = shp10_final
  
-        Part.show(shp10_final)
+        #Part.show(shp10_final)
+
+#doc = FreeCAD.newDocument()
+#shp_hold = ShpTensionerHolder(
+#                              aluprof_w = 15,
+#                              belt_pos_h = 22.,
+#                              tens_h = 10.,
+#                              tens_w = 10.,
+#                              tens_d_inside = 25.,
+#                              wall_thick = 3.,
+#                              in_fillet = 2.,
+#                              boltaluprof_d = 3,
+#                              bolttens_d = 3,
+#                              hold_bas_h = 0,
+#                              opt_tens_chmf = 1,
+#                              hold_hole_2sides = 1,
+#                              tol = kcomp.TOL,
+#                              axis_d = VX,
+#                              axis_w = VY,
+#                              axis_h = VZ,
+#                              pos_d = 0,
+#                              pos_w = 0,
+#                              pos_h = 0,
+#                              pos = V0)
+
+class PartTensionerHolder (fc_clss.SinglePart, ShpTensionerHolder):
+    """ Integration of a ShpTensionerHolder object into a PartTensionerHolder
+    object, so it is a FreeCAD object that can be visualized in FreeCAD
+    """
+    def __init__(self,
+                 aluprof_w,
+                 belt_pos_h,
+                 tens_h,
+                 tens_w,
+                 tens_d_inside,
+                 wall_thick = 3.,
+                 in_fillet = 1.,
+                 boltaluprof_d = 3,
+                 bolttens_d = 3,
+                 hold_bas_h = 0,
+                 opt_tens_chmf = 1,
+                 hold_hole_2sides = 1,
+                 tol = kcomp.TOL,
+                 axis_d = VX,
+                 axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos = V0,
+                 model_type = 0, #exact
+                 name = ''):
+
+        default_name = 'tensioner_holder'
+        self.set_name (name, default_name, change = 0)
+        # First the shape is created
+        ShpTensionerHolder.__init__(self,
+                               aluprof_w = aluprof_w,
+                               belt_pos_h = belt_pos_h,
+                               tens_h = tens_h,
+                               tens_w = tens_w,
+                               tens_d_inside = tens_d_inside,
+                               wall_thick = wall_thick,
+                               in_fillet = in_fillet,
+                               boltaluprof_d = boltaluprof_d,
+                               bolttens_d = bolttens_d,
+                               hold_bas_h = hold_bas_h,
+                               opt_tens_chmf = opt_tens_chmf,
+                               hold_hole_2sides = hold_hole_2sides,
+                               tol = tol,
+                               axis_d = axis_d,
+                               axis_w = axis_w,
+                               axis_h = axis_h,
+                               pos_d = pos_d,
+                               pos_w = pos_w,
+                               pos_h = pos_h,
+                               pos = V0)
+        fc_clss.SinglePart.__init__(self)
+
 
 doc = FreeCAD.newDocument()
-        
-shp_hold = ShpTensionerHolder(
+holder = PartTensionerHolder(
                               aluprof_w = 15,
                               belt_pos_h = 22.,
                               tens_h = 10.,
@@ -1567,26 +1644,7 @@ shp_hold = ShpTensionerHolder(
                               pos_d = 0,
                               pos_w = 0,
                               pos_h = 0,
-                              pos = V0)
+                              pos = V0,
+                              name = 'tensioner_holder')
 
-
-#shp= ShpIdlerTensioner(idler_h = 10. ,
-#                 idler_r_in  = 5,
-#                 idler_r_ext = 6,
-#                 in_fillet = 2.,
-#                 wall_thick = 5.,
-#                 tens_stroke = 20. ,
-#                 pulley_stroke_dist = 0,
-#                 nut_holder_thick = 4. ,
-#                 boltidler_d = 3,
-#                 bolttens_d = 3,
-#                 opt_tens_chmf = 1,
-#                 tol = kcomp.TOL,
-#                 axis_d = VX,
-#                 axis_w = VY,
-#                 axis_h = VZ,
-#                 pos_d = 0,
-#                 pos_w = 0,
-#                 pos_h = 0,
-#                 pos = V0)
 
