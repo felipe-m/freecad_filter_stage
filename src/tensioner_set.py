@@ -1017,8 +1017,6 @@ class Tensioner (object):
         #                   +
         #               (hold_w+aluprof_w)/2
 
-        self.hold_bas_w = self.hold_w + 2*self.aluprof_w
-        #
         # first get the position of point C
         pt_c = self.pos0 + DraftVecUtils.scale(self.axis_l, self.hold_bas_l/2.)
         # distance C - A

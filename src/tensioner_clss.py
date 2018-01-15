@@ -86,8 +86,7 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 class ShpIdlerTensioner (shp_clss.Obj3D):
-    """ Creates the idler pulley tensioner shape and FreeCAD object
-    Returns the FreeCAD object created
+    """ Creates the idler pulley tensioner shape
 
                        nut_space 
                        .+..
@@ -191,6 +190,16 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
     -----------
     All the parameters and attributes of father class SinglePart
 
+    Dimensional attributes:
+    tens_d : float
+        total length (depth) of the idler tensioner
+    tens_w : float
+        total width of the idler tensioner
+    tens_h : float
+        total height of the idler tensioner
+    tens_d_inside : float
+        length (depth) of the idler tensioner that can be inside the holder
+
     prnt_ax : FreeCAD.Vector
         Best axis to print (normal direction, pointing upwards)
     d0_cen : int
@@ -260,6 +269,10 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
                        + self.pulley_stroke_dist
                        + idler_r_ext
                        + idler_r_in)
+
+        self.tens_d_inside = (   self.nut_holder_tot
+                               + tens_stroke
+                               + self.pulley_stroke_dist)
 
         self.tens_w = 2 * idler_r_in 
 
@@ -881,4 +894,699 @@ partset= IdlerTensionerSet (
                  pos_h = 3,
                  pos = FreeCAD.Vector(3,10,5),
                  name = 'tensioner_group')
+
+
+
+
+class ShpTensionerHolder (shp_clss.Obj3D):
+    """ Creates the idler pulley tensioner shape
+
+
+                              axis_h            axis_h 
+                               :                  :
+                            ___:___               :______________
+                           |  ___  |              |  __________  |---
+                           | |   | |              | |__________| | : |
+    .---- belt_pos_h------/| |___| |\             |________      |---
+    :                    / |_______| \            |        |    /      
+    :             . ____/  |       |  \____       |________|  /
+    :..hold_bas_h:.|_::____|_______|____::_|      |___::___|/......>axis_d
+   
+                                wall_thick
+                                  +
+                                 : :         
+                    _____________:_:________.........>axis_w
+                   |    |  | :   : |  |     |    :
+                   |  O |  | :   : |  |  O  |    + aluprof_w
+                   |____|__| :   : |__|_____|....:
+                           | :   : |
+                           |_:___:_|
+                             |   |
+                              \_/
+                               :
+                               :
+                             axis_l
+
+                             axis_h            axis_h 
+                               :         pos_h    :
+    ....................... ___:___         4     :______________
+    :                      |  ___  |              |  __________  |---
+    :                      | |   | |        3     | |__________| | : |
+    :+hold_h              /| |___| |\       2     |________      |---
+    :                    / |_______| \            |        |    /      
+    :             . ____/  |       |  \____ 1     |________|  /
+    :..hold_bas_h:.|_::____|___o___|____::_|0     o___::___|/......>axis_d
+                                                  01   2   3     4: pos_d
+   
+   
+   
+                    .... hold_bas_w ........
+                   :        .hold_w.        :
+                   :       :    wall_thick  :
+                   :       :      +         :
+                   :       :     : :        :
+          pos_w:   4__3____2_1_0_:_:________:........>axis_w
+                   |    |  | :   : |  |     |    :
+                   |  O |  | :   : |  |  O  |    + hold_bas_l
+                   |____|__| :   : |__|_____|....:
+                           | :   : |
+                           |_:___:_|
+                             |   |
+                              \_/
+                               :
+                               :
+                             axis_d
+
+        pos_o (origin) is at pos_d=0, pos_w=0, pos_h=0, It marked with o
+
+    The part is referenced along 3 perpendicular axis
+      (cartesian coordinate systems):
+      - axis_d: depth
+      - axis_w: width
+      - axis_h: height
+    There is a position of the piece:
+      - pos: FreeCAD Vector
+    This position of the piece (pos) can be at different locations within
+      the piece. These locations are defined by:
+      - pos_d: location of pos along the axis_d (0,1,2)
+         - 0: at the back of the holder
+         - 1: at the place where the tensioner can reach all the way inside
+         - 2: at the center of the base along axis_d, where the bolts to attach
+              the holder base to the aluminum profile
+         - 3: at the end of the base
+         - 4: at the end of the holder
+      - pos_w: location of pos along the axis_w (0,1,2)
+         - 0: at the center of symmetry
+         - 1: at the inner walls of the holder
+         - 2: at the end of the holder (the top part, where the base starts)
+         - 3: at the center of the bolt holes to attach the holder base to the
+              aluminum profile
+         - 4: at the end of the piece along axis_w
+              axes have direction. So if pos_w == 3, the piece will be drawn
+              along the positive side of axis_w
+      - pos_h: location of pos along the axis_h (0,1,2,3)
+         - 0: at the bottom of the holder
+         - 1: at the top of the base of the holder (for the bolts)
+         - 2: at the bottom of the hole where the idler tensioner goes
+         - 3: at the middle point of the hole where the idler tensioner goes
+         - 4: at the top of the holder
+
+    Parameters
+    ----------
+    aluprof_w : float
+        Width of the aluminum profile
+    belt_pos_h : float
+        The position along axis_h where the idler pulley that conveys the belt
+        starts. THIS POSITION IS CENTERED at the ilder pulley
+    tens_h : float
+        height of the ilder tensioner
+    tens_w : float
+        width of the ilder tensioner
+    tens_d_inside : float
+        Max length (depth) of the ilder tensioner that is inside the holder
+    wall_thick : float
+        Thickness of the walls
+    in_fillet: float
+        radius of the inner fillets
+    boltaluprof_d : float
+        diameter (metric) of the bolt that attachs the tensioner holder to the
+        aluminum profile (or whatever is attached to)
+    bolttens_d : float
+        diameter (metric) of the bolt for the tensioner
+    hold_bas_h : float
+        height of the base of the tensioner holder
+        if 0, it will take wall_thick
+    opt_tens_chmf : int
+        1: there is a chamfer at every edge of tensioner, inside the holder
+        0: there is a chamfer only at the edges along axis_w, not along axis_h
+    hold_hole_2sides : int
+        In the tensioner holder there is a hole to see inside, it can be at
+        each side of the holder or just on one side
+        0: only at one side
+        1: at both sides
+    tol : float
+        Tolerances to print
+    axis_d : FreeCAD.Vector
+        depth vector of coordinate system
+    axis_w : FreeCAD.Vector
+        width vector of coordinate system
+        if V0: it will be calculated using the cross product: axis_l x axis_h
+    axis_h : FreeCAD.Vector
+        height vector of coordinate system
+    pos_d : int
+        location of pos along the axis_d (0,1,2,3,4)
+        0: at the back of the holder
+        1: at the place where the tensioner can reach all the way inside
+        2: at the center of the base along axis_d, where the bolts to attach
+           the holder base to the aluminum profile
+        3: at the end of the base
+        4: at the end of the holder
+    pos_w : int
+        location of pos along the axis_w (0,1,2)
+        0: at the center of symmetry
+        1: at the inner walls of the holder
+        2: at the end of the holder (the top part, where the base starts)
+        3: at the center of the bolt holes to attach the holder base to the
+           aluminum profile
+        4: at the end of the piece along axis_w
+              axes have direction. So if pos_w == 3, the piece will be drawn
+              along the positive side of axis_w
+    pos_h : int
+        location of pos along the axis_h (0,1,2,3,4)
+        0: at the bottom of the holder
+        1: at the top of the base of the holder (for the bolts)
+        2: at the bottom of the hole where the idler tensioner goes
+        3: at the middle point of the hole where the idler tensioner goes
+        4: at the top of the holder
+    pos : FreeCAD.Vector
+        position of the piece
+
+    Paramenters for the set
+
+    tens_in_ratio : float
+        from 0 to 1, the ratio of the stroke that the tensioner is inside.
+        if 1: it is all the way inside
+        if 0: it is all the way outside (all the tens_stroke)
+
+
+
+
+
+    Attributes:
+    -----------
+    All the parameters and attributes of father class SinglePart
+
+    prnt_ax : FreeCAD.Vector
+        Best axis to print (normal direction, pointing upwards)
+    d0_cen : int
+    w0_cen : int
+    h0_cen : int
+        indicates if pos_h = 0 (pos_d, pos_w) is at the center along
+        axis_h, axis_d, axis_w, or if it is at the end.
+        1 : at the center (symmetrical, or almost symmetrical)
+        0 : at the end
+
+    """
+    def __init__(self,
+                 aluprof_w,
+                 belt_pos_h,
+                 tens_h,
+                 tens_w,
+                 tens_d_inside,
+                 wall_thick = 3.,
+                 in_fillet = 1.,
+                 boltaluprof_d = 3,
+                 bolttens_d = 3,
+                 hold_bas_h = 0,
+                 opt_tens_chmf = 1,
+                 hold_hole_2sides = 1,
+                 tol = kcomp.TOL,
+                 axis_d = VX,
+                 axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos = V0):
+        
+        shp_clss.Obj3D.__init__(self, axis_d, axis_w, axis_h)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i):
+                setattr(self, i, values[i])
+
+        # pos_w = 0 is at the center, not pos_d, pos_h
+        self.d0_cen = 0
+        self.w0_cen = 1
+        self.h0_cen = 0
+
+        # calculation of the dimensions:
+        self.hold_w = tens_w + 2*wall_thick
+        self.hold_d = tens_d_inside + wall_thick
+        # base of the tensioner holder
+        self.hold_bas_w = self.hold_w + 2*aluprof_w
+        self.hold_bas_d = aluprof_w
+        if hold_bas_h == 0:
+            self.hold_bas_h = wall_thick
+        else:
+            self.hold_bas_h = hold_bas_h
+
+        # --- bolt of the tensioner
+        self.bolttens_dict = kcomp.D912[bolttens_d]
+        # the shank radius including tolerance
+        self.bolttens_r_tol = self.bolttens_dict['shank_r_tol']
+
+        # --- bolt to attach to the aluminum profile
+        # dictionary of the bolt
+        d_boltaluprof = kcomp.D912[boltaluprof_d]
+        self.d_boltaluprof = d_boltaluprof
+        self.boltaluprof_head_r_tol = d_boltaluprof['head_r_tol']
+        self.boltaluprof_r_tol = d_boltaluprof['shank_r_tol']
+        self.boltaluprof_head_l = d_boltaluprof['head_l']
+        # better to make a hole for the washer
+        self.washer_aluprof_r_tol = kcomp.D125[boltaluprof_d]['do']/2.+tol
+
+
+        #  check that the position of the belt is higher than the minimum
+        #                            axis_h
+        #                           ___:___
+        #                          /  ___  \
+        #            ..............| |   | |......
+        #            :             | |___| |.....:tens_h/2
+        # belt_pos_h +             |_______|
+        #            :      _______|       |_______.....
+        #            :.....(_______|_______|_______)...+hold_bas_h
+        #                                                : :          :
+        #  
+        if belt_pos_h < tens_h/2. + self.hold_bas_h:
+            self.belt_pos_h = tens_h/2. + self.hold_bas_h
+            msg = 'argument belt_pos_h is smaller than minimum, new value: '
+            logger.warning(msg + str(self.belt_pos_h))
+        self.hold_h = self.belt_pos_h + tens_h/2. + wall_thick
+
+
+        # ------ vectors from the different position points
+        # d_o[1] is the distance from o to 1
+        self.d_o[0] = V0
+        self.d_o[1] = self.vec_d(wall_thick)
+        self.d_o[2] = self.vec_d(self.hold_bas_d/2.)
+        self.d_o[3] = self.vec_d(self.hold_bas_d)
+        self.d_o[4] = self.vec_d(self.hold_d)
+
+        self.w_o[0] = V0
+        self.w_o[1] = self.vec_w(-self.tens_w/2.)
+        self.w_o[2] = self.vec_w(-self.hold_w/2.)
+        self.w_o[3] = self.vec_w(-self.hold_w/2. - aluprof_w/2.)
+        self.w_o[4] = self.vec_w(-self.hold_w/2. - aluprof_w)
+
+        # h_o[1] is the distance from o to 1
+        self.h_o[0] = V0
+        self.h_o[1] = self.vec_h(self.hold_bas_h)
+        self.h_o[2] = self.vec_h(self.belt_pos_h - tens_h/2.)
+        self.h_o[3] = self.vec_h(self.belt_pos_h)
+        self.h_o[4] = self.vec_h(self.hold_h)
+
+        # calculates the position of the origin, and keeps it in attribute pos_o
+        self.set_pos_o()
+
+
+        # --------------- step 01 --------------------------- 
+        #    the base, to attach it to the aluminum profiles
+        #    
+        #
+        #                         axis_h                axis_h
+        #                            :                  :
+        #              .. ___________:___________       :________
+        #  hold_bas_h.+..|___________:___________|      |________|...axis_d
+        #
+        #                 .... hold_bas_w ........
+        #                :                        :
+        #                :________________________:......axis_w
+        #                |           :            |    :
+        #                |           :            |    + hold_bas_d
+        #                |___________:____________|....:
+        #                            :            :
+        #                          axis_d
+        shp01 = fcfun.shp_box_dir(box_w = self.hold_bas_w,
+                                  box_d = self.hold_bas_d,
+                                  box_h = self.hold_bas_h,
+                                  fc_axis_h = self.axis_h,
+                                  fc_axis_d = self.axis_d,
+                                  cw=1, cd=0, ch=0, pos=self.pos_o)
+        #    --------------- step 02 --------------------------- 
+        #    Fillet the base
+        #    The piece will be printed on the h w plane, so this fillet will be 
+        #    raising
+        #  
+        #                          axis_h
+        #                             :
+        #                f4___________:___________f2
+        #                 (_______________________)... axis_w
+        #                f3                        f1
+        #
+        bas_fil_r = self.in_fillet
+        if self.hold_bas_h/2. <= self.in_fillet:
+            msg1 = 'Radius of holder base fillet is larger than 2 x base height'
+            msg2 = ' making fillet smaller: '
+            bas_fil_r = self.hold_bas_h /2. - 0.1
+            logger.warning(msg1 + msg2 + str(bas_fil_r))
+        # fillet along axis_d :
+        shp02 = fcfun.shp_filletchamfer_dir (shp=shp01, fc_axis=self.axis_d,
+                                             fillet = 1, radius=bas_fil_r)
+
+        #    --------------- step 03 --------------------------- 
+        #    The main box
+        #                          axis_h              axis_h
+        #                             :    aluprof_w     :
+        #                             :    ..+....       :
+        #           .............. ___:___:       :      :____________
+        #           :             |       |       :      |            |
+        #           :             |       |       :      |            |
+        #   hold_h +:             |       |       :      |            |
+        #           :             |       |       :      |            |     
+        #           :      _______|       |_______:      |________    |
+        #           :.....(_______|_______|_______)      |________|___|...axis_d
+        #                                                :            :
+        #                  .... hold_bas_w ........      :.. hold_d...:
+        #                 :                        :
+        #                 :        .hold_w.        :
+        #                 :       :       :        :
+        #                 :_______:_______:________:.......axis_w
+        #                 |       |       |        |    :
+        #                 |       |       |        |    + hold_bas_d
+        #                 |_______|       |________|....:
+        #                         |       |
+        #                         |_______|
+        #                             :
+        #                             :
+        #                           axis_d 
+
+        shp03 = fcfun.shp_box_dir(box_w = self.hold_w,
+                                  box_d = self.hold_d,
+                                  box_h = self.hold_h,
+                                  fc_axis_h = self.axis_h,
+                                  fc_axis_d = self.axis_d,
+                                  cw=1, cd=0, ch=0, pos=self.pos_o)
+        #    --------------- step 04 --------------------------- 
+        #    Fillets on top
+        #                          axis_h   aluprof_w
+        #                             :    ..+....:
+        #           .............  ___4___        : 
+        #           :             /       \       :
+        #           :             |       |       :
+        #   hold_h +:             |       |       :
+        #           :             |       |       :
+        #           :      _______|       |_______:
+        #           :.....(_______|_______|_______).... axis_w
+    
+        #                 :______-2___0___2________:.......axis_w
+        #                 |       |       |        |    :
+        #                 |       |       |        |    + hold_bas_d
+        #                 |_______|       |________|....:
+        #                         |       |
+        #                         |_______|
+
+        # fillet along axis_d and the vertex should contain points:
+        # d=0, w=(-2,2) , h = 4
+        pts_list = [self.get_pos_dwh(0,2,4), self.get_pos_dwh(0,-2,4)]
+        shp04 = fcfun.shp_filletchamfer_dirpts (shp=shp03,
+                                                fc_axis=self.axis_d,
+                                                fc_pts=pts_list,
+                                                fillet = 1,
+                                                radius=self.in_fillet)
+
+
+
+        #    --------------- step 05 --------------------------- 
+        #    large chamfer at the bottom
+        #                axis_h                 axis_h
+        #                  :                      :
+        #   Option A    ___:___                   :____________
+        #              /       \                  |            |
+        #              |       |                  |            |
+        #              |_______|                  |            |
+        #              |       |                  |           /       
+        #       _______|_______|_______           |________ /  
+        #      (___________C___________)..axis_w  |________|...C...axis_d
+
+        #  
+        #               axis_h                 axis_h
+        #                  :                      :
+        #   Option B    ___:___                   :____________
+        #              /       \                  |            |
+        #              |       |                  |            |
+        #              |       |                  |            |
+        #              |_______|                  |            |      
+        #       _______|       |_______           |________   /  
+        #      (_______|___4___|_______)..axis_w  |________|/..4...axis_d
+        #                                         :            :
+        #                                         :............:
+        #                                               +  
+        #                                             hold_d
+        #
+        # option B: using more material (probably sturdier)
+        #chmf_rad = min(self.hold_d - self.hold_bas_d,
+        #               self.hold_h - (self.tens_h + 2*wall_thick))
+        # option A: using less material
+        chmf_rad = min(self.hold_d-self.hold_bas_d + self.hold_bas_h,
+                       self.hold_h - (self.tens_h + 2*wall_thick))
+        
+        print chmf_rad
+        # Find a point along the vertex that is going to be chamfered.
+        # See drawings: Point C:
+        if chmf_rad > 0:
+            pt_c = self.get_pos_d(4)
+            shp05 = fcfun.shp_filletchamfer_dirpt (shp = shp04,
+                                                   fc_axis = self.axis_w,
+                                                   fc_pt = pt_c,
+                                                   fillet = 0,
+                                                   radius = chmf_rad)
+        else:
+            shp05 = shp04
+
+        #    --------------- step 06 --------------------------- 
+        #    Hole for the tensioner
+        #                                             axis_h
+        #                                                :
+        #                                                : tens_d_inside
+        #                        axis_h                  :  ....+.....
+        #                       ___:___                  :_:__________:
+        #                      /  ___  \                 |  ..........|
+        #                      | | 3 | | pos_d=1,pos_h=3 | 1          |
+        #            ..........| |___| |                 | :..........|
+        # tens_pos_h +         |_______|                 |            |      
+        #            :  _______|       |_______          |________   /  
+        #            :.(_______|_______|_______).axis_w  |________|/....axis_d
+        #                                                : :          :
+        #                                                :+           :
+        #                                                :wall_thick  :
+        #                                                :            :
+        #                                                :............:
+        #                                                      +
+        #                                                    hold_l
+        #
+
+        # position of point A is pos_tens0
+        if self.opt_tens_chmf == 0: # no optional chamfer, only along axis_w
+            edge_dir = self.axis_w
+        else:
+            edge_dir = V0
+
+        pos_06 = self.get_pos_dwh(1,0,3)
+   
+        shp06 = fcfun.shp_boxdir_fillchmfplane(
+                               box_w = self.tens_w,
+                               box_d = self.hold_d,
+                               box_h = self.tens_h,
+                               axis_d = self.axis_d,
+                               axis_h = self.axis_h,
+                               cd=0, cw=1, ch=1,
+                               xtr_nd = tol,  #tolerance inside
+                               xtr_w  = tol/2.,  #tolerances on each side
+                               xtr_nw = tol/2.,
+                               xtr_h  = tol/2.,
+                               xtr_nh = tol/2.,
+                               fillet = 0, # chamfer
+                               radius = 2*self.in_fillet-kcomp.TOL,
+                               plane_fill = self.axis_d.negative(),
+                               both_planes = 0,
+                               edge_dir = edge_dir,
+                               pos = pos_06)
+
+        #    --------------- step 07 --------------------------- 
+        #    A hole to be able to see inside, could be on one side or both
+        #
+        #    hold_hole_2sides = 1:
+        #              axis_h                   axis_h
+        #                :                        :
+        #             ___:___                     :____________
+        #            /  ___  \                    |  ._______ .|
+        #            |:|   |:|                    | :|_______| |
+        #            | |___| |                    |  ..........|
+        #            |_______|                    |            |      
+        #     _______|       |_______             |________   /  
+        #    (_______|_______|_______)..>axis_w   |________|/......>axis_d
+        #
+        #    hold_hole_2sides = 0:
+        #              axis_h                   axis_h
+        #                :                        :
+        #             ___:___                     :____________
+        #            /  ___  \                    |  ._______ .|
+        #            2:|   | |<-Not a hole here   3 *________| |
+        #            | |___| |                    |  ..........|
+        #            |_______|                    |            |      
+        #     _______|       |_______             |________   /  
+        #    (_______|_______|_______)..>axis_w   |________|/......>axis_d
+        #           -2 pos_w                pos_d = 1
+
+        if self.hold_hole_2sides == 1:
+            hold_hole_w = self.hold_w
+        else:
+            hold_hole_w = self.wall_thick
+        # position of point 7:
+        # height of point 7, is the center of the tensioner:
+        pos_07 = self.get_pos_dwh(1,-2,3)
+        shp07 = fcfun.shp_box_dir_xtr (
+                                       box_w = hold_hole_w,
+                                       box_d =  self.hold_d
+                                              - 2*wall_thick,
+                                       box_h = tens_h/2.,
+                                       fc_axis_h = self.axis_h,
+                                       fc_axis_d = self.axis_d,
+                                       fc_axis_w = self.axis_w,
+                                       ch = 1, cd = 0, cw = 0,
+                                       xtr_w = 1, xtr_nw = 1,
+                                       pos=pos_07)
+        # chamfer the edges
+        shp07 = fcfun.shp_filletchamfer_dir (shp=shp07, fc_axis=self.axis_w,
+                                             fillet = 0, radius=tens_h/6)
+        # /* --------------- step 08 --------------------------- 
+        #    A hole for the leadscrew
+        #            axis_h             axis_h
+        #              :                  :
+        #           ___:___               :____________
+        #          /  ___  \              |  ._______ .|
+        #          |:| O |:|              |::|_______| |
+        #          | |___| |              |  ..........|
+        #          |_______|              |            |      
+        #   _______|       |_______       |________   /  
+        #  (_______|_______|_______)      |________|/......> axis_d
+        #
+        pos_08 = self.get_pos_h(3)
+        shp08 = fcfun.shp_cylcenxtr (r = self.bolttens_r_tol,
+                                     h = wall_thick,
+                                     normal = self.axis_d,
+                                     ch = 0, xtr_top=1, xtr_bot=1,
+                                     pos = pos_08)
+
+        #    --------------- step 09 --------------------------- 
+        #    09a: Fuse all the elements to cut
+        #    09b: Cut the box with the elements to cut
+        #    09c: Fuse the base with the holder
+        #    09d: chamfer the union
+        #            axis_h           axis_h
+        #              :               :
+        #           ___:___            :____________
+        #          /  ___  \           |  ._______ .|
+        #          |:| O |:|           |::|_______| |...
+        #         /| |___| |\          |  ..........|...belt_h/2 -tensnut_ap_tol
+        #        / |_______| \         |            |  :+tens_pos_h
+        #   ____/__A       B__\____    A________   /   :  ...
+        #  (_______|_______|_______)   |________|/.....:.....hold_bas_h
+        #
+        shp09a = fcfun.fuseshplist([shp06, shp07, shp08])
+        shp09b = shp05.cut(shp09a)
+        shp09c = shp09b.fuse(shp02) # fuse with the base
+        shp09c = shp09c.removeSplitter() # refine shape
+
+        # chamfer the union, points A and B:
+        # Radius of chamfer
+        chmf_rad = min(aluprof_w/2, self.belt_pos_h - tens_h/2.)
+        # add the points A,B to the list to have the edges chamfered
+        pts = [self.get_pos_dwh(0,2,1), self.get_pos_dwh(0,-2,1)]
+        shp09d = fcfun.shp_filletchamfer_dirpts (shp=shp09c,
+                                                 fc_axis=self.axis_d,
+                                                 fc_pts=pts,
+                                                 fillet = 0,
+                                                 radius=chmf_rad)
+        shp09d = shp09d.removeSplitter() # refine shape
+
+
+        #    --------------- step 10 --------------------------- 
+        #    Bolt holes to attach the piece to the aluminum profile
+        #                                
+        #             axis_h            axis_h
+        #            ___:___              :____________
+        #           /  ___  \             |  ._______ .|
+        #           |:| O |:|             |::|_______| |
+        #          /| |___| |\            |  ..........|
+        #         / |_______| \           |            |
+        #    ____/__|       |__\____      |________   /
+        #   (__::___|_______|___::__)     |___::___|/....axis_d
+        #      -3   pos_w        3      pos_d 2
+
+        #             hold_w   aluprof_w
+        #            ...+... ...+...
+        #    _______:_______:_______:.......axis_w
+        #   |       |       |       |    :
+        #   |   A   |       |   B   |    + hold_bas_d
+        #   |_______|       |_______|....:
+        #           |       |   :
+        #           |_______|   :
+        #               :       :
+        #               :.......:
+        #                   +
+        #               (hold_w+aluprof_w)/2
+
+        shp_bolt_list = []
+        for w_i in [-3,3]:
+            # points A and B
+            pt_i = self.get_pos_dwh(2,w_i,0)
+            shp_i = fcfun.shp_bolt_dir(
+                       r_shank = self.boltaluprof_r_tol,
+                       l_bolt = self.hold_bas_h +2*self.boltaluprof_head_r_tol,
+                       r_head = self.washer_aluprof_r_tol,
+                       # extra head, just in case
+                       l_head = 2*self.boltaluprof_head_l,
+                       xtr_head = 1, xtr_shank = 1,
+                       support = 0,
+                       fc_normal = self.axis_h.negative(),
+                       pos_n = 2, #at the end of the shank
+                       pos = pt_i)
+            shp_bolt_list.append(shp_i)
+        shp10_bolts = fcfun.fuseshplist(shp_bolt_list)
+        shp10_final = shp09d.cut(shp10_bolts)
+        shp10_final = shp10_final.removeSplitter()
+
+        self.shp = shp10_final
+ 
+        Part.show(shp10_final)
+
+doc = FreeCAD.newDocument()
+        
+shp_hold = ShpTensionerHolder(
+                              aluprof_w = 15,
+                              belt_pos_h = 22.,
+                              tens_h = 10.,
+                              tens_w = 10.,
+                              tens_d_inside = 25.,
+                              wall_thick = 3.,
+                              in_fillet = 2.,
+                              boltaluprof_d = 3,
+                              bolttens_d = 3,
+                              hold_bas_h = 0,
+                              opt_tens_chmf = 1,
+                              hold_hole_2sides = 1,
+                              tol = kcomp.TOL,
+                              axis_d = VX,
+                              axis_w = VY,
+                              axis_h = VZ,
+                              pos_d = 0,
+                              pos_w = 0,
+                              pos_h = 0,
+                              pos = V0)
+
+
+#shp= ShpIdlerTensioner(idler_h = 10. ,
+#                 idler_r_in  = 5,
+#                 idler_r_ext = 6,
+#                 in_fillet = 2.,
+#                 wall_thick = 5.,
+#                 tens_stroke = 20. ,
+#                 pulley_stroke_dist = 0,
+#                 nut_holder_thick = 4. ,
+#                 boltidler_d = 3,
+#                 bolttens_d = 3,
+#                 opt_tens_chmf = 1,
+#                 tol = kcomp.TOL,
+#                 axis_d = VX,
+#                 axis_w = VY,
+#                 axis_h = VZ,
+#                 pos_d = 0,
+#                 pos_w = 0,
+#                 pos_h = 0,
+#                 pos = V0)
 
