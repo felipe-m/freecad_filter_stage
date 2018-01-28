@@ -1872,7 +1872,6 @@ class TensionerSet (fc_clss.PartsSet):
                  pos_w = 0,
                  pos_h = 0,
                  pos = V0,
-                 group = 1,
                  name = ''):
 
         default_name = 'tensioner_set'
@@ -1917,12 +1916,7 @@ class TensionerSet (fc_clss.PartsSet):
         self.append_part(idler_tensioner)
         idler_tensioner.parent = self
 
-        # 
-
-
-
         # creation of the holder
-
         tensioner_holder = PartTensionerHolder(
                                aluprof_w = aluprof_w,
                                belt_pos_h = belt_pos_h,
@@ -1946,9 +1940,8 @@ class TensionerSet (fc_clss.PartsSet):
                                pos = pos,
                                model_type = 0) #exact
 
-        self.append_part(idler_tensioner)
+        self.append_part(tensioner_holder)
         idler_tensioner.parent = self
-
 
         self.d_o[0] = V0
         self.d_o[1] = tensioner_holder.d_o[1]
@@ -1989,12 +1982,46 @@ class TensionerSet (fc_clss.PartsSet):
 
         self.place_fcos()
 
+    def get_tensioner_holder(self):
+        """ gets the tensioner holder"""
+        part_list = self.get_parts()
+        for part_i in part_list:
+            if isinstance(part_i, PartTensionerHolder):
+                return part_i
+
+
+    def get_idler_tensioner(self):
+        """ gets the idler tensioner set"""
+        part_list = self.get_parts()
+        for part_i in part_list:
+            if isinstance(part_i, IdlerTensionerSet):
+                return part_i
+
+    def set_pos_tensioner (self, new_tens_out_ratio = None):
+        """ Sets the tensioner place, depending on the attributes tens_in_ratio
+        and tens_stroke
+        Parameters:
+        -----------
+        new_tens_out_ratio : float [0,1]
+            ratio of the tensioner that is outside.
+            It can be any value from 0 to 1
+            0: all the way inside
+            1: maximum value outside (tens_stroke)
+        """
+        if new_tens_out_ratio is not None:
+            # set the new tens_in_ratio
+            self.tens_out_ratio = new_tens_out_ratio
+        self.tens_out = self.tens_out_ratio * self.tens_stroke
+        idler_tensioner = self.get_idler_tensioner()
+        idler_tensioner.extra_mov = idler_tensioner.vec_d(self.tens_out)
+        self.place_fcos()
+
 
 t_set = TensionerSet(
                      aluprof_w = 20.,
                      belt_pos_h = 20., 
                      hold_bas_h = 0,
-                     hold_hole_2sides = 0,
+                     hold_hole_2sides = 1,
                      boltidler_mtr = 3,
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
@@ -2008,10 +2035,10 @@ t_set = TensionerSet(
                      axis_d = VX,
                      axis_w = VY,
                      axis_h = VZ,
-                     pos_d = 0,
-                     pos_w = 0,
-                     pos_h = 0,
-                     pos = FreeCAD.Vector(1,20,100),
+                     pos_d = 1,
+                     pos_w = 4,
+                     pos_h = 3,
+                     pos = FreeCAD.Vector(1,0,10),
                      name = 'tensioner_set')
 
 
