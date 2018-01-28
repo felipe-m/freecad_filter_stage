@@ -150,9 +150,9 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
     idler_r_ext : float
         external radius of the idler pulley. This is the most external part of
         the pulley (for example the radius of the large washer)
-    boltidler_d : float
+    boltidler_mtr : float
         diameter (metric) of the bolt for the idler pulley
-    bolttens_d : float
+    bolttens_mtr : float
         diameter (metric) of the bolt for the tensioner
     opt_tens_chmf : int
         1: there is a chamfer at every edge of tensioner, inside the holder
@@ -220,8 +220,8 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
                  tens_stroke = 20. ,
                  pulley_stroke_dist = 0,
                  nut_holder_thick = 4. ,
-                 boltidler_d = 3,
-                 bolttens_d = 3,
+                 boltidler_mtr = 3,
+                 bolttens_mtr = 3,
                  opt_tens_chmf = 1,
                  tol = kcomp.TOL,
                  axis_d = VX,
@@ -233,6 +233,7 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
                  pos = V0):
         
         shp_clss.Obj3D.__init__(self, axis_d, axis_w, axis_h)
+
 
         # save the arguments as attributes:
         frame = inspect.currentframe()
@@ -247,16 +248,16 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
 
         # dictionary of the bolt for the idler pulley
         # din 912 bolts are used:
-        self.boltidler_dict = kcomp.D912[boltidler_d]
+        self.boltidler_dict = kcomp.D912[boltidler_mtr]
         self.boltidler_r_tol = self.boltidler_dict['shank_r_tol']
 
         # --- tensioner bolt and nut values
         # dictionary of the bolt tensioner
-        self.bolttens_dict = kcomp.D912[bolttens_d]
+        self.bolttens_dict = kcomp.D912[bolttens_mtr]
         # the shank radius including tolerance
         self.bolttens_r_tol = self.bolttens_dict['shank_r_tol']
         # dictionary of the nut
-        self.nuttens_dict = kcomp.D934[bolttens_d]
+        self.nuttens_dict = kcomp.D934[bolttens_mtr]
         self.nut_space = kcomp.NUT_HOLE_MULT_H + self.nuttens_dict['l_tol']
         self.nut_holder_tot = self.nut_space + 2* self.nut_holder_thick
         # the apotheme of the nut
@@ -420,12 +421,20 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
         pt_f2 = self.get_pos_d(5) + self.vec_h(  self.tens_h/2.)
         pt_f3 = self.get_pos_d(5) + self.vec_h( -idler_h_hole/2.)
         pt_f4 = self.get_pos_d(5) + self.vec_h(  idler_h_hole/2.)
+
+        if wall_thick/2. <= in_fillet:
+            msg1 = 'Radius of fillet is larger than 2 x wall thick'
+            msg2 = ' making fillet smaller: '
+            wall_fillet_r = self.wall_thick /2. - 0.1
+            logger.warning(msg1 + msg2 + str(wall_fillet_r))
+        else:
+            wall_fillet_r = in_fillet
         shp03 = fcfun.shp_filletchamfer_dirpts (
                                             shp=shp02,
                                             fc_axis=self.axis_w,
                                             fc_pts=[pt_f1,pt_f2, pt_f3, pt_f4],
                                             fillet = 1,
-                                            radius=in_fillet)
+                                            radius=wall_fillet_r)
         #  --------------- step 04 done at step 01 ------------------------ 
 
         #  --------------- step 05 --------------------------- 
@@ -559,8 +568,8 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
 #                 tens_stroke = 20. ,
 #                 pulley_stroke_dist = 0,
 #                 nut_holder_thick = 4. ,
-#                 boltidler_d = 3,
-#                 bolttens_d = 3,
+#                 boltidler_mtr = 3,
+#                 bolttens_mtr = 3,
 #                 opt_tens_chmf = 1,
 #                 tol = kcomp.TOL,
 #                 axis_d = VX,
@@ -585,8 +594,8 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
                  tens_stroke = 20. ,
                  pulley_stroke_dist = 0,
                  nut_holder_thick = 4. ,
-                 boltidler_d = 3,
-                 bolttens_d = 3,
+                 boltidler_mtr = 3,
+                 bolttens_mtr = 3,
                  opt_tens_chmf = 1,
                  tol = kcomp.TOL,
                  axis_d = VX,
@@ -611,8 +620,8 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
                                   tens_stroke = tens_stroke,
                                   pulley_stroke_dist = pulley_stroke_dist,
                                   nut_holder_thick = nut_holder_thick ,
-                                  boltidler_d = boltidler_d,
-                                  bolttens_d = bolttens_d,
+                                  boltidler_mtr = boltidler_mtr,
+                                  bolttens_mtr = bolttens_mtr,
                                   opt_tens_chmf = opt_tens_chmf,
                                   tol = tol,
                                   axis_d = axis_d,
@@ -641,8 +650,8 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
 #                 tens_stroke = 20. ,
 #                 pulley_stroke_dist = 0,
 #                 nut_holder_thick = 4. ,
-#                 boltidler_d = 3,
-#                 bolttens_d = 3,
+#                 boltidler_mtr = 3,
+#                 bolttens_mtr = 3,
 #                 opt_tens_chmf = 1,
 #                 tol = kcomp.TOL,
 #                 axis_d = VX,
@@ -655,8 +664,7 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
 
 
 class IdlerTensionerSet (fc_clss.PartsSet):
-    """ Integration of a ShpIdlerTensioner object into a PartIlderTensioner
-    object, so it is a FreeCAD object that can be visualized in FreeCAD
+    """ Set composed of the idler pulley and the tensioner
 
     Parameter:
     ---------
@@ -692,12 +700,12 @@ class IdlerTensionerSet (fc_clss.PartsSet):
                                     : :  : :    pulley_stroke_dist
                                     : :  : :       .+.
                                     : :  : :       : :
-                                    : :  : :       : :  boltidler_metric
+                                    : :  : :       : :  boltidler_mtr
                                     : :  : :       : :   +
         ________                    : :__:_:_______:_:__:_:___ ....
        |___::___|                    /       ____     __:_:___|....+wall_thick
        |    ....|                   |  __   /     \  |
-       |   ()...|  bolttens_metric::|:|  |:|       | |
+       |   ()...|     bolttens_mtr::|:|  |:|       | |
        |________|                   |  --   \_____/  |________
        |___::___|                    \__________________:_:___|
                                            :       :
@@ -726,12 +734,29 @@ class IdlerTensionerSet (fc_clss.PartsSet):
        tensioner_width is the same as the idler internal diameter
 
 
+    Attributes:
+    -----------
+    d0_cen : 0 (int)
+    w0_cen : 1 (int)
+    h0_cen : 1 (int)
+        indicates if pos_h = 0 (pos_d, pos_w) is at the center along
+        its axis, or if it is at the end (symmetrical or not)
+    tens_d : float
+        Depth of the tensioner
+    tens_w : float
+        width of the tensioner
+    tens_h : float
+        height of the tensioner
+    tens_d_inside : float
+        length (depth) of the idler tensioner that can be inside the holder
+
+
 
     """
 
     def __init__(self, 
-                 boltidler_metric = 3,
-                 bolttens_metric = 3,
+                 boltidler_mtr = 3,
+                 bolttens_mtr = 3,
                  tens_stroke = 20. ,
                  wall_thick = 5.,
                  in_fillet = 2.,
@@ -773,7 +798,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         # them, and then move them and calculate the vectors h_o, d_o, w_o
 
         # Creation of the idler pulley, we put it in the center
-        pulley = fc_clss.BearWashSet(metric = bolttens_metric,
+        pulley = fc_clss.BearWashSet(metric = bolttens_mtr,
                                             axis_h = axis_h, pos_h = 0,
                                             axis_d = axis_d, pos_d = 0,
                                             axis_w = axis_w, pos_w = 0,
@@ -794,8 +819,8 @@ class IdlerTensionerSet (fc_clss.PartsSet):
                                      tens_stroke = tens_stroke ,
                                      pulley_stroke_dist = pulley_stroke_dist,
                                      nut_holder_thick = nut_holder_thick,
-                                     boltidler_d = boltidler_metric,
-                                     bolttens_d  = bolttens_metric,
+                                     boltidler_mtr = boltidler_mtr,
+                                     bolttens_mtr  = bolttens_mtr,
                                      opt_tens_chmf = opt_tens_chmf,
                                      tol    = tol,
                                      axis_d = self.axis_d,
@@ -807,6 +832,11 @@ class IdlerTensionerSet (fc_clss.PartsSet):
                                      pos    = pos)
         self.append_part(idler_tens_part)
         idler_tens_part.parent = self
+
+        self.tens_d = idler_tens_part.tens_d
+        self.tens_w = idler_tens_part.tens_w
+        self.tens_h = idler_tens_part.tens_h
+        self.tens_d_inside = idler_tens_part.tens_d_inside
 
         
 
@@ -876,24 +906,24 @@ class IdlerTensionerSet (fc_clss.PartsSet):
             self.make_group()
 
 
-partset= IdlerTensionerSet (
-                 boltidler_metric = 3,
-                 bolttens_metric = 3,
-                 tens_stroke = 20. ,
-                 wall_thick = 3.,
-                 in_fillet = 1.,
-                 pulley_stroke_dist = 0,
-                 nut_holder_thick = 4. ,
-                 opt_tens_chmf = 1,
-                 tol = kcomp.TOL,
-                 axis_d = VX,
-                 axis_w = VY,
-                 axis_h = VZ,
-                 pos_d = 0,
-                 pos_w = 0,
-                 pos_h = 3,
-                 pos = FreeCAD.Vector(3,10,5),
-                 name = 'tensioner_group')
+#partset= IdlerTensionerSet (
+#                 boltidler_mtr = 3,
+#                 bolttens_mtr = 3,
+#                 tens_stroke = 20. ,
+#                 wall_thick = 3.,
+#                 in_fillet = 1.,
+#                 pulley_stroke_dist = 0,
+#                 nut_holder_thick = 4. ,
+#                 opt_tens_chmf = 1,
+#                 tol = kcomp.TOL,
+#                 axis_d = VX,
+#                 axis_w = VY,
+#                 axis_h = VZ,
+#                 pos_d = 0,
+#                 pos_w = 0,
+#                 pos_h = 3,
+#                 pos = FreeCAD.Vector(3,10,5),
+#                 name = 'tensioner_group')
 
 
 
@@ -1008,10 +1038,10 @@ class ShpTensionerHolder (shp_clss.Obj3D):
         Thickness of the walls
     in_fillet: float
         radius of the inner fillets
-    boltaluprof_d : float
+    boltaluprof_mtr : float
         diameter (metric) of the bolt that attachs the tensioner holder to the
         aluminum profile (or whatever is attached to)
-    bolttens_d : float
+    bolttens_mtr : float
         diameter (metric) of the bolt for the tensioner
     hold_bas_h : float
         height of the base of the tensioner holder
@@ -1095,8 +1125,8 @@ class ShpTensionerHolder (shp_clss.Obj3D):
                  tens_d_inside,
                  wall_thick = 3.,
                  in_fillet = 1.,
-                 boltaluprof_d = 3,
-                 bolttens_d = 3,
+                 boltaluprof_mtr = 3,
+                 bolttens_mtr = 3,
                  hold_bas_h = 0,
                  opt_tens_chmf = 1,
                  hold_hole_2sides = 1,
@@ -1135,19 +1165,19 @@ class ShpTensionerHolder (shp_clss.Obj3D):
             self.hold_bas_h = hold_bas_h
 
         # --- bolt of the tensioner
-        self.bolttens_dict = kcomp.D912[bolttens_d]
+        self.bolttens_dict = kcomp.D912[bolttens_mtr]
         # the shank radius including tolerance
         self.bolttens_r_tol = self.bolttens_dict['shank_r_tol']
 
         # --- bolt to attach to the aluminum profile
         # dictionary of the bolt
-        d_boltaluprof = kcomp.D912[boltaluprof_d]
+        d_boltaluprof = kcomp.D912[boltaluprof_mtr]
         self.d_boltaluprof = d_boltaluprof
         self.boltaluprof_head_r_tol = d_boltaluprof['head_r_tol']
         self.boltaluprof_r_tol = d_boltaluprof['shank_r_tol']
         self.boltaluprof_head_l = d_boltaluprof['head_l']
         # better to make a hole for the washer
-        self.washer_aluprof_r_tol = kcomp.D125[boltaluprof_d]['do']/2.+tol
+        self.washer_aluprof_r_tol = kcomp.D125[boltaluprof_mtr]['do']/2.+tol
 
 
         #  check that the position of the belt is higher than the minimum
@@ -1554,8 +1584,8 @@ class ShpTensionerHolder (shp_clss.Obj3D):
 #                              tens_d_inside = 25.,
 #                              wall_thick = 3.,
 #                              in_fillet = 2.,
-#                              boltaluprof_d = 3,
-#                              bolttens_d = 3,
+#                              boltaluprof_mtr = 3,
+#                              bolttens_mtr = 3,
 #                              hold_bas_h = 0,
 #                              opt_tens_chmf = 1,
 #                              hold_hole_2sides = 1,
@@ -1580,8 +1610,8 @@ class PartTensionerHolder (fc_clss.SinglePart, ShpTensionerHolder):
                  tens_d_inside,
                  wall_thick = 3.,
                  in_fillet = 1.,
-                 boltaluprof_d = 3,
-                 bolttens_d = 3,
+                 boltaluprof_mtr = 3,
+                 bolttens_mtr = 3,
                  hold_bas_h = 0,
                  opt_tens_chmf = 1,
                  hold_hole_2sides = 1,
@@ -1607,8 +1637,8 @@ class PartTensionerHolder (fc_clss.SinglePart, ShpTensionerHolder):
                                tens_d_inside = tens_d_inside,
                                wall_thick = wall_thick,
                                in_fillet = in_fillet,
-                               boltaluprof_d = boltaluprof_d,
-                               bolttens_d = bolttens_d,
+                               boltaluprof_mtr = boltaluprof_mtr,
+                               bolttens_mtr = bolttens_mtr,
                                hold_bas_h = hold_bas_h,
                                opt_tens_chmf = opt_tens_chmf,
                                hold_hole_2sides = hold_hole_2sides,
@@ -1619,32 +1649,369 @@ class PartTensionerHolder (fc_clss.SinglePart, ShpTensionerHolder):
                                pos_d = pos_d,
                                pos_w = pos_w,
                                pos_h = pos_h,
-                               pos = V0)
+                               pos = pos)
         fc_clss.SinglePart.__init__(self)
 
 
-doc = FreeCAD.newDocument()
-holder = PartTensionerHolder(
-                              aluprof_w = 15,
-                              belt_pos_h = 22.,
-                              tens_h = 10.,
-                              tens_w = 10.,
-                              tens_d_inside = 25.,
-                              wall_thick = 3.,
-                              in_fillet = 2.,
-                              boltaluprof_d = 3,
-                              bolttens_d = 3,
-                              hold_bas_h = 0,
-                              opt_tens_chmf = 1,
-                              hold_hole_2sides = 1,
-                              tol = kcomp.TOL,
-                              axis_d = VX,
-                              axis_w = VY,
-                              axis_h = VZ,
-                              pos_d = 0,
-                              pos_w = 0,
-                              pos_h = 0,
-                              pos = V0,
-                              name = 'tensioner_holder')
+#doc = FreeCAD.newDocument()
+#holder = PartTensionerHolder(
+#                              aluprof_w = 15,
+#                              belt_pos_h = 22.,
+#                              tens_h = 10.,
+#                              tens_w = 10.,
+#                              tens_d_inside = 25.,
+#                              wall_thick = 3.,
+#                              in_fillet = 2.,
+#                              boltaluprof_mtr = 3,
+#                              bolttens_mtr = 3,
+#                              hold_bas_h = 0,
+#                              opt_tens_chmf = 1,
+#                              hold_hole_2sides = 1,
+#                              tol = kcomp.TOL,
+#                              axis_d = VX,
+#                              axis_w = VY,
+#                              axis_h = VZ,
+#                              pos_d = 0,
+#                              pos_w = 0,
+#                              pos_h = 0,
+#                              pos = V0,
+#                              name = 'tensioner_holder')
+
+
+class TensionerSet (fc_clss.PartsSet):
+    """ Set composed of the idler pulley and the tensioner
+
+                              axis_h            axis_h 
+                               :                  :
+                            ___:___               :______________
+                           |  ___  |              |  __________  |---
+                           | |   | |              | |__________| | : |
+    .---- belt_pos_h------/| |___| |\             |________      |---
+    :                    / |_______| \            |        |    /      
+    :             . ____/  |       |  \____       |________|  /
+    :..hold_bas_h:.|_::____|_______|____::_|      |___::___|/......>axis_d
+   
+                                wall_thick
+                                  +
+                                 : :         
+                    _____________:_:________.........>axis_w
+                   |    |  | :   : |  |     |    :
+                   |  O |  | :   : |  |  O  |    + aluprof_w
+                   |____|__| :   : |__|_____|....:
+                           | :   : |
+                           |_:___:_|
+                             |   |
+                              \_/
+                               :
+                               :
+                             axis_l
+
+                             axis_h            axis_h 
+                               :         pos_h    :
+    ....................... ___:___         4     :______________
+    :                      |  ___  |              |  __________  |---
+    :                      | |   | |        3     | |__________| | : |
+    :+hold_h              /| |___| |\       2     |________      |---
+    :                    / |_______| \            |        |    /      
+    :             . ____/  |       |  \____ 1     |________|  /
+    :..hold_bas_h:.|_::____|___o___|____::_|0     o___::___|/......>axis_d
+                                                  01   2   3     4 5 6: pos_d
+ 
+                                      having the tensioner extended:    7  8
+                                                    _____________       :  :
+                                                                 |---------
+                                                                 |      :  |
+                                                                 |---------
+   
+   
+                    .... hold_bas_w ........
+                   :        .hold_w.        :
+                   :       :    wall_thick  :
+                   :       :      +         :
+                   :       :     : :        :
+          pos_w:   4__3____2_1_0_:_:________:........>axis_w
+                   |    |  | :   : |  |     |    :
+                   |  O |  | :   : |  |  O  |    + hold_bas_l
+                   |____|__| :   : |__|_____|....:
+                           | :   : |
+                           |_:___:_|
+                             |   |
+                              \_/
+                               :
+                               :
+                             axis_d
+
+        pos_o (origin) is at pos_d=0, pos_w=0, pos_h=0, It marked with o
+
+    Parameters
+    ----------
+    aluprof_w : float
+        Width of the aluminum profile
+    belt_pos_h : float
+        The position along axis_h where the idler pulley that conveys the belt
+        starts. THIS POSITION IS CENTERED at the ilder pulley
+    tens_h : float
+        height of the ilder tensioner
+    tens_w : float
+        width of the ilder tensioner
+    tens_d_inside : float
+        Max length (depth) of the ilder tensioner that is inside the holder
+    wall_thick : float
+        Thickness of the walls
+    in_fillet: float
+        radius of the inner fillets
+    boltaluprof_mtr : float
+        diameter (metric) of the bolt that attachs the tensioner holder to the
+        aluminum profile (or whatever is attached to)
+    bolttens_mtr : float
+        diameter (metric) of the bolt for the tensioner
+    hold_bas_h : float
+        height of the base of the tensioner holder
+        if 0, it will take wall_thick
+    opt_tens_chmf : int
+        1: there is a chamfer at every edge of tensioner, inside the holder
+        0: there is a chamfer only at the edges along axis_w, not along axis_h
+    hold_hole_2sides : int
+        In the tensioner holder there is a hole to see inside, it can be at
+        each side of the holder or just on one side
+        0: only at one side
+        1: at both sides
+    tol : float
+        Tolerances to print
+    axis_d : FreeCAD.Vector
+        depth vector of coordinate system
+    axis_w : FreeCAD.Vector
+        width vector of coordinate system
+        if V0: it will be calculated using the cross product: axis_l x axis_h
+    axis_h : FreeCAD.Vector
+        height vector of coordinate system
+    pos_d : int
+        location of pos along the axis_d
+        0: at the back of the holder
+        1: at the place where the tensioner can reach all the way inside
+        2: at the center of the base along axis_d, where the bolts to attach
+           the holder base to the aluminum profile
+        3: at the end of the base
+        4: at the end of the holder
+        5: at the center of the pulley
+        6: at the end of the idler tensioner
+        7: at the center of the pulley, when idler is all the way out
+        8: at the end of the idler tensioner, whenit is all the way out
+    pos_w : int
+        location of pos along the axis_w
+        0: at the center of symmetry
+        1: at the inner walls of the holder, which is the pulley radius
+        2: at the end of the holder (the top part, where the base starts)
+        3: at the center of the bolt holes to attach the holder base to the
+           aluminum profile
+        4: at the end of the piece along axis_w
+              axes have direction. So if pos_w == 3, the piece will be drawn
+              along the positive side of axis_w
+    pos_h : int
+        location of pos along the axis_h (0,1,2,3,4)
+        0: at the bottom of the holder
+        1: at the top of the base of the holder (for the bolts)
+        2: at the bottom of the hole where the idler tensioner goes
+        3: at the middle point of the hole where the idler tensioner goes
+        4: at the top of the holder
+    pos : FreeCAD.Vector
+        position of the piece
+
+    Paramenters for the set
+
+    tens_in_ratio : float
+        from 0 to 1, the ratio of the stroke that the tensioner is inside.
+        if 1: it is all the way inside
+        if 0: it is all the way outside (all the tens_stroke)
+
+
+
+
+
+    Attributes:
+    -----------
+    All the parameters and attributes of father class SinglePart
+
+    prnt_ax : FreeCAD.Vector
+        Best axis to print (normal direction, pointing upwards)
+    d0_cen : int
+    w0_cen : int
+    h0_cen : int
+        indicates if pos_h = 0 (pos_d, pos_w) is at the center along
+        axis_h, axis_d, axis_w, or if it is at the end.
+        1 : at the center (symmetrical, or almost symmetrical)
+        0 : at the end
+    tot_d : float
+        total depth, including the idler tensioner
+    tot_d_extend : float
+        total depth including the idler tensioner, having it extended
+
+
+    Parameters:
+    """
+
+    def __init__(self,
+                 aluprof_w = 20.,
+                 belt_pos_h = 20., 
+                 hold_bas_h = 0,
+                 hold_hole_2sides = 0,
+                 boltidler_mtr = 3,
+                 bolttens_mtr = 3,
+                 boltaluprof_mtr = 3,
+                 tens_stroke = 20. ,
+                 wall_thick = 3.,
+                 in_fillet = 2.,
+                 pulley_stroke_dist = 0,
+                 nut_holder_thick = 4. ,
+                 opt_tens_chmf = 1,
+                 tol = kcomp.TOL,
+                 axis_d = VX,
+                 axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos = V0,
+                 group = 1,
+                 name = ''):
+
+        default_name = 'tensioner_set'
+        self.set_name (name, default_name, change = 0)
+
+        fc_clss.PartsSet.__init__(self, axis_d = axis_d,
+                                  axis_w = axis_w, axis_h = axis_h)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): # so we keep the attributes by CylHole
+                setattr(self, i, values[i])
+
+        # pos_w = 0 is at the center, not pos_d, pos_h
+        self.d0_cen = 0
+        self.w0_cen = 1
+        self.h0_cen = 0
+
+        # Creation of the idler pulley set, we cannot know the relative 
+        # position from pos, so we put it at pos_d,w,h = 0
+
+        idler_tensioner = IdlerTensionerSet(
+                                 boltidler_mtr = boltidler_mtr,
+                                 bolttens_mtr  = bolttens_mtr,
+                                 tens_stroke = tens_stroke,
+                                 wall_thick = wall_thick,
+                                 in_fillet = in_fillet,
+                                 pulley_stroke_dist = pulley_stroke_dist,
+                                 nut_holder_thick = nut_holder_thick ,
+                                 opt_tens_chmf = opt_tens_chmf,
+                                 tol = tol,
+                                 axis_d = self.axis_d,
+                                 axis_w = self.axis_w,
+                                 axis_h = self.axis_h,
+                                 pos_d = 0,
+                                 pos_w = 0,
+                                 pos_h = 0,
+                                 pos = pos)
+
+        self.append_part(idler_tensioner)
+        idler_tensioner.parent = self
+
+        # 
+
+
+
+        # creation of the holder
+
+        tensioner_holder = PartTensionerHolder(
+                               aluprof_w = aluprof_w,
+                               belt_pos_h = belt_pos_h,
+                               tens_h = idler_tensioner.tens_h,
+                               tens_w = idler_tensioner.tens_w,
+                               tens_d_inside = idler_tensioner.tens_d_inside,
+                               wall_thick = wall_thick,
+                               in_fillet = in_fillet,
+                               boltaluprof_mtr = boltaluprof_mtr,
+                               bolttens_mtr = bolttens_mtr,
+                               hold_bas_h = hold_bas_h,
+                               opt_tens_chmf = opt_tens_chmf,
+                               hold_hole_2sides = hold_hole_2sides,
+                               tol = tol,
+                               axis_d = self.axis_d,
+                               axis_w = self.axis_w,
+                               axis_h = self.axis_h,
+                               pos_d = 0,
+                               pos_w = 0,
+                               pos_h = 0,
+                               pos = pos,
+                               model_type = 0) #exact
+
+        self.append_part(idler_tensioner)
+        idler_tensioner.parent = self
+
+
+        self.d_o[0] = V0
+        self.d_o[1] = tensioner_holder.d_o[1]
+        self.d_o[2] = tensioner_holder.d_o[2]
+        self.d_o[3] = tensioner_holder.d_o[3]
+        self.d_o[4] = tensioner_holder.d_o[4]
+        self.d_o[5] = self.d_o[1] + idler_tensioner.d_o[5]
+        self.d_o[6] = self.d_o[1] + idler_tensioner.d_o[6]
+        self.d_o[7] = self.d_o[5] + self.vec_d(tens_stroke)
+        self.d_o[8] = self.d_o[6] + self.vec_d(tens_stroke)
+
+        self.tot_d = self.d_o[6].Length
+        self.tot_d_extend = self.d_o[8].Length
+
+        # these are the same
+        for i in tensioner_holder.w_o:
+            self.w_o[i] = tensioner_holder.w_o[i]
+        for i in tensioner_holder.h_o:
+            self.h_o[i] = tensioner_holder.h_o[i]
+                                   
+
+        # Now we place the idler tensioner according to pos_d,w,h
+        # argument 1 means that pos_o wasnt in place and has to be
+        # adjusted
+        self.set_pos_o(adjust = 1)
+
+        # Now we have the position where the origin is, but:
+        # - we havent located the idler_tensioner at pos_o
+        # - we havent located the pulley at pos_o + dist to axis
+
+        # we should have call PartIdlerTensioner (pos = self.pos_o)
+        # instead, we have it at (pos = self.pos)
+        # so we have to move PartIdlerTensioner self.pos_o - self.pos
+        self.set_part_place(tensioner_holder)
+
+        self.set_part_place(idler_tensioner,   self.get_o_to_d(1)
+                                             + self.get_o_to_h(3))
+
+        self.place_fcos()
+
+
+t_set = TensionerSet(
+                     aluprof_w = 20.,
+                     belt_pos_h = 20., 
+                     hold_bas_h = 0,
+                     hold_hole_2sides = 0,
+                     boltidler_mtr = 3,
+                     bolttens_mtr = 3,
+                     boltaluprof_mtr = 3,
+                     tens_stroke = 20. ,
+                     wall_thick = 3.,
+                     in_fillet = 2.,
+                     pulley_stroke_dist = 0,
+                     nut_holder_thick = 4. ,
+                     opt_tens_chmf = 1,
+                     tol = kcomp.TOL,
+                     axis_d = VX,
+                     axis_w = VY,
+                     axis_h = VZ,
+                     pos_d = 0,
+                     pos_w = 0,
+                     pos_h = 0,
+                     pos = FreeCAD.Vector(1,20,100),
+                     name = 'tensioner_set')
 
 
