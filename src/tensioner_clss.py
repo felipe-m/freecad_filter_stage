@@ -41,9 +41,9 @@
 #                           axis_d
 
 # the tensioner set is referenced on 3 perpendicular axis:
-# - fc_axis_d: depth
-# - fc_axis_w: width
-# - fc_axis_h: height
+# - axis_d: depth
+# - axis_w: width
+# - axis_h: height
 # There is a position of the piece:
 # - that can be in a different point
 
@@ -150,9 +150,9 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
     idler_r_ext : float
         external radius of the idler pulley. This is the most external part of
         the pulley (for example the radius of the large washer)
-    boltidler_mtr : float
+    boltidler_mtr : integer (could be float 2.5)
         diameter (metric) of the bolt for the idler pulley
-    bolttens_mtr : float
+    bolttens_mtr : integer (could be float 2.5)
         diameter (metric) of the bolt for the tensioner
     opt_tens_chmf : int
         1: there is a chamfer at every edge of tensioner, inside the holder
@@ -1038,10 +1038,10 @@ class ShpTensionerHolder (shp_clss.Obj3D):
         Thickness of the walls
     in_fillet: float
         radius of the inner fillets
-    boltaluprof_mtr : float
+    boltaluprof_mtr : integer (could be float 2.5)
         diameter (metric) of the bolt that attachs the tensioner holder to the
         aluminum profile (or whatever is attached to)
-    bolttens_mtr : float
+    bolttens_mtr : integer (could be float 2.5)
         diameter (metric) of the bolt for the tensioner
     hold_bas_h : float
         height of the base of the tensioner holder
