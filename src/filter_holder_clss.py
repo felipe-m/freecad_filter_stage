@@ -340,7 +340,7 @@ class ShpFilterHolder (shp_clss.Obj3D):
                  filter_l = 60.,
                  filter_w = 25.,
                  filter_t = 2.5,
-                 base_h = 8.,
+                 base_h = 6.,
                  hold_d = 12.,
                  filt_supp_in = 2.,
                  filt_rim = 3.,
@@ -688,57 +688,112 @@ class ShpFilterHolder (shp_clss.Obj3D):
                                  pos = stadpos)
             bolt_list.append (shp_stad)
                                  
-
-
         shp_bolts = fcfun.fuseshplist(bolt_list)
-        Part.show(shp_bolts)
         shp_l = shp_l.cut(shp_bolts)
-        Part.show(shp_l)
+
+        # ---------------- Belt clamps
+        # at both sides
+        clamp_list = []
+        for w_side in [-1,1]:
+            clamp_pos = self.get_pos_dwh(0, w_side*7,7)
+            if w_side == 1:
+                clamp_axis_w = self.axis_w.negative()
+            else:
+                clamp_axis_w = self.axis_w
+            shp_clamp = fcfun.shp_box_dir_xtr (
+                                      box_w = beltclamp_l,
+                                      box_d = self.beltclamp_blk_t,
+                                      box_h = beltclamp_h,
+                                      fc_axis_h = self.axis_h,
+                                      fc_axis_d = self.axis_d,
+                                      fc_axis_w = clamp_axis_w,
+                                      cw = 0, cd = 0, ch = 0,
+                                      xtr_nh = 1,
+                                      pos = clamp_pos)
 
 
+            # fillet the corner
+            shp_clamp = fcfun.shp_filletchamfer_dirpt (shp_clamp, self.axis_h,
+                                               fc_pt = clamp_pos,
+                                               fillet = 1, radius = fillet_r)
+            shp_clamp = shp_clamp.removeSplitter()
+            clamp_list.append (shp_clamp)
+
+            # the other clamp, with no fillet
+            clamp_pos = self.get_pos_dwh(6, w_side*7,7)
+            shp_clamp = fcfun.shp_box_dir_xtr (
+                                      box_w = beltclamp_l,
+                                      box_d = self.beltclamp_blk_t,
+                                      box_h = beltclamp_h,
+                                      fc_axis_h = self.axis_h,
+                                      fc_axis_d = self.axis_d.negative(),
+                                      fc_axis_w = clamp_axis_w,
+                                      cw = 0, cd = 0, ch = 0,
+                                      xtr_nh = 1,
+                                      pos = clamp_pos)
+            clamp_list.append (shp_clamp)
+
+            # the belt post
+            beltpost_pos = self.get_pos_dwh(2, w_side*5,7)
+            shp_beltpost = fcfun.shp_belt_dir(
+                                       center_sep = 2 * self.lr_beltpost_r,
+                                       rad1 = sm_beltpost_r,
+                                       rad2 = self.lr_beltpost_r,
+                                       height = beltclamp_h,
+                                       fc_axis_h = self.axis_h,
+                                       fc_axis_l = clamp_axis_w,
+                                       ref_l = 3,
+                                       ref_h = 2,
+                                       xtr_h = 0, xtr_nh = 1,
+                                       pos = beltpost_pos)
+            
+            clamp_list.append (shp_beltpost)
+        shp_filterholder = shp_l.multiFuse(clamp_list)
+        shp_filterholder = shp_filterholder.removeSplitter()
+        #Part.show (shp_filterholder)
+            
         
-        
-        self.shp = shp_l
+        self.shp = shp_filterholder
 
 
-shp = ShpFilterHolder(
-                 filter_l = 60.,
-                 filter_w = 25.,
-                 filter_t = 2.5,
-                 base_h = 6.,
-                 hold_d = 12.,
-                 filt_supp_in = 2.,
-                 filt_rim = 3.,
-                 filt_cen_d = 0,
-                 fillet_r = 1.,
-                 # linear guides SEBLV16 y SEBS15, y MGN12H:
-                 boltcol1_dist = 20/2.,
-                 boltcol2_dist = 12.5, #thorlabs breadboard distance
-                 boltcol3_dist = 25,
-                 boltrow1_h = 0,
-                 boltrow1_2_dist = 12.5,
-                 # linear guide MGN12H
-                 boltrow1_3_dist = 20.,
-                 # linear guide SEBLV16 and SEBS15
-                 boltrow1_4_dist = 25.,
+#shp = ShpFilterHolder(
+#                 filter_l = 60.,
+#                 filter_w = 25.,
+#                 filter_t = 2.5,
+#                 base_h = 6.,
+#                 hold_d = 12.,
+#                 filt_supp_in = 2.,
+#                 filt_rim = 3.,
+#                 filt_cen_d = 0,
+#                 fillet_r = 1.,
+#                 # linear guides SEBLV16 y SEBS15, y MGN12H:
+#                 boltcol1_dist = 20/2.,
+#                 boltcol2_dist = 12.5, #thorlabs breadboard distance
+#                 boltcol3_dist = 25,
+#                 boltrow1_h = 0,
+#                 boltrow1_2_dist = 12.5,
+#                 # linear guide MGN12H
+#                 boltrow1_3_dist = 20.,
+#                 # linear guide SEBLV16 and SEBS15
+#                 boltrow1_4_dist = 25.,
 
-                 bolt_cen_mtr = 4, 
-                 bolt_linguide_mtr = 3, # linear guide bolts
+#                 bolt_cen_mtr = 4, 
+#                 bolt_linguide_mtr = 3, # linear guide bolts
 
-                 beltclamp_t = 3.,
-                 beltclamp_l = 12.,
-                 beltclamp_h = 8.,
-                 clamp_post_dist = 4.,
-                 sm_beltpost_r = 1.,
+#                 beltclamp_t = 3.,
+#                 beltclamp_l = 12.,
+#                 beltclamp_h = 8.,
+#                 clamp_post_dist = 4.,
+#                 sm_beltpost_r = 1.,
 
-                 tol = kcomp.TOL,
-                 axis_d = VX,
-                 axis_w = VY,
-                 axis_h = VZ,
-                 pos_d = 0,
-                 pos_w = 0,
-                 pos_h = 0,
-                 pos = V0)
+#                 tol = kcomp.TOL,
+#                 axis_d = VX,
+#                 axis_w = VY,
+#                 axis_h = VZ,
+#                 pos_d = 0,
+#                 pos_w = 0,
+#                 pos_h = 0,
+#                 pos = V0)
 
 
 
@@ -842,43 +897,49 @@ class PartFilterHolder (fc_clss.SinglePart, ShpFilterHolder):
 
 
 
+doc = FreeCAD.newDocument()
 
-#fco = PartFilterHolder(
-#                 filter_l = 60.,
-#                 filter_w = 25.,
-#                 filter_t = 2.5,
-#                 base_h = 8.,
-#                 hold_d = 12.,
-#                 filt_supp_in = 2.,
-#                 filt_rim = 3.,
-#                 filt_cen_d = 0,
-#                 fillet_r = 1.,
-#                 # linear guides SEBLV16 y SEBS15, y MGN12H:
-#                 boltcol1_dist = 20/2.,
-#                 boltcol2_dist = 12.5, #thorlabs breadboard distance
-#                 boltcol3_dist = 25,
-#                 boltrow1_h = 0,
-#                 boltrow1_2_dist = 12.5,
-#                 # linear guide MGN12H
-#                 boltrow1_3_dist = 20.,
-#                 # linear guide SEBLV16 and SEBS15
-#                 boltrow1_4_dist = 25.,
-#
-#                 bolt_cen_mtr = 4, 
-#                 bolt_linguide_mtr = 3, # linear guide bolts
-#
-#                 beltclamp_t = 3.,
-#                 beltclamp_l = 12.,
-#                 beltclamp_h = 8.,
-#                 clamp_post_dist = 4.,
-#                 sm_beltpost_r = 1.,
-#
-#                 tol = kcomp.TOL,
-#                 axis_d = VX,
-#                 axis_w = VY,
-#                 axis_h = VZ,
-#                 pos_d = 0,
-#                 pos_w = 0,
-#                 pos_h = 0,
-#                 pos = V0)
+fco = PartFilterHolder(
+                 filter_l = 60.,
+                 filter_w = 25.,
+                 filter_t = 2.5,
+                 base_h = 6.,
+                 hold_d = 12.,
+                 filt_supp_in = 2.,
+                 filt_rim = 3.,
+                 filt_cen_d = 30,
+                 fillet_r = 1.,
+                 # linear guides SEBLV16 y SEBS15, y MGN12H:
+                 boltcol1_dist = 20/2.,
+                 boltcol2_dist = 12.5, #thorlabs breadboard distance
+                 boltcol3_dist = 25,
+                 boltrow1_h = 0,
+                 boltrow1_2_dist = 12.5,
+                 # linear guide MGN12H
+                 boltrow1_3_dist = 20.,
+                 # linear guide SEBLV16 and SEBS15
+                 boltrow1_4_dist = 25.,
 
+                 bolt_cen_mtr = 4, 
+                 bolt_linguide_mtr = 3, # linear guide bolts
+
+                 beltclamp_t = 3.,
+                 beltclamp_l = 12.,
+                 beltclamp_h = 8.,
+                 clamp_post_dist = 4.,
+                 sm_beltpost_r = 1.,
+
+                 tol = kcomp.TOL,
+                 axis_d = VX,
+                 axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos = V0)
+
+fco.set_color(fcfun.ORANGE_08)
+
+
+
+doc.recompute()
