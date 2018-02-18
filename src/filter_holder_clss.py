@@ -44,6 +44,11 @@
 #        | | :.......................: | |
 #        | |___________________________| |
 #         \_____________________________/
+#                        :
+#                        :
+#                        :
+#                      axis_d
+#
 #
 
 
@@ -98,27 +103,27 @@ class ShpFilterHolder (shp_clss.Obj3D):
     """ Creates the filter holder shape
 
 
-
-                        axis_h
-                         :
-                         :
-          ___    ___     :     ___    ___ 
+                               beltpost_l = 3*lr_beltpost_r + sm_beltpost_r
+       pos_h         axis_h   :   :
+       |                 :    :    clamp_post_dist
+       v pos_w           :    :   ....
+       8 7___6  5___4    :    :___:  :___ 
          |   |  |   |    :    |   |  |   |
-         |...|__|___|____:____|___|__|...|...
+       7 |...|__|___|____:____|___|__|...|...
          |         _           _         |   2 * bolt_linguide_head_r_tol
-         |        |o|         |o|        |-----------------------
-         |        |o|         |o|        |--------------------  +boltrow1_4_dist
+       6 |        |o|         |o|        |-----------------------
+       5 |        |o|         |o|        |--------------------  +boltrow1_4_dist
          |                               |                   :  :
          |                               |                   +boltrow1_3_dist
-         |      (O)             (O)      |--:                :  :
+       4 |      (O)             (O)      |--:                :  :
          |                               |  +boltrow1_2_dist :  :
          |                               |  :                :  :
-         | (O)    (o)   (O)   (o)    (O) |--:----------------:--:
+       3 | (O)    (o)   (O)   (o)    (O) |--:----------------:--:
          |_______________________________|  + boltrow1_h
-         |_______________________________|..:..................
-         |  :.........................:  |..: filt_hole_h  :
+       2 |_______________________________|..:..................
+       1 |  :.........................:  |..: filt_hole_h  :
          |   :                       :   |                 + base_h
-         |___:___________x___________:___|.................:........axis_w
+       0 |___:___________x___________:___|.................:........axis_w
                          :     : :    :
                          :.....: :    :
                          : + boltcol1_dist
@@ -129,16 +134,16 @@ class ShpFilterHolder (shp_clss.Obj3D):
                          :............:
                             boltcol3_dist
 
+             3     21    0     pos_w (position of the columns)
+         7  6  5   4           pos_w (position of the belt clamps)
 
-
-
-                                     belt_clamp_l
-                                    ..+...
-                                    :    :
-          _______________x__________:____:...................> axis_w
-         |____|                     |____|..                :
-         |____   <  )          (  >  ____|..: belt_clamp_t  :+ hold_d
-         |____|_____________________|____|..................:
+                                     beltclamp_l
+                clamp_post          ..+...
+                  V                 :    :
+          _______________x__________:____:......................> axis_w
+         |____|                     |____|.. beltclamp_blk_t  :
+         |____   <  )          (  >  ____|..: beltclamp_t     :+ hold_d
+         |____|_____________________|____|....................:
          |_______________________________|
          |  ___________________________  |.................
          | | ......................... | |..filt_supp_in   :
@@ -164,9 +169,10 @@ class ShpFilterHolder (shp_clss.Obj3D):
 
 
 
-
+               0123  pos_d
+               0 45  pos_d 
                 ____...............................
-               | || |   + belt_clamp_h            :
+               | || |   + beltclamp_h             :
                |_||_|...:................         :
                |  ..|                   :         :
                |::  |                   :         :
@@ -182,9 +188,13 @@ class ShpFilterHolder (shp_clss.Obj3D):
                |       :...........:  | :         :
                |        :         :   | :         :
                x________:_________:___|.:.........:...>axis_d
-               :                      :
+               :             :        :
+               :.............:        :
+               : filt_cen_d           :
                :                      :
                :...... tot_d .........:
+
+       pos_d:  0    6  78    9    1011 12
  
  
 
@@ -212,7 +222,7 @@ class ShpFilterHolder (shp_clss.Obj3D):
            or if it is smaller than the minimum distance
     filt_rim : float
         distance from the filter to the edge of the base
-    filllet_r : float
+    fillet_r : float
         radius of the fillets
     boltcol1_dist : float
         distance to the center along axis_w of the first column of bolts
@@ -238,6 +248,18 @@ class ShpFilterHolder (shp_clss.Obj3D):
     bolt_linguide_mtr : integer (could be float: 2.5)
         diameter (metric) of the bolts at the 2nd column, to attach to a
         linear guide
+    beltclamp_t : float
+        thickness of the hole for the belt. Inside de belt clamp blocks
+        (along axis_d)
+    beltclamp_l : float
+        length of the belt clamp (along axis_w)
+    beltclamp_h : float
+        height of the belt clamp: belt width + 2
+        (along axis_h)
+    clamp_post_dist : float
+        distance from the belt clamp to the belt clamp post
+    sm_beltpost_r : float
+        small radius of the belt post
 
 
     tol : float
@@ -252,26 +274,45 @@ class ShpFilterHolder (shp_clss.Obj3D):
     pos_d : int
         location of pos along the axis_d (0,1,2,3,4,5), see drawing
         0: at the back of the holder
-        1: at the beginning of the hole for the nut (position for the nut)
-        2: at the beginning of the tensioner stroke hole
-        3: at the end of the tensioner stroke hole
-        4: at the center of the idler pulley hole
-        5: at the end of the piece
+        1: at the end of the first clamp block
+        2: at the center of the holder
+        3: at the beginning of the second clamp block
+        4: at the beginning of the bolt head hole for the central bolt
+        5: at the beginning of the bolt head hole for the linguide bolts
+        6: at the front side of the holder
+        7: at the beginning of the hole for the porta
+        8: at the inner side of the porta thruhole
+        9: at the center of the porta
+        10: at the outer side of the porta thruhole
+        11: at the end of the porta
+        12: at the end of the piece
     pos_w : int
-        location of pos along the axis_w (0,1) almost symmetrical
+        location of pos along the axis_w (0-7) symmetrical
         0: at the center of symmetry
-        1: at the end of the piece along axis_w at the negative side
+        1: at the first bolt column
+        2: at the second bolt column
+        3: at the third bolt column
+        4: at the inner side of the clamp post (larger circle)
+        5: at the outer side of the clamp post (smaller circle)
+        6: at the inner side of the clamp rails
+        7: at the end of the piece
     pos_h : int
-        location of pos along the axis_h (0,1,2), symmetrical
-        0: at the center of symmetry
-        1: at the inner base: where the base of the pulley goes
-        2: at the bottom of the piece (negative side of axis_h)
+        location of pos along the axis_h (0-8)
+        0: at the bottom (base)
+        1: at the base for the porta
+        2: at the top of the base
+        3: first row of bolts
+        4: second row of bolts
+        5: third row of bolts
+        6: 4th row of bolts
+        7: at the base of the belt clamp
+        8: at the top of the piece
     pos : FreeCAD.Vector
         Position of the cylinder, taking into account where the center is
 
     Attributes:
     -----------
-    All the parameters and attributes of father class SinglePart
+    All the parameters and attributes of parent class SinglePart
 
     Dimensional attributes:
     filt_hole_d : float
@@ -281,14 +322,8 @@ class ShpFilterHolder (shp_clss.Obj3D):
     filt_hole_h : float
         height of the hole for the filter (for filter_t)
 
-    tens_d : float
-        total length (depth) of the idler tensioner
-    tens_w : float
-        total width of the idler tensioner
-    tens_h : float
-        total height of the idler tensioner
-    tens_d_inside : float
-        length (depth) of the idler tensioner that can be inside the holder
+    beltclamp_blk_t : float
+        thickness (along axis_d) of each of the belt clamp blocks
 
     prnt_ax : FreeCAD.Vector
         Best axis to print (normal direction, pointing upwards)
@@ -308,13 +343,15 @@ class ShpFilterHolder (shp_clss.Obj3D):
                  base_h = 8.,
                  hold_d = 12.,
                  filt_supp_in = 2.,
+                 filt_rim = 3.,
+                 filt_cen_d = 0,
                  fillet_r = 1.,
                  # linear guides SEBLV16 y SEBS15, y MGN12H:
                  boltcol1_dist = 20/2.,
                  boltcol2_dist = 12.5, #thorlabs breadboard distance
                  boltcol3_dist = 25,
                  boltrow1_h = 0,
-                 boltrow1_2_dist : 12.5,
+                 boltrow1_2_dist = 12.5,
                  # linear guide MGN12H
                  boltrow1_3_dist = 20.,
                  # linear guide SEBLV16 and SEBS15
@@ -323,9 +360,11 @@ class ShpFilterHolder (shp_clss.Obj3D):
                  bolt_cen_mtr = 4, 
                  bolt_linguide_mtr = 3, # linear guide bolts
 
-                 belt_clamp_t = 2.8,
-                 belt_clamp_l = 12.,
-                 belt_clamp_h = 8.,
+                 beltclamp_t = 3., #2.8,
+                 beltclamp_l = 12.,
+                 beltclamp_h = 8.,
+                 clamp_post_dist = 4.,
+                 sm_beltpost_r = 1.,
 
                  tol = kcomp.TOL,
                  axis_d = VX,
@@ -367,13 +406,13 @@ class ShpFilterHolder (shp_clss.Obj3D):
         self.bolt_cen_dict = kcomp.D912[bolt_cen_mtr]
         self.bolt_cen_head_r_tol = self.bolt_cen_dict['head_r_tol']
         self.bolt_cen_r_tol = self.bolt_cen_dict['shank_r_tol']
-        self.bolt_cen_head_l = self.bolt_cen_dict['head_l']
+        self.bolt_cen_head_l_tol = self.bolt_cen_dict['head_l_tol']
 
         # dictionary of the 1st column bolts (for the linear guide)
         self.bolt_linguide_dict = kcomp.D912[bolt_linguide_mtr]
         self.bolt_linguide_head_r_tol = self.bolt_linguide_dict['head_r_tol']
         self.bolt_linguide_r_tol = self.bolt_linguide_dict['shank_r_tol']
-        self.bolt_linguide_head_l = self.bolt_linguide_dict['head_l']
+        self.bolt_linguide_head_l_tol = self.bolt_linguide_dict['head_l_tol']
 
         max_row1_head_r_tol = max(self.bolt_linguide_head_r_tol,
                                   self.bolt_cen_head_r_tol)
@@ -384,80 +423,248 @@ class ShpFilterHolder (shp_clss.Obj3D):
             self.boltrow1_h = 2* max_row1_head_r_tol
             msg1 = 'boltrow1_h smaller than bolt head diameter'
             msg2 = 'boltrow1_h will be bolt head diameter' 
-            logger.warning(msg1 + msg2 + str(self.boltrow1_h)
+            logger.warning(msg1 + msg2 + str(self.boltrow1_h))
         # else # it will be as it is
 
         self.hold_h = (base_h + self.boltrow1_h + boltrow1_4_dist
                        + 2 * self.bolt_linguide_head_r_tol)
-        self.tot_h = self.hold_h + belt_clamp_h
+        self.tot_h = self.hold_h + beltclamp_h
+
+        self.beltclamp_blk_t = (hold_d - beltclamp_t)/2.
+
+        #self.clamp2cenpost = clamp_post_dist + s_beltclamp_r_sm
+
+
+        # the large radius of the belt post
+        self.lr_beltpost_r = (hold_d - 3) / 2.
+
+        min_filt_cen_d = hold_d + filt_rim + filter_w/2.
+        if filt_cen_d == 0: 
+            filt_cen_d = hold_d + filt_rim + filter_w/2.
+        elif filt_cen_d < min_filt_cen_d:
+            filt_cen_d = hold_d + filt_rim + filter_w/2.
+            msg =  'filt_cen_d is smaller than needed, taking: '
+            logger.warning(msg + str(filt_cen_d))
+        self.filt_cen_d = filt_cen_d
+
+        self.tot_d = self.filt_cen_d + filter_w/2. + filt_rim 
+
+        # find out if the max width if given by the filter or the holder
+        base_w = filter_l + 2 * filt_rim
+        hold_w = 2 * boltcol3_dist + 4 * self.bolt_cen_head_r_tol
+        self.tot_w = max(base_w, hold_w)
+
+
+        self.beltpost_l = (3*self.lr_beltpost_r) + sm_beltpost_r
 
 
 
-        # CHANGE:
 
         self.d0_cen = 0
         self.w0_cen = 1 # symmetrical
-        self.h0_cen = 1 # symmetrical
+        self.h0_cen = 0
 
         self.d_o[0] = V0
-        self.d_o[1] = self.vec_d(nut_holder_thick)
-        self.d_o[2] = self.vec_d(self.nut_holder_tot)
-        self.d_o[3] = self.vec_d(self.nut_holder_tot + tens_stroke)
-        self.d_o[4] = self.vec_d(self.tens_d - idler_r_in)
-        self.d_o[5] = self.vec_d(self.tens_d)
+        self.d_o[1] = self.vec_d(self.beltclamp_blk_t)
+        self.d_o[2] = self.vec_d(hold_d/2.)
+        self.d_o[3] = self.vec_d(hold_d - self.beltclamp_blk_t)
+        # at the beginning of the bolt head hole for the central bolt
+        self.d_o[4] = self.vec_d(hold_d - self.bolt_cen_head_l_tol)
+        self.d_o[5] = self.vec_d(hold_d - self.bolt_linguide_head_l_tol)
+        self.d_o[6] = self.vec_d(hold_d)
+        # at the beginning of the hole of the porta (no tolerance):
+        self.d_o[7] = self.vec_d(self.filt_cen_d - filter_w/2.)
+        # inner side of porta thruhole
+        self.d_o[8] = self.d_o[7] + self.vec_d(filt_supp_in)
+        # at the center of the porta:
+        self.d_o[9] = self.vec_d(self.filt_cen_d)
+        # outer side of porta thruhole
+        self.d_o[10] = self.vec_d(self.filt_cen_d + filter_w/2. - filt_supp_in)
+        # at the end of the hole of the porta (no tolerance):
+        self.d_o[11] = self.vec_d(self.filt_cen_d + filter_w/2.)
+        self.d_o[12] = self.vec_d(self.tot_d)
 
         # these are negative because actually the pos_w indicates a negative
         # position along axis_w
-        self.w_o[0] = V0
-        self.w_o[1] = self.vec_w(-self.tens_w/2.)
 
+        self.w_o[0] = V0
+        #1: at the first bolt column
+        self.w_o[1] = self.vec_w(-boltcol1_dist)
+        #2: at the second bolt column
+        self.w_o[2] = self.vec_w(-boltcol2_dist)
+        #3: at the third bolt column
+        self.w_o[3] = self.vec_w(-boltcol3_dist)
+
+        #7: at the end of the piece
+        self.w_o[7] = self.vec_w(-self.tot_w/2.)
+        #6: at the inner side of the clamp rails
+        # add belt_clamp because  w_o are negative
+        self.w_o[6] = self.w_o[7] + self.vec_w(beltclamp_l)
+        #5: at the outer side of the clamp post (smaller circle)
+        self.w_o[5] = self.w_o[6] + self.vec_w(clamp_post_dist)
+        #4: at the inner side of the clamp post (larger circle)
+        self.w_o[4] = self.w_o[5] + self.vec_w(self.beltpost_l)
+
+
+        #0: at the bottom (base)
         self.h_o[0] = V0
-        self.h_o[1] = self.vec_h(-idler_h/2.)
-        self.h_o[2] = self.vec_h(-self.tens_h/2.)
+        #1: at the base for the porta
+        self.h_o[1] = self.vec_h(base_h - self.filt_hole_h)
+        #2: at the top of the base
+        self.h_o[2] = self.vec_h(base_h)
+        #3: first row of bolts
+        self.h_o[3] = self.vec_h(base_h + self.boltrow1_h)
+        #4: second row of bolts
+        self.h_o[4] = self.h_o[3] + self.vec_h(boltrow1_2_dist)
+        #5: third row of bolts, taking self.h_o[3]
+        self.h_o[5] = self.h_o[3] + self.vec_h(boltrow1_3_dist)
+        #6: 4th row of bolts
+        self.h_o[6] = self.h_o[3] + self.vec_h(boltrow1_4_dist)
+        #7: at the base of the belt clamp
+        self.h_o[7] = self.vec_h(self.hold_h)
+        #8: at the top of the piece
+        self.h_o[8] = self.vec_h(self.tot_h)
 
         # calculates the position of the origin, and keeps it in attribute pos_o
         self.set_pos_o()
 
+        # -------- building of the piece
+        # the base
+        shp_base = fcfun.shp_box_dir (box_w = self.tot_w,
+                                      box_d = self.tot_d,
+                                      box_h = base_h,
+                                      fc_axis_w = self.axis_w,
+                                      fc_axis_d = self.axis_d,
+                                      fc_axis_h = self.axis_h,
+                                      cw = 1, cd = 0, ch = 0,
+                                      pos = self.pos_o)
 
 
-#shp= ShpIdlerTensioner(idler_h = 10. ,
-#                 idler_r_in  = 5,
-#                 idler_r_ext = 6,
-#                 in_fillet = 2.,
-#                 wall_thick = 5.,
-#                 tens_stroke = 20. ,
-#                 pulley_stroke_dist = 0,
-#                 nut_holder_thick = 4. ,
-#                 boltidler_mtr = 3,
-#                 bolttens_mtr = 3,
-#                 opt_tens_chmf = 1,
-#                 tol = kcomp.TOL,
-#                 axis_d = VX,
-#                 axis_w = VY,
-#                 axis_h = VZ,
-#                 pos_d = 0,
-#                 pos_w = 0,
-#                 pos_h = 0,
-#                 pos = V0)
+        shp_base = fcfun.shp_filletchamfer_dir (shp_base, self.axis_h,
+                                                fillet = 1, radius = fillet_r)
+        shp_base = shp_base.removeSplitter()
 
-# CHANGE:
-class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
-    """ Integration of a ShpIdlerTensioner object into a PartIlderTensioner
+        # the holder to attach to a linear guide
+
+        shp_holder = fcfun.shp_boxdir_fillchmfplane (
+                                        box_w = self.tot_w,
+                                        box_d = hold_d,
+                                        box_h = self.hold_h,
+                                        axis_d = self.axis_d,
+                                        axis_h = self.axis_h,
+                                        cw = 1, cd = 0, ch = 0,
+                                        fillet = 1,
+                                        radius = fillet_r,
+                                        plane_fill = self.axis_d.negative(),
+                                        both_planes = 0,
+                                        edge_dir = self.axis_h,
+                                        pos = self.pos_o)
+
+        #shp_holder = fcfun.shp_box_dir (box_w = self.tot_w,
+                                        #box_d = hold_d,
+                                        #box_h = self.hold_h,
+                                        #fc_axis_w = self.axis_w,
+                                        #fc_axis_d = self.axis_d,
+                                        #fc_axis_h = self.axis_h,
+                                        #cw = 1, cd = 0, ch = 1,
+                                        #pos = self.pos_o)
+        #shp_base = fcfun.shp_filletchamfer_dir (shp_base, self.axis_h,
+                                                #fillet = 1, radius = fillet_r)
+        shp_base = shp_base.removeSplitter()
+
+        shp_l = shp_base.fuse(shp_holder)
+        shp_l = shp_l.removeSplitter()
+        shp_l = fcfun.shp_filletchamfer_dirpt (shp_l,
+                                            fc_axis= self.axis_w,
+                                            fc_pt = self.get_pos_dwh(6,0,2),
+                                            fillet = 0, radius = fillet_r)
+        shp_l = shp_l.removeSplitter()
+        Part.show(shp_l)
+        # now we have the L shape with its chamfers and fillets
+        # make the hole for the filter:
+        shp_filter_hole = fcfun.shp_box_
+
+        self.shp = shp_l
+
+
+shp = ShpFilterHolder(
+                 filter_l = 60.,
+                 filter_w = 25.,
+                 filter_t = 2.5,
+                 base_h = 8.,
+                 hold_d = 12.,
+                 filt_supp_in = 2.,
+                 filt_rim = 3.,
+                 filt_cen_d = 0,
+                 fillet_r = 1.,
+                 # linear guides SEBLV16 y SEBS15, y MGN12H:
+                 boltcol1_dist = 20/2.,
+                 boltcol2_dist = 12.5, #thorlabs breadboard distance
+                 boltcol3_dist = 25,
+                 boltrow1_h = 0,
+                 boltrow1_2_dist = 12.5,
+                 # linear guide MGN12H
+                 boltrow1_3_dist = 20.,
+                 # linear guide SEBLV16 and SEBS15
+                 boltrow1_4_dist = 25.,
+
+                 bolt_cen_mtr = 4, 
+                 bolt_linguide_mtr = 3, # linear guide bolts
+
+                 beltclamp_t = 3.,
+                 beltclamp_l = 12.,
+                 beltclamp_h = 8.,
+                 clamp_post_dist = 4.,
+                 sm_beltpost_r = 1.,
+
+                 tol = kcomp.TOL,
+                 axis_d = VX,
+                 axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos = V0)
+
+
+
+
+
+class PartFilterHolder (fc_clss.SinglePart, ShpFilterHolder):
+    """ Integration of a ShpFilterHolder object into a PartFilterHolder
     object, so it is a FreeCAD object that can be visualized in FreeCAD
     """
 
     def __init__(self,
-                 idler_h ,
-                 idler_r_in ,
-                 idler_r_ext ,
-                 in_fillet = 2.,
-                 wall_thick = 5.,
-                 tens_stroke = 20. ,
-                 pulley_stroke_dist = 0,
-                 nut_holder_thick = 4. ,
-                 boltidler_mtr = 3,
-                 bolttens_mtr = 3,
-                 opt_tens_chmf = 1,
+                 filter_l = 60.,
+                 filter_w = 25.,
+                 filter_t = 2.5,
+                 base_h = 8.,
+                 hold_d = 12.,
+                 filt_supp_in = 2.,
+                 filt_rim = 3.,
+                 filt_cen_d = 0,
+                 fillet_r = 1.,
+                 # linear guides SEBLV16 y SEBS15, y MGN12H:
+                 boltcol1_dist = 20/2.,
+                 boltcol2_dist = 12.5, #thorlabs breadboard distance
+                 boltcol3_dist = 25,
+                 boltrow1_h = 0,
+                 boltrow1_2_dist = 12.5,
+                 # linear guide MGN12H
+                 boltrow1_3_dist = 20.,
+                 # linear guide SEBLV16 and SEBS15
+                 boltrow1_4_dist = 25.,
+
+                 bolt_cen_mtr = 4, 
+                 bolt_linguide_mtr = 3, # linear guide bolts
+
+                 beltclamp_t = 3.,
+                 beltclamp_l = 12.,
+                 beltclamp_h = 8.,
+                 clamp_post_dist = 4.,
+                 sm_beltpost_r = 1.,
+
                  tol = kcomp.TOL,
                  axis_d = VX,
                  axis_w = VY,
@@ -469,29 +676,45 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
                  model_type = 0, # exact
                  name = ''):
 
-        default_name = 'idler_tensioner'
+        default_name = 'filter_holder'
         self.set_name (name, default_name, change = 0)
         # First the shape is created
-        ShpIdlerTensioner.__init__(self,
-                                  idler_h = idler_h ,
-                                  idler_r_in  = idler_r_in,
-                                  idler_r_ext = idler_r_ext,
-                                  in_fillet = in_fillet,
-                                  wall_thick = wall_thick,
-                                  tens_stroke = tens_stroke,
-                                  pulley_stroke_dist = pulley_stroke_dist,
-                                  nut_holder_thick = nut_holder_thick ,
-                                  boltidler_mtr = boltidler_mtr,
-                                  bolttens_mtr = bolttens_mtr,
-                                  opt_tens_chmf = opt_tens_chmf,
-                                  tol = tol,
-                                  axis_d = axis_d,
-                                  axis_w = axis_w,
-                                  axis_h = axis_h,
-                                  pos_d = pos_d,
-                                  pos_w = pos_w,
-                                  pos_h = pos_h,
-                                  pos = pos)
+        ShpFilterHolder.__init__(self,
+                 filter_l = filter_l,
+                 filter_w = filter_w,
+                 filter_t = filter_t,
+                 base_h = base_h,
+                 hold_d = hold_d,
+                 filt_supp_in = filt_supp_in,
+                 filt_rim = filt_rim,
+                 filt_cen_d = filt_cen_d,
+                 fillet_r = fillet_r,
+                 boltcol1_dist = boltcol1_dist,
+                 boltcol2_dist = boltcol2_dist,
+                 boltcol3_dist = boltcol3_dist,
+                 boltrow1_h = boltrow1_h,
+                 boltrow1_2_dist = boltrow1_2_dist,
+                 boltrow1_3_dist = boltrow1_3_dist,
+                 boltrow1_4_dist = boltrow1_4_dist,
+
+                 bolt_cen_mtr = bolt_cen_mtr, 
+                 bolt_linguide_mtr = bolt_linguide_mtr,
+
+                 beltclamp_t = beltclamp_t,
+                 beltclamp_l = beltclamp_l,
+                 beltclamp_h = beltclamp_h,
+                 clamp_post_dist = clamp_post_dist,
+                 sm_beltpost_r = sm_beltpost_r,
+
+                 tol = tol,
+                 axis_d = axis_d,
+                 axis_w = axis_w,
+                 axis_h = axis_h,
+                 pos_d = pos_d,
+                 pos_w = pos_w,
+                 pos_h = pos_h,
+                 pos = pos)
+
 
         # Then the Part
         fc_clss.SinglePart.__init__(self)
@@ -503,17 +726,39 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
             if not hasattr(self,i): # so we keep the attributes by CylHole
                 setattr(self, i, values[i])
 
-#part= PartIdlerTensioner(idler_h = 10. ,
-#                 idler_r_in  = 5,
-#                 idler_r_ext = 6,
-#                 in_fillet = 2.,
-#                 wall_thick = 5.,
-#                 tens_stroke = 20. ,
-#                 pulley_stroke_dist = 0,
-#                 nut_holder_thick = 4. ,
-#                 boltidler_mtr = 3,
-#                 bolttens_mtr = 3,
-#                 opt_tens_chmf = 1,
+
+
+
+#fco = PartFilterHolder(
+#                 filter_l = 60.,
+#                 filter_w = 25.,
+#                 filter_t = 2.5,
+#                 base_h = 8.,
+#                 hold_d = 12.,
+#                 filt_supp_in = 2.,
+#                 filt_rim = 3.,
+#                 filt_cen_d = 0,
+#                 fillet_r = 1.,
+#                 # linear guides SEBLV16 y SEBS15, y MGN12H:
+#                 boltcol1_dist = 20/2.,
+#                 boltcol2_dist = 12.5, #thorlabs breadboard distance
+#                 boltcol3_dist = 25,
+#                 boltrow1_h = 0,
+#                 boltrow1_2_dist = 12.5,
+#                 # linear guide MGN12H
+#                 boltrow1_3_dist = 20.,
+#                 # linear guide SEBLV16 and SEBS15
+#                 boltrow1_4_dist = 25.,
+#
+#                 bolt_cen_mtr = 4, 
+#                 bolt_linguide_mtr = 3, # linear guide bolts
+#
+#                 beltclamp_t = 3.,
+#                 beltclamp_l = 12.,
+#                 beltclamp_h = 8.,
+#                 clamp_post_dist = 4.,
+#                 sm_beltpost_r = 1.,
+#
 #                 tol = kcomp.TOL,
 #                 axis_d = VX,
 #                 axis_w = VY,
@@ -522,5 +767,4 @@ class PartIdlerTensioner (fc_clss.SinglePart, ShpIdlerTensioner):
 #                 pos_w = 0,
 #                 pos_h = 0,
 #                 pos = V0)
-
 
