@@ -390,9 +390,10 @@ class ShpFilterHolder (shp_clss.Obj3D):
         # Note that now the dimensions width and length are changed.
         # to depth and width
         # they are relative to the holder, not to the filter
-        self.filt_hole_d = filter_w + tol # depth
-        self.filt_hole_w = filter_l + tol # width in holder axis
-        self.filt_hole_h = filter_t + tol/2. # 0.5 tolerance for height
+        # no need to have the tolerances here:
+        self.filt_hole_d = filter_w # + tol # depth
+        self.filt_hole_w = filter_l # + tol # width in holder axis
+        self.filt_hole_h = filter_t # + tol/2. # 0.5 tolerance for height
 
         # The hole under the filter to let the light go through
         # and big enough to hold the filter
@@ -574,16 +575,129 @@ class ShpFilterHolder (shp_clss.Obj3D):
 
         shp_l = shp_base.fuse(shp_holder)
         shp_l = shp_l.removeSplitter()
+        # pos (6,0,2): position at the corner of the L
         shp_l = fcfun.shp_filletchamfer_dirpt (shp_l,
                                             fc_axis= self.axis_w,
                                             fc_pt = self.get_pos_dwh(6,0,2),
                                             fillet = 0, radius = fillet_r)
         shp_l = shp_l.removeSplitter()
-        Part.show(shp_l)
         # now we have the L shape with its chamfers and fillets
-        # make the hole for the filter:
-        shp_filter_hole = fcfun.shp_box_
 
+        # ------------------- Holes for the filter
+        # include tolerances, along nh: only half of it, along h= 1 to make
+        # the cut
+        # pos (9,0,1) position at the center of the porta, at its bottom
+        shp_filter_hole = fcfun.shp_box_dir_xtr (box_w = self.filt_hole_w,
+                                             box_d = self.filt_hole_d,
+                                             box_h = self.filt_hole_h,
+                                             fc_axis_h = self.axis_h,
+                                             fc_axis_d = self.axis_d,
+                                             cw = 1, cd = 1, ch = 0,
+                                             xtr_h = 1, xtr_nh = tol/2.,
+                                             xtr_d = tol, xtr_nd = tol,
+                                             xtr_w = tol, xtr_nw = tol,
+                                             pos = self.get_pos_dwh(9,0,1))
+        # pos (9,0,0) position at the center of the porta, at the bottom of the
+        # piece
+        # no extra on top because it will be fused with shp_filter_hole
+        shp_filter_thruhole = fcfun.shp_box_dir_xtr (box_w = self.filt_supp_w,
+                                             box_d = self.filt_supp_d,
+                                             box_h = base_h,
+                                             fc_axis_h = self.axis_h,
+                                             fc_axis_d = self.axis_d,
+                                             cw = 1, cd = 1, ch = 0,
+                                             xtr_h = 0, xtr_nh = 1,
+                                             xtr_d = tol, xtr_nd = tol,
+                                             xtr_w = tol, xtr_nw = tol,
+                                             pos = self.get_pos_dwh(9,0,0))
+        shp_fuse_filter_hole = shp_filter_hole.fuse(shp_filter_thruhole)
+        shp_l = shp_l.cut(shp_fuse_filter_hole)
+        shp_l = shp_l.removeSplitter()
+        # the L with the hole in the base is done
+
+        # ---------------- Holes for the bolts
+
+        bolt_list = []
+
+        shp_cen_bolt = fcfun.shp_bolt_dir (r_shank = self.bolt_cen_r_tol,
+                                           l_bolt = hold_d,
+                                           r_head = self.bolt_cen_head_r_tol,
+                                           l_head = self.bolt_cen_head_l_tol,
+                                           xtr_head = 1,
+                                           xtr_shank = 1,
+                                           support = 0, #not at printing directi
+                                           fc_normal = self.axis_d.negative(),
+                                           pos_n = 2,
+                                           pos = self.get_pos_dwh(0,0,3))
+        bolt_list.append (shp_cen_bolt)
+        # the rest of the bolts come in pairs:
+        for w_side in [-1,1]:
+            # the wider bolts (although can be smaller)
+            for cen_col, cen_row in zip([2,3], [4,3]):
+                boltpos = self.get_pos_dwh(0,w_side*cen_col, cen_row)
+                shp_cen_bolt = fcfun.shp_bolt_dir ( 
+                                           r_shank = self.bolt_cen_r_tol,
+                                           l_bolt = hold_d,
+                                           r_head = self.bolt_cen_head_r_tol,
+                                           l_head = self.bolt_cen_head_l_tol,
+                                           xtr_head = 1,
+                                           xtr_shank = 1,
+                                           support = 0, #not at printing directi
+                                           fc_normal = self.axis_d.negative(),
+                                           pos_n = 2,
+                                           pos = boltpos)
+                bolt_list.append (shp_cen_bolt)
+            # the smaller bolts (although can be larger). Linear guide
+            # first row:
+            boltpos = self.get_pos_dwh(0,w_side*1, 3)
+            shp_lin_bolt = fcfun.shp_bolt_dir ( 
+                                       r_shank = self.bolt_linguide_r_tol,
+                                       l_bolt = hold_d,
+                                       r_head = self.bolt_linguide_head_r_tol,
+                                       l_head = self.bolt_linguide_head_l_tol,
+                                       xtr_head = 1,
+                                       xtr_shank = 1,
+                                       support = 0, #not at printing directi
+                                       fc_normal = self.axis_d.negative(),
+                                       pos_n = 2,
+                                       pos = boltpos)
+            bolt_list.append (shp_lin_bolt)
+            # 3rd and 4th row. Just 2 shanks and a stadium per side
+            for linrow in [5, 6]:
+                boltpos = self.get_pos_dwh(0,w_side*1, linrow)
+                shp_lin_shank = fcfun.shp_cylcenxtr ( 
+                                       r = self.bolt_linguide_r_tol,
+                                       h = hold_d,
+                                       normal = self.axis_d,
+                                       ch = 0,
+                                       xtr_top = 0, #no need: stadium
+                                       xtr_bot = 1,
+                                       pos = boltpos)
+                bolt_list.append (shp_lin_shank)
+            # the stadium for both bolts head (they are too close)
+            stadpos = self.get_pos_dwh(6,w_side*1, 5)
+            shp_stad = fcfun.shp_stadium_dir (
+                                 length = boltrow1_4_dist - boltrow1_3_dist,
+                                 radius = self.bolt_linguide_head_r_tol,
+                                 height = self.bolt_linguide_head_l_tol,
+                                 fc_axis_h = self.axis_d.negative(),
+                                 fc_axis_l = self.axis_h,
+                                 ref_l = 2,
+                                 ref_h = 2,
+                                 xtr_h = 0, xtr_nh = 1,
+                                 pos = stadpos)
+            bolt_list.append (shp_stad)
+                                 
+
+
+        shp_bolts = fcfun.fuseshplist(bolt_list)
+        Part.show(shp_bolts)
+        shp_l = shp_l.cut(shp_bolts)
+        Part.show(shp_l)
+
+
+        
+        
         self.shp = shp_l
 
 
@@ -591,7 +705,7 @@ shp = ShpFilterHolder(
                  filter_l = 60.,
                  filter_w = 25.,
                  filter_t = 2.5,
-                 base_h = 8.,
+                 base_h = 6.,
                  hold_d = 12.,
                  filt_supp_in = 2.,
                  filt_rim = 3.,
@@ -639,7 +753,7 @@ class PartFilterHolder (fc_clss.SinglePart, ShpFilterHolder):
                  filter_l = 60.,
                  filter_w = 25.,
                  filter_t = 2.5,
-                 base_h = 8.,
+                 base_h = 6.,
                  hold_d = 12.,
                  filt_supp_in = 2.,
                  filt_rim = 3.,
