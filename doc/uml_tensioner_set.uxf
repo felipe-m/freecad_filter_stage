@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.2">
+  <zoom_level>8</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>344</x>
+      <y>224</y>
+      <w>176</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>ShpCylHole
+shp_clss.py
+-
+shp : OCC shape
+d_o : dictionary of distance Vectors
+w_o : dictionary of distance Vectors
+h_o : dictionary of distance Vectors
+pos_o : FreeCAD.Vector
+prnt_ax : FreeCAD.Vector
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>40</x>
+      <y>160</y>
+      <w>112</w>
+      <h>176</h>
+    </coordinates>
+    <panel_attributes>SinglePart
+fc_clss.py
+-
+place : FreeCAD.Vector
+tol : float
+model_type : int
+fco : FreeCAD object
+-
+get_parts() return empty list
+set_color(color)
+set_name(name,...)
+create_fco(name)
+set_place(Vector)
+export_stl(str, str)
+save_fcad</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>376</x>
+      <y>0</y>
+      <w>216</w>
+      <h>208</h>
+    </coordinates>
+    <panel_attributes>Obj3D
+shp_clss.py
+-
+axis_d : FreeCAD.Vector
+axis_w : FreeCAD.Vector
+axis_h :  FreeCAD.Vector
+-
+vec_d(float) : FreeCAD.Vector
+vec_w(float) : FreeCAD.Vector
+vec_h(float) : FreeCAD.Vector
+vec_d_w_h(float, float, float) : FreeCAD.Vector
+set_pos_o()
+get_o_to_d (int) : FreeCAD.Vector
+get_o_to_w (int) : FreeCAD.Vector
+get_o_to_h (int) : FreeCAD.Vector
+get_pos_d (int) : FreeCAD.Vector
+get_pos_w (int) : FreeCAD.Vector
+get_pos_h (int) : FreeCAD.Vector</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>424</x>
+      <y>200</y>
+      <w>80</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>80.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>176</x>
+      <y>512</y>
+      <w>96</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Din125Washer
+fc_clss.py
+-
+name
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>64</x>
+      <y>328</y>
+      <w>272</w>
+      <h>96</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>10.0;10.0;320.0;100.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>304</x>
+      <y>328</y>
+      <w>136</w>
+      <h>96</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>150.0;10.0;10.0;100.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>248</x>
+      <y>408</y>
+      <w>104</w>
+      <h>88</h>
+    </coordinates>
+    <panel_attributes>Washer
+fc_clss.py
+-
+metric
+r_in : float
+r_out : float
+h : float
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>288</x>
+      <y>512</y>
+      <w>104</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Din9021Washer
+fc_clss.py
+-
+name
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>216</x>
+      <y>488</y>
+      <w>88</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>90.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>280</x>
+      <y>488</y>
+      <w>72</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>10.0;10.0;70.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>560</x>
+      <y>232</y>
+      <w>144</w>
+      <h>136</h>
+    </coordinates>
+    <panel_attributes>PartsSet
+fc_clss.py
+-
+-
+append_part(part)
+get_parts()
+set_part_place(child_part)
+set_color(color, part)
+set_place(FreeCAD.Vector) 
+export_stl (part, str)
+save_fcad(str)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>480</x>
+      <y>200</y>
+      <w>192</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>10.0;10.0;220.0;40.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>560</x>
+      <y>392</y>
+      <w>160</w>
+      <h>136</h>
+    </coordinates>
+    <panel_attributes>BearWashSet
+fc_clss.py
+-
+metric : int / float
+pos : FreeCAD.Vector
+d_o : dictionary of distance Vectors
+w_o : dictionary of distance Vectors
+h_o : dictionary of distance Vectors
+pos_o : FreeCAD.Vector
+parts_lst : list of the parts
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>632</x>
+      <y>360</y>
+      <w>24</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;40.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>160</x>
+      <y>224</y>
+      <w>176</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>ShpIdlerTensioner
+tensioner_clss.py
+-
+shp : OCC shape
+d_o : dictionary of distance Vectors
+w_o : dictionary of distance Vectors
+h_o : dictionary of distance Vectors
+h0_cen, d0_cen, w0_cen: int
+pos_o : FreeCAD.Vector
+prnt_ax : FreeCAD.Vector
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>240</x>
+      <y>200</y>
+      <w>264</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>310.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>560</x>
+      <y>536</y>
+      <w>160</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>PartIdlerTensioner
+tensioner_clss.py
+-
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>72</x>
+      <y>328</y>
+      <w>504</w>
+      <h>272</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>10.0;10.0;610.0;320.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>256</x>
+      <y>328</y>
+      <w>320</w>
+      <h>272</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+</panel_attributes>
+    <additional_attributes>10.0;10.0;380.0;320.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>512</x>
+      <y>504</y>
+      <w>64</w>
+      <h>32</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0..n</panel_attributes>
+    <additional_attributes>10.0;10.0;60.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>424</x>
+      <y>448</y>
+      <w>96</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Din9021Washer
+fc_clss.py
+-
+name
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>424</x>
+      <y>504</y>
+      <w>96</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>Din125Washer
+fc_clss.py
+-
+name
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>792</x>
+      <y>416</y>
+      <w>160</w>
+      <h>136</h>
+    </coordinates>
+    <panel_attributes>IdlerTensionerSet
+tensioner_clss.py
+-
+dimensions...
+pos_d,w,h : int
+pos : FreeCAD.Vector
+d_o : dictionary of distance Vectors
+w_o : dictionary of distance Vectors
+h_o : dictionary of distance Vectors
+pos_o : FreeCAD.Vector
+parts_lst : list of the parts
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>712</x>
+      <y>480</y>
+      <w>96</w>
+      <h>64</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;100.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>712</x>
+      <y>512</y>
+      <w>80</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;50.0;80.0;10.0</additional_attributes>
+  </element>
+</diagram>
