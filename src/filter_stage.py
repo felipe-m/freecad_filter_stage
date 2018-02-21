@@ -125,6 +125,7 @@ import tensioner_clss # Idler pulley and belt tensioner
 import filter_holder_clss # Filter holder
 import comps   # CAD components
 import partgroup 
+import parts
 
 from fcfun import V0, VX, VY, VZ, V0ROT
 from fcfun import VXN, VYN, VZN
@@ -141,7 +142,7 @@ axis_front = VX
 axis_up    = VZ
 
 # distance in mm that the filter is going to move
-mov_distance = 20.
+mov_distance = 60.
 
 # width of the timming belt
 belt_w = 6.
@@ -207,7 +208,7 @@ tensioner_pos_h = 3 # middle point of the pulley
 
 tensioner = tensioner_clss.TensionerSet(
                      aluprof_w = 20.,
-                     belt_pos_h = 20., 
+                     belt_pos_h = 30., 
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,
@@ -228,6 +229,30 @@ tensioner = tensioner_clss.TensionerSet(
                      pos_h = tensioner_pos_h,
                      pos = tensioner_pos,
                      name = 'tensioner_set')
+
+motor_holder_pos = (  belt_pos
+                     + DraftVecUtils.scale(axis_mov, - mov_distance)
+                     + DraftVecUtils.scale(axis_up, -20))
+
+
+motor_holder = parts.NemaMotorHolder ( 
+                  nema_size = 17,
+                  wall_thick = 6.,
+                  motor_thick = 4.,
+                  reinf_thick = 4.,
+                  motor_min_h = 10.,
+                  motor_max_h = 30,
+                  motor_xtr_space = 2., # counting on one side
+                  bolt_wall_d = 4.,
+                  chmf_r = 1.,
+                  fc_axis_h = axis_up,
+                  fc_axis_n = axis_mov.negative(),
+                  ref_axis = 0, 
+                  #ref_bolt = 0,
+                  pos = motor_holder_pos,
+                  wfco = 1,
+                  name = 'nema_holder')
+
 
 
 
