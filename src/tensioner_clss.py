@@ -2036,9 +2036,10 @@ t_set = TensionerSet(
                      axis_w = VY,
                      axis_h = VZ,
                      pos_d = 1,
-                     pos_w = 4,
-                     pos_h = 3,
-                     pos = FreeCAD.Vector(1,0,10),
+                     pos_w = 0,
+                     pos_h = 4,
+                     #pos = FreeCAD.Vector(1,0,10),
+                     pos = FreeCAD.Vector(0,0,0),
                      name = 'tensioner_set')
 
 
