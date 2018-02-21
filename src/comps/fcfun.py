@@ -94,6 +94,23 @@ EQUAL_TOL = 0.001 # less than a micron is the same
 COS30 = 0.86603   
 COS45 = 0.707   
 
+
+
+def RotateView(axisX=1.0,axisY=0.0,axisZ=0.0,angle=45.0):
+    import math
+    from pivy import coin
+    try:
+        cam = Gui.ActiveDocument.ActiveView.getCameraNode()
+        rot = coin.SbRotation()
+        rot.setValue(coin.SbVec3f(axisX,axisY,axisZ),math.radians(angle))
+        nrot = cam.orientation.getValue() * rot
+        cam.orientation = nrot
+        print axisX," ",axisY," ",axisZ," ",angle
+    except Exception:
+        print "Not ActiveView " 
+
+
+
 # to compare numbers that they are almost the same, but because of 
 # floating point calculations they are not exactly the same
 def equ (x,y):
@@ -1986,7 +2003,7 @@ def add3CylsHole (r1, h1, r2, h2, rring, hring, thick,
 #              :   :
 #              :.l.:
 #
-# l: length of the parallels
+# l: length of the parallels (from center to center)
 # r: Radius of the semicircles
 # axis_rect: 'x' the parallels are on axis X (as in the drawing)
 #             'y' the parallels are on axis Y
@@ -2050,7 +2067,7 @@ def shp_stadium_wire_dir (length, radius, fc_axis_l = VX,
                length
  
     Arguments:
-    length: length of the parallels
+    length: length of the parallels (distance between semcircle centers)
     radius: Radius of the semicircles
     fc_axis_l: vector on the direction of the paralles
     fc_axis_s: vector on the direction perpendicular to the paralles
@@ -2189,6 +2206,7 @@ def shp_stadium_dir (
     makes a stadium shape in any direction
     see shp_stadium_wire_dir for the arguments
 
+    length: length of the parallels (distance between semcircle centers)
     height: height the stadium
     fc_axis_s: direction on the short axis, not necessary if ref_s == 1
          it will be the perpendicular of the other 2 vectors
@@ -2625,7 +2643,7 @@ def shp_belt_dir (center_sep, rad1, rad2, height,
     fc_axis_h: vector on the hieght direction
     ref_l: reference (zero) of the fc_axis_l
             1: reference on the center 
-            2: reference at one of the semicircle centers (point 2)
+            2: reference at rad1 semicircle centers (point 2)
                the other circle center will be on the direction of fc_axis_l
             3: reference at the end of rad1 circle
                the other end will be on the direction of fc_axis_l
@@ -3006,6 +3024,453 @@ def wire_sim_xy (vecList):
     return totwire
 
 # ------------------- end def wire_sim_xy
+
+
+# ------------------- def wire_cableturn
+
+def wire_cableturn (d, w, corner_r,
+                        conn_d, conn_sep,
+                        xtr_conn_d = 0,
+                        closed = 0,
+                        axis_d = VY,
+                        axis_w = VX,
+                        pos_d = 0,
+                        pos_w = 0,
+                        pos=V0):
+
+    """
+    Creates a electrical wire turn, in any direction
+    But it is a wire in FreeCAD, has no volumen
+
+
+           axis_d
+             :
+             :
+        .....:w ..... 
+       :     :      :                          pos_d
+        ____________ ...... ..                   3
+       /            \      :..corner_r
+       |            |      :
+       |            |      :
+       |            |      + d                   2
+       |            |      :
+       |            |      :
+       |            |      :
+        \___ o ____/ ......:                     1
+            \ /            :
+            | |            + conn_d
+            | |            : 
+            | |............:...........axis_w    0
+            : :
+           conn_sep
+
+       1     0  pos_w
+
+       pos_o (orig) is at pos_d=0, pos_w=0, marked with o
+
+
+ 
+    Parameters:
+    -----------
+    d : float
+        depth/length of the turn
+    w : float
+        width of the turn
+    corner_r : float
+        radius of the corners
+    conn_d : float
+        depth/length of the connector part
+        0: there is no connecting wire
+    xtr_conn_d : float
+        if conn_d > 0, there can be and extra length of connector to make 
+        unions, it will not be counted as pos_d = 0
+        It will not work well if it is closed
+    conn_sep : float
+        separation of the connectors
+    closed : boolean
+        0 : the ends are not closed
+        1 : the ends are closed
+    axis_d :  FreeCAD.Vector
+        Coordinate System Vector along the depth
+    axis_w :  FreeCAD.Vector
+        Coordinate System Vector along the width
+    pos_d : int
+        location of pos along the axis_d (0,1,2,3), see drawing
+        0: reference at the beginning of the connector
+        1: reference at the beginning of the turn, at the side of the connector
+        2: reference at the middle of the turn
+        3: reference at the end of the turn
+    pos_w : int
+        location of pos along the axis_w (0,1), see drawing
+        0: reference at the center of simmetry
+        1: reference at the end of the turn
+    pos: FreeCAD vector of the position of the reference
+
+
+    returns the shape of the wire
+    """
+
+    # normalize the axis
+    axis_d = DraftVecUtils.scaleTo(axis_d,1)
+    axis_w = DraftVecUtils.scaleTo(axis_w,1)
+
+    d_o = {}
+    # distances from the pos_o to pos_d 
+    d_o[0] = DraftVecUtils.scale(axis_d, -conn_d)
+    d_o[1] = V0
+    d_o[2] = DraftVecUtils.scale(axis_d, d/2.)
+    d_o[3] = DraftVecUtils.scale(axis_d, d)
+
+    xtr_conn_d_vec = DraftVecUtils.scale(axis_d, -xtr_conn_d)
+
+    w_o = {}
+    # distances from the pos_o to pos_w 
+    w_o[0] = V0
+    w_o[1] = DraftVecUtils.scale(axis_w, -w/2.)
+
+    # reference position
+    pos_o = pos + d_o[pos_d].negative() + w_o[pos_w].negative()
+
+    if (2 * corner_r + conn_sep >= w ) or (2 * corner_r >= d):
+        corner_r = min(d/2.1,(w-conn_sep)/4.1)
+        logger.warning('radius too large, taking:' + str(corner_r))
+
+    
+
+    #           w_t
+    #       ____________  ..... ..                   3
+    #      /B          C\      :..corner_r
+    #      |            |      :
+    #      |            |      :
+    # w_l  |            | w_r  + d                   2
+    #      |            |      :
+    #      |            |      :
+    #      | A         D|      :
+    #       \___   ____/ ......:                     1
+    #           \ /            :
+    #           | |            + conn_d
+    #           | |            : 
+    #           \_/............:...........axis_w    0
+    #
+    # Define the 4 corners 0, 1, 2, 3, that are at the center of the radius
+    # of the corners
+
+    # vector with length of the radius along axis_w 
+    d_rad =  DraftVecUtils.scale(axis_d, corner_r)
+    d_rad_n = d_rad.negative()
+    w_rad =  DraftVecUtils.scale(axis_w, corner_r)
+    w_rad_n = w_rad.negative()
+    # vector with half the length of the separation of connectors along axis_w 
+    w_hsep =  DraftVecUtils.scale(axis_w, conn_sep/2.)
+    w_hsep_n = w_hsep.negative()
+
+    pt_A = pos_o + d_o[1] + w_o[1] + d_rad + w_rad
+    pt_B = pos_o + d_o[3] + w_o[1] + d_rad_n + w_rad
+    pt_C = pos_o + d_o[3] + w_o[1].negative() + d_rad_n + w_rad_n
+    pt_D = pos_o + d_o[1] + w_o[1].negative() + d_rad + w_rad_n
+
+    if corner_r > 0 :
+        corner_r45 = corner_r/math.sqrt(2)
+        d_rad45 =  DraftVecUtils.scale(axis_d, corner_r45)
+        d_rad45_n = d_rad45.negative()
+        w_rad45 =  DraftVecUtils.scale(axis_w, corner_r45)
+        w_rad45_n = w_rad45.negative()
+
+        pt_A1 = pt_A + d_rad_n
+        pt_A2 = pt_A + d_rad45_n + w_rad45_n
+        pt_A3 = pt_A + w_rad_n
+        corner_A = Part.Arc(pt_A1, pt_A2, pt_A3).toShape()
+
+        pt_B1 = pt_B + w_rad_n
+        pt_B2 = pt_B + d_rad45 + w_rad45_n
+        pt_B3 = pt_B + d_rad
+        corner_B = Part.Arc(pt_B1, pt_B2, pt_B3).toShape()
+
+        pt_C1 = pt_C + d_rad
+        pt_C2 = pt_C + d_rad45 + w_rad45
+        pt_C3 = pt_C + w_rad
+        corner_C = Part.Arc(pt_C1, pt_C2, pt_C3).toShape()
+
+        pt_D1 = pt_D + w_rad
+        pt_D2 = pt_D + d_rad45_n + w_rad45
+        pt_D3 = pt_D + d_rad_n
+        corner_D = Part.Arc(pt_D1, pt_D2, pt_D3).toShape()
+
+        line_AB = Part.Line(pt_A3, pt_B1).toShape()
+        line_BC = Part.Line(pt_B3, pt_C1).toShape()
+        line_CD = Part.Line(pt_C3, pt_D1).toShape()
+
+        top_wire = Part.Wire([corner_A, line_AB,
+                              corner_B, line_BC,
+                              corner_C, line_CD,
+                              corner_D])
+        top_wire_firstpt = pt_A1
+        top_wire_lastpt = pt_D3
+        if conn_d == 0:
+            # the turn ends here:
+            if closed == 1:
+                line_bot = Part.Line(pt_D3, pt_A1).toShape()
+                cable_wire = Part.Wire([line_bot,top_wire,])
+            else:
+                #
+                #      | A         D|
+                #       \___E   F___/
+                #      
+                pt_E =  pos_o + w_hsep_n
+                pt_F =  pos_o + w_hsep
+                line_EA = Part.Line(pt_E, pt_A1).toShape()
+                line_DF = Part.Line(pt_D3, pt_F).toShape()
+                cable_wire = Part.Wire([line_EA,top_wire, line_DF])
+        else :
+            if conn_d < corner_r :
+                conn_d = corner_r * 1.1
+                logger.warning('radius larger than connector length')
+                logger.warning('making it: ' + str(conn_d))
+                logger.warning('Distances mabe be WRONG')
+            # Points E1, E2, E3, F1, F2, F3:
+            pt_E = pos_o + w_hsep_n + d_rad_n + w_rad_n # radius center
+            pt_F = pos_o + w_hsep + d_rad_n + w_rad # radius center
+            # E3 is the closest to A
+            pt_E3 = pt_E + d_rad
+            pt_E2 = pt_E + d_rad45 + w_rad45
+            pt_E1 = pt_E + w_rad
+
+            # F1 is the closest to D
+            pt_F3 = pt_F + w_rad_n
+            pt_F2 = pt_F + d_rad45 + w_rad45_n
+            pt_F1 = pt_F + d_rad
+            
+            corner_E = Part.Arc(pt_E1, pt_E2, pt_E3).toShape()
+            corner_F = Part.Arc(pt_F1, pt_F2, pt_F3).toShape()
+            line_EA = Part.Line(pt_E3, pt_A1).toShape()
+            line_DF = Part.Line(pt_D3, pt_F1).toShape()
+
+            pt_G =  pos_o + w_hsep_n + d_o[0] + xtr_conn_d_vec
+            pt_H =  pos_o + w_hsep + d_o[0] + xtr_conn_d_vec
+            line_GE = Part.Line(pt_G, pt_E1).toShape()
+            line_FH = Part.Line(pt_F3, pt_H).toShape()
+
+
+            cable_wire = Part.Wire([line_GE, corner_E, line_EA,top_wire,
+                                    line_DF, corner_F, line_FH])
+            if closed == 1:
+                line_HG = Part.Line(pt_H, pt_G).toShape()
+                cable_wire = Part.Wire([cable_wire, line_HG])
+        
+        
+    else : # no corners
+        line_AB = Part.Line(pt_A, pt_B).toShape()
+        line_BC = Part.Line(pt_B, pt_C).toShape()
+        line_CD = Part.Line(pt_C, pt_D).toShape()
+        top_wire = Part.Wire([line_AB, line_BC,line_CD])
+        top_wire_firstpt = pt_A
+        top_wire_lastpt = pt_D
+        # points E - F
+        #      |            |
+        #      |____E   F___|
+        #      
+        if conn_d == 0:
+            # the turn ends here:
+            if closed == 1:
+                line_bot = Part.Line(pt_D, pt_A).toShape()
+                cable_wire = Part.Wire([line_bot,top_wire,])
+            else :
+                pt_E =  pos_o + w_hsep_n
+                pt_F =  pos_o + w_hsep
+                line_EA = Part.Line(pt_E, pt_A).toShape()
+                line_DF = Part.Line(pt_D, pt_F).toShape()
+                cable_wire = Part.Wire([line_EA,top_wire, line_DF])
+        else:
+            pt_E =  pos_o + w_hsep_n
+            pt_F =  pos_o + w_hsep
+            line_EA = Part.Line(pt_E, pt_A).toShape()
+            line_DF = Part.Line(pt_D, pt_F).toShape()
+            # points E - F
+            #      |            |
+            #      |____E   F___|
+            #           |   |
+            #           |   |
+            #           G   H
+            pt_G =  pt_E + d_o[0] + xtr_conn_d_vec
+            pt_H =  pt_F + d_o[0] + xtr_conn_d_vec
+            line_GE = Part.Line(pt_G, pt_E).toShape()
+            line_FH = Part.Line(pt_F, pt_H).toShape()
+            cable_wire = Part.Wire([line_GE, line_EA,top_wire,
+                                    line_DF, line_FH])
+            if closed == 1 :
+                line_HG = Part.Line(pt_H, pt_G).toShape()
+                cable_wire = Part.Wire([cable_wire, line_HG])
+
+
+    #Part.show(cable_wire)
+    return (cable_wire)
+
+#cablewire=  wire_cableturn (d=20, w=30, corner_r=1,
+#                        conn_d=4, conn_sep=3,
+#                        closed = 0,
+#                        axis_d = VY,
+#                        axis_w = VX,
+#                        pos_d = 0,
+#                        pos_w = 0,
+#                        pos=V0)
+
+
+
+
+
+
+# ------------------- def shp_cableturn
+
+def shp_cableturn (d, w, thick_d, corner_r,
+                        conn_d, conn_sep,
+                        xtr_conn_d = 0,
+                        closed = 0,
+                        axis_d = VY,
+                        axis_w = VX,
+                        pos_d = 0,
+                        pos_w = 0,
+                        pos=V0):
+
+    """
+    Creates a shape of an electrical cable turn, in any direction
+    But it is a shape in FreeCAD
+    See function wire_cableturn
+
+
+           axis_d
+             :
+             :
+        .....:w ..... 
+       :     :      :                          pos_d
+        ____________ ...... ..                   3
+       /            \      :..corner_r
+       |            |      :
+       |            |      :
+       |            |      + d                   2
+       |            |      :
+       |            |      :
+       |            |      :
+        \___ o ____/ ......:                     1
+            \ /            :
+            | |            + conn_d
+            | |            : 
+            | |............:...........axis_w    0
+            : :
+           conn_sep
+
+       1     0  pos_w
+
+       pos_o (orig) is at pos_d=0, pos_w=0, marked with o
+
+
+ 
+    Parameters:
+    -----------
+    d : float
+        depth/length of the turn
+    w : float
+        width of the turn
+    thick_d : float
+        diameter of the wire
+    corner_r : float
+        radius of the corners
+    conn_d : float
+        depth/length of the connector part
+        0: there is no connecting wire
+    conn_sep : float
+        separation of the connectors
+    xtr_conn_d : float
+        if conn_d > 0, there can be and extra length of connector to make 
+        unions, it will not be counted as pos_d = 0
+        It will not work well if it is closed
+    closed : boolean
+        0 : the ends are not closed
+        1 : the ends are closed
+    axis_d :  FreeCAD.Vector
+        Coordinate System Vector along the depth
+    axis_w :  FreeCAD.Vector
+        Coordinate System Vector along the width
+    pos_d : int
+        location of pos along the axis_d (0,1,2,3), see drawing
+        0: reference at the beginning of the connector
+        1: reference at the beginning of the turn, at the side of the connector
+        2: reference at the middle of the turn
+        3: reference at the end of the turn
+    pos_w : int
+        location of pos along the axis_w (0,1), see drawing
+        0: reference at the center of simmetry
+        1: reference at the end of the turn
+    pos: FreeCAD vector of the position of the reference
+
+
+    returns the shape of the wire
+    """
+
+    # normalize the axis
+    axis_d = DraftVecUtils.scaleTo(axis_d,1)
+    axis_w = DraftVecUtils.scaleTo(axis_w,1)
+
+
+    cablewire =  wire_cableturn (d=d, w=w, corner_r=corner_r,
+                                 conn_d=conn_d, conn_sep=conn_sep,
+                                 xtr_conn_d = xtr_conn_d,
+                                 closed = closed,
+                                 axis_d = axis_d,
+                                 axis_w = axis_w,
+                                 pos_d = pos_d,
+                                 pos_w = pos_w,
+                                 pos=pos)
+
+
+
+    d_o = {}
+    # distances from the pos_o to pos_d 
+    d_o[0] = DraftVecUtils.scale(axis_d, -conn_d)
+    d_o[1] = V0
+    d_o[2] = DraftVecUtils.scale(axis_d, d/2.)
+    d_o[3] = DraftVecUtils.scale(axis_d, d)
+
+    w_o = {}
+    # distances from the pos_o to pos_w 
+    w_o[0] = V0
+    w_o[1] = DraftVecUtils.scale(axis_w, -w/2.)
+
+    # reference position
+    pos_o = pos + d_o[pos_d].negative() + w_o[pos_w].negative()
+
+    # the section of the wire at the end pos_d = 3
+    pos_section = pos_o + d_o[3]
+
+    circle = Part.makeCircle (thick_d/2., pos_section, axis_w)
+    wire_circle = Part.Wire(circle)
+    face_circle = Part.Face(wire_circle)
+
+    #shp_cable = cablewire.makePipe(wire_circle) # hollow tube
+    #shp_cable = cablewire.makePipe(face_circle) # filled tube
+    # filled tube
+    # Is solid, Frenet, 0: defaul, 1: right corners, 2: rounded corners
+    shp_cable = cablewire.makePipeShell([wire_circle], True, False, 2)
+    
+    #Part.show(shp_cable)
+
+    return (shp_cable)
+
+
+shp_cable = shp_cableturn (d = 20, w=30, thick_d=1,
+                        corner_r=1,
+                        conn_d=4, conn_sep=3,
+                        xtr_conn_d = 10,
+                        closed = 0,
+                        axis_d = VY,
+                        axis_w = VX,
+                        pos_d = 0,
+                        pos_w = 0,
+                        pos=V0)
+
+
+
+
+
 
 
 def regpolygon_vecl (n_sides, radius, x_angle=0):
@@ -4842,17 +5307,19 @@ def shp_filletchamfer_dir (shp, fc_axis = VZ,  fillet = 1, radius=1):
     for edge in shp.Edges:
         #logger.debug('filletchamfer: edge Length: %s', edge.Length)
         # get the FreeCAD.Vector with the point
-        p0 = edge.Vertexes[0].Point
-        p1 = edge.Vertexes[1].Point
-        v_vertex = p1.sub(p0)  #substraction
-        # I could calculate the angle, but I think it will take more
-        # time than normalizing and checking if they are the same
-        v_vertex.normalize()
-        # check if they are the same vector (they are parallel):
-        if ( DraftVecUtils.equals(v_vertex, nnorm) or
-             DraftVecUtils.equals(v_vertex, nnorm_neg)):
-            edgelist.append(edge)
-            #logger.debug('append edge Length: %s', edge.Length)
+        if len(edge.Vertexes) == 2:
+            p0 = edge.Vertexes[0].Point
+            p1 = edge.Vertexes[1].Point
+            v_vertex = p1.sub(p0)  #substraction
+            # I could calculate the angle, but I think it will take more
+            # time than normalizing and checking if they are the same
+            v_vertex.normalize()
+            # check if they are the same vector (they are parallel):
+            if ( DraftVecUtils.equals(v_vertex, nnorm) or
+                 DraftVecUtils.equals(v_vertex, nnorm_neg)):
+                edgelist.append(edge)
+                #logger.debug('append edge Length: %s', edge.Length)
+                #logger.debug(str(p0) + ' - ' + str(p1))
 
     if len(edgelist) != 0:
         if fillet == 1:

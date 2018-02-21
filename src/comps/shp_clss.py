@@ -60,21 +60,35 @@ class Obj3D (object):
             
     """
     def __init__(self, axis_d = None, axis_w = None, axis_h = None):
-        if axis_h is not None:
-            axis_h = DraftVecUtils.scaleTo(axis_h,1)
-        if axis_d is not None:
-            axis_d = DraftVecUtils.scaleTo(axis_d,1)
-        if axis_w is not None:
-            axis_w = DraftVecUtils.scaleTo(axis_w,1)
-        self.axis_d = axis_d
-        self.axis_w = axis_w
-        self.axis_h = axis_h
-
         # the TopoShape has an origin, and distance vectors from it to 
         # the different points along the coordinate system  
         self.d_o = {}  # along axis_d
         self.w_o = {}  # along axis_w
         self.h_o = {}  # along axis_h
+        if axis_h is not None:
+            axis_h = DraftVecUtils.scaleTo(axis_h,1)
+        else:
+            self.h_o[0] = V0
+            self.pos_h = 0
+            axis_h = V0
+        self.axis_h = axis_h
+
+        if axis_d is not None:
+            axis_d = DraftVecUtils.scaleTo(axis_d,1)
+        else:
+            self.d_o[0] = V0
+            self.pos_d = 0
+            axis_d = V0
+        self.axis_d = axis_d
+
+        if axis_w is not None:
+            axis_w = DraftVecUtils.scaleTo(axis_w,1)
+        else:
+            self.w_o[0] = V0
+            self.pos_w = 0
+            axis_w = V0
+        self.axis_w = axis_w
+
         
         self.pos_o_adjust = V0
 
@@ -150,10 +164,9 @@ class Obj3D (object):
         Parameters:
         -----------
         adjust : int
-            If, when created, wasnt possible to set the piece at pos_o, and it
-			was placed at pos, then the position will be adjusted
+             1: If, when created, wasnt possible to set the piece at pos_o,
+                and it was placed at pos, then the position will be adjusted
             
-        The rest of the arguments can be taken No arguments, all values are taken from self
         """
 
         vec_from_pos_o =  (  self.d_o[self.pos_d]

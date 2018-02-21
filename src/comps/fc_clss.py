@@ -110,6 +110,7 @@ class SinglePart (object):
         #self.place = V0
         #self.displacement = V0
         self.rel_place = V0
+        self.extra_mov = V0
 
         self.create_fco(self.name)
         #self.tol = tol
@@ -185,7 +186,8 @@ class SinglePart (object):
         #if type(place) is tuple:
         #   place = FreeCAD.Vector(place) # change to FreeCAD.Vector
         
-        tot_displ = self.pos_o_adjust + displacement + self.rel_place
+        tot_displ = (  self.pos_o_adjust + displacement
+                     + self.rel_place + self.extra_mov)
         self.tot_displ = tot_displ
         self.fco.Placement.Base = tot_displ
     
@@ -303,6 +305,7 @@ class PartsSet (shp_clss.Obj3D):
         self.parts_lst = [] # list of all the parts (SinglePart, ...)
         self.abs_place = V0
         self.rel_place = V0
+        self.extra_mov = V0
         self.displacement = V0
 
     def append_part (self, part):
@@ -314,6 +317,20 @@ class PartsSet (shp_clss.Obj3D):
         """ get a list of the parts, 
         """
         return self.parts_lst
+        
+    def make_group (self):
+        self.fco = self.doc.addObject("Part::Compound", self.name)
+        list_fco = []
+        part_list = self.get_parts()
+        for part in part_list:
+            try:
+                fco_i = part.fco
+            except AttributeError:
+                logger.error('part is not a single part or compound')
+            else:
+                list_fco.append(fco_i)
+        self.fco.Links = list_fco
+        self.doc.recompute()
         
     def get_abs_place (self):
         """ gets the placement of the object, with any adjustment
@@ -338,16 +355,16 @@ class PartsSet (shp_clss.Obj3D):
         Adds this displacement to the part's children
         """
         
-        #displacement = self.place + self.pos_o_adjust + vec_o_to_childpart
+        rel_place = self.pos_o_adjust + vec_o_to_childpart
         if add == 0:
-            child_part.rel_place = vec_o_to_childpart
+            child_part.rel_place = rel_place
         else:
-            child_part.rel_place = child_part.rel_place + vec_o_to_childpart
+            child_part.rel_place = child_part.rel_place + rel_place
         #child_part.abs_place = self.get_abs_place() + child_part.rel_place
-        try:
-            child_part.fco.Placement.Base = child_part.abs_place
-        except AttributeError: # only SimpleParts objects have fco, not PartsSet
-            pass
+        #try:
+        #    child_part.fco.Placement.Base = child_part.abs_place
+        #except AttributeError: # only SimpleParts objects have fco, not PartsSet
+        #    pass
         # add this displacement to all the children
         #part_list = child_part.get_parts()
         #for grandchild_i in part_list:
@@ -401,11 +418,18 @@ class PartsSet (shp_clss.Obj3D):
         #if type(place) is tuple:
         #   place = FreeCAD.Vector(place) # change to FreeCAD.Vector
         
-        tot_displ = self.pos_o_adjust + displacement + self.rel_place
+        # having pos_o_adjust and rel_place made the sum twice
+        #tot_displ = (  self.pos_o_adjust + displacement 
+        tot_displ = (  displacement 
+                     + self.rel_place + self.extra_mov)
         self.tot_displ = tot_displ
-        # set the new position for every freecad object
-        for part in self.parts_lst:
-            part.place_fcos(tot_displ)
+        #if this set has been grouped, we dont have to go to its children
+        try:
+            self.fco.Placement.Base = tot_displ
+        except AttributeError:
+            # Not grouped: set the new position for every freecad object
+            for part in self.parts_lst:
+                part.place_fcos(tot_displ)
 
 
     # ----- Export to STL method
@@ -825,6 +849,10 @@ class BearWashSet (PartsSet):
         2: pos is at the bearing external radius
         3: pos is at the large washer external radius
         
+    group : int
+        1: make a group
+        0: leave as individual componentes
+        
     pos : FreeCAD.Vector
         Position of the cylinder, taking into account where the center is
 
@@ -894,6 +922,7 @@ class BearWashSet (PartsSet):
                  axis_d = None, pos_d = 0,
                  axis_w = None, pos_w = 0,
                  pos = V0,
+                 group = 1,
                  name = ''):
 
         default_name = 'bearing_idlpulley_m' + str(metric)
@@ -1010,6 +1039,8 @@ class BearWashSet (PartsSet):
                                     pos = rwash_t.get_pos_h(1),
                                     name = 'idlpull_lwash_bt')
             self.append_part(lwash_t)
+            if group == 1:
+                self.make_group ()
 
 
 
