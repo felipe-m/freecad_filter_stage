@@ -260,6 +260,10 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
         self.nuttens_dict = kcomp.D934[bolttens_mtr]
         self.nut_space = kcomp.NUT_HOLE_MULT_H + self.nuttens_dict['l_tol']
         self.nut_holder_tot = self.nut_space + 2* self.nut_holder_thick
+        # circum diameter of the nut
+        self.tensnut_circ_d = self.nuttens_dict['circ_d']
+        # circum radius of the nut, with tolerance
+        self.tensnut_circ_r_tol = self.nuttens_dict['circ_r_tol']
         # the apotheme of the nut
         self.tensnut_ap_tol = (self.nuttens_dict['a2']+tol/2.)/2.
 
@@ -275,7 +279,7 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
                                + tens_stroke
                                + self.pulley_stroke_dist)
 
-        self.tens_w = 2 * idler_r_in 
+        self.tens_w = max(2 * idler_r_in, self.tensnut_circ_d)
 
         self.d0_cen = 0
         self.w0_cen = 1 # symmetrical
@@ -538,7 +542,7 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
         # position at pos_d = 1
 
         shp08 = fcfun.shp_nuthole (
-                               nut_r = self.bolttens_r_tol + kcomp.STOL,
+                               nut_r = self.tensnut_circ_r_tol,
                                nut_h = self.nut_space,
                                hole_h = self.tens_w/2,
                                xtr_nut = 1, xtr_hole = 1, 
@@ -2019,18 +2023,18 @@ class TensionerSet (fc_clss.PartsSet):
 
 t_set = TensionerSet(
                      aluprof_w = 20.,
-                     belt_pos_h = 20., 
+                     belt_pos_h = 17., 
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
-                     tens_stroke = 20. ,
+                     tens_stroke = 10. ,
                      wall_thick = 3.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
-                     nut_holder_thick = 4. ,
-                     opt_tens_chmf = 1,
+                     nut_holder_thick = 3. ,
+                     opt_tens_chmf = 0,
                      tol = kcomp.TOL,
                      axis_d = VX,
                      axis_w = VY,
