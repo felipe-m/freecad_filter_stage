@@ -147,6 +147,11 @@ nut_space = kcomp.NUT_HOLE_MULT_H + d_nuttens['l_tol']
 
 nut_holder_total = nut_space + 2* nut_holder_thick
 
+# circum diameter of the nut
+tensnut_circ_d = d_nuttens['circ_d']
+# circum radius of the nut, with tolerance
+tensnut_circ_r_tol = d_nuttens['circ_r_tol']
+
 # the apotheme of the nut
 tensnut_ap_tol = (d_nuttens['a2']+STOL)/2.
 
@@ -168,7 +173,7 @@ tens_l = (  nut_holder_total
           + tens_stroke
           + 2 * idler_r_xtr
           + pulley_stroke_dist)
-tens_w = 2 * idler_r_xtr 
+tens_w = max(2 * idler_r_xtr, tensnut_circ_d)
 
 tens_w_tol = tens_w + TOL
 tens_h_tol = tens_h + TOL

@@ -394,7 +394,7 @@ Step07 is the red cylinder
                             kidler.tens_h/2.)
     #oscad: cylinder (r=m4_nut_r_tol+stol, h = nut_space, $fn=6);
     #oscad:  cube([tens_w/2 + 2, nut_space, 2*m4_nut_ap_tol]);
-    shp08 = fcfun.shp_nuthole (nut_r = kidler.bolttens_r_tol + kcomp.STOL,
+    shp08 = fcfun.shp_nuthole (nut_r = kidler.tensnut_circ_r_tol,
                                nut_h = kidler.nut_space,
                                hole_h = kidler.tens_w/2,
                                xtr_nut = 1, xtr_hole = 1, 

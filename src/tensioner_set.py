@@ -574,6 +574,12 @@ class Tensioner (object):
         self.d_nuttens = kcomp.D934[bolttens_d]
         self.nut_space = kcomp.NUT_HOLE_MULT_H + self.d_nuttens['l_tol']
         self.nut_holder_total = self.nut_space + 2* self.nut_holder_thick
+
+        # circum diameter of the nut
+        self.tensnut_circ_d = self.d_nuttens['circ_d']
+        # circum radius of the nut, with tolerance
+        self.tensnut_circ_r_tol = self.d_nuttens['circ_r_tol']
+
         # the apotheme of the nut
         self.tensnut_ap_tol = (self.d_nuttens['a2']+kcomp.STOL)/2.
 
@@ -591,7 +597,7 @@ class Tensioner (object):
                        + tens_stroke
                        + 2 * self.idler_r_xtr
                        + pulley_stroke_dist)
-        self.tens_w = 2 * self.idler_r_xtr 
+        self.tens_w = max(2 * self.idler_r_xtr, self.tensnut_circ_d)
 
         self.tens_w_tol = self.tens_w + kcomp.TOL
         self.tens_h_tol = self.tens_h + kcomp.TOL
@@ -1319,7 +1325,7 @@ class Tensioner (object):
         pos08 = (self.pos_tens0 + DraftVecUtils.scale(self.axis_l,
                                            self.nut_holder_thick))
         shp08 = fcfun.shp_nuthole (
-                               nut_r = self.bolttens_r_tol + kcomp.STOL,
+                               nut_r = self.tensnut_circ_r_tol,
                                nut_h = self.nut_space,
                                hole_h = self.tens_w/2,
                                xtr_nut = 1, xtr_hole = 1, 

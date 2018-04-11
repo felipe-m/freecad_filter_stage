@@ -23,11 +23,17 @@ https://github.com/felipe-m/oscad_filter_stage
 ![Idler Tensioner](imgs/small/idler_tensioner.png )
 1. [tensioner_holder.md](./tensioner_holder.md) Detailed explanation for the tensioner holder
 ![Tensioner Holder](imgs/small/tens_holder.png )
-1. The [tensioner_set.py](src/tensioner_set.py) module has no detailed explanation, but the code is explained based on the previous. This code combines the parts of the tensioner set and uses Python classes and methods.
-
-![Tensioner Set](imgs/small/tensioner_set.png )
 
 You can compare the same pieces made using OpenSCAD: https://github.com/felipe-m/oscad_filter_stage
+
+## Designs with no step by step explanations
+1. The [tensioner_set.py](src/tensioner_set.py) module has no detailed explanation, but the code is explained based on the previous. This code combines the parts of the tensioner set and uses Python classes and methods.
+![Tensioner Set](imgs/small/tensioner_set.png )
+1. [filter_holder_clss.py](src/filter_holder_clss.py) Filter holder, similar to the one made with OpenSCAD (https://github.com/felipe-m/oscad_filter_stage)
+![Filter Holder](imgs/small/filter_holder.png )
+1. [filter_stage.py](src/filter_stage.py) In the same design includes the filter holder, the belt tensioner and the motor holder
+
+
 
 
 
