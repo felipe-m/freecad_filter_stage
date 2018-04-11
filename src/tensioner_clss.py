@@ -1646,7 +1646,8 @@ class PartTensionerHolder (fc_clss.SinglePart, ShpTensionerHolder):
                                hold_bas_h = hold_bas_h,
                                opt_tens_chmf = opt_tens_chmf,
                                hold_hole_2sides = hold_hole_2sides,
-                               tol = 2.5*tol, #extratol needed
+                               #tol = tol,
+                               tol = 3*tol, #extra tol needed
                                axis_d = axis_d,
                                axis_w = axis_w,
                                axis_h = axis_h,
