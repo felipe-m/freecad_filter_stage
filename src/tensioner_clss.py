@@ -39,6 +39,26 @@
 #                            :
 #                            :
 #                           axis_d
+#
+# min_width = 1 Mininum width
+#
+#                 .... hold_bas_w ........
+#                :        .hold_w.        :
+#             washer diam:    wall_thick  :
+#                :..+....:      +         :
+#                :       :     : :        :
+#       pos_w:   2__1____:___0_:_:________:........axis_w
+#                |    |  | :   : |  |     |    :
+#                |  O |  | :   : |  |  O  |    + hold_bas_d
+#                |____|__| :   : |__|_____|....:
+#                        | :   : |
+#                        |_:___:_|
+#                          |   |
+#                           \_/
+#                            :
+#                            :
+#                           axis_d
+
 
 # the tensioner set is referenced on 3 perpendicular axis:
 # - axis_d: depth
@@ -1058,6 +1078,9 @@ class ShpTensionerHolder (shp_clss.Obj3D):
         each side of the holder or just on one side
         0: only at one side
         1: at both sides
+    min_width: make the rim the minimum: the diameter of the washer
+        0: normal width: the width of the aluminum profile
+        1: minimum width: diameter of the washer
     tol : float
         Tolerances to print
     axis_d : FreeCAD.Vector
@@ -1134,6 +1157,7 @@ class ShpTensionerHolder (shp_clss.Obj3D):
                  hold_bas_h = 0,
                  opt_tens_chmf = 1,
                  hold_hole_2sides = 1,
+                 min_width = 0,
                  tol = kcomp.TOL,
                  axis_d = VX,
                  axis_w = VY,
@@ -1157,11 +1181,27 @@ class ShpTensionerHolder (shp_clss.Obj3D):
         self.w0_cen = 1
         self.h0_cen = 0
 
+        # --- bolt to attach to the aluminum profile
+        # dictionary of the bolt
+        d_boltaluprof = kcomp.D912[boltaluprof_mtr]
+        self.d_boltaluprof = d_boltaluprof
+        self.boltaluprof_head_r_tol = d_boltaluprof['head_r_tol']
+        self.boltaluprof_r_tol = d_boltaluprof['shank_r_tol']
+        self.boltaluprof_head_l = d_boltaluprof['head_l']
+        # better to make a hole for the washer
+        self.washer_aluprof_d = kcomp.D125[boltaluprof_mtr]['do']
+        self.washer_aluprof_r_tol = self.washer_aluprof_d/2.+tol
+
         # calculation of the dimensions:
         self.hold_w = tens_w + 2*wall_thick
+
         self.hold_d = tens_d_inside + wall_thick
         # base of the tensioner holder
-        self.hold_bas_w = self.hold_w + 2*aluprof_w
+        if min_width == 0:
+            self.rim_w = aluprof_w
+        else:
+            self.rim_w = self.washer_aluprof_d
+        self.hold_bas_w = self.hold_w + 2*self.rim_w
         self.hold_bas_d = aluprof_w
         if hold_bas_h == 0:
             self.hold_bas_h = wall_thick
@@ -1173,15 +1213,6 @@ class ShpTensionerHolder (shp_clss.Obj3D):
         # the shank radius including tolerance
         self.bolttens_r_tol = self.bolttens_dict['shank_r_tol']
 
-        # --- bolt to attach to the aluminum profile
-        # dictionary of the bolt
-        d_boltaluprof = kcomp.D912[boltaluprof_mtr]
-        self.d_boltaluprof = d_boltaluprof
-        self.boltaluprof_head_r_tol = d_boltaluprof['head_r_tol']
-        self.boltaluprof_r_tol = d_boltaluprof['shank_r_tol']
-        self.boltaluprof_head_l = d_boltaluprof['head_l']
-        # better to make a hole for the washer
-        self.washer_aluprof_r_tol = kcomp.D125[boltaluprof_mtr]['do']/2.+tol
 
 
         #  check that the position of the belt is higher than the minimum
@@ -1213,8 +1244,8 @@ class ShpTensionerHolder (shp_clss.Obj3D):
         self.w_o[0] = V0
         self.w_o[1] = self.vec_w(-self.tens_w/2.)
         self.w_o[2] = self.vec_w(-self.hold_w/2.)
-        self.w_o[3] = self.vec_w(-self.hold_w/2. - aluprof_w/2.)
-        self.w_o[4] = self.vec_w(-self.hold_w/2. - aluprof_w)
+        self.w_o[3] = self.vec_w(-self.hold_w/2. - self.rim_w/2.)
+        self.w_o[4] = self.vec_w(-self.hold_w/2. - self.rim_w)
 
         # h_o[1] is the distance from o to 1
         self.h_o[0] = V0
@@ -1274,7 +1305,7 @@ class ShpTensionerHolder (shp_clss.Obj3D):
         #    --------------- step 03 --------------------------- 
         #    The main box
         #                          axis_h              axis_h
-        #                             :    aluprof_w     :
+        #                             :    rim_w         :
         #                             :    ..+....       :
         #           .............. ___:___:       :      :____________
         #           :             |       |       :      |            |
@@ -1306,7 +1337,7 @@ class ShpTensionerHolder (shp_clss.Obj3D):
                                   cw=1, cd=0, ch=0, pos=self.pos_o)
         #    --------------- step 04 --------------------------- 
         #    Fillets on top
-        #                          axis_h   aluprof_w
+        #                          axis_h   rim_w
         #                             :    ..+....:
         #           .............  ___4___        : 
         #           :             /       \       :
@@ -1619,6 +1650,7 @@ class PartTensionerHolder (fc_clss.SinglePart, ShpTensionerHolder):
                  hold_bas_h = 0,
                  opt_tens_chmf = 1,
                  hold_hole_2sides = 1,
+                 min_width = 0,
                  tol = kcomp.TOL,
                  axis_d = VX,
                  axis_w = VY,
@@ -1646,8 +1678,9 @@ class PartTensionerHolder (fc_clss.SinglePart, ShpTensionerHolder):
                                hold_bas_h = hold_bas_h,
                                opt_tens_chmf = opt_tens_chmf,
                                hold_hole_2sides = hold_hole_2sides,
+                               min_width = min_width,
                                #tol = tol,
-                               tol = 3*tol, #extra tol needed
+                               tol = 3.5*tol, #extra tol needed
                                axis_d = axis_d,
                                axis_w = axis_w,
                                axis_h = axis_h,
@@ -1781,6 +1814,9 @@ class TensionerSet (fc_clss.PartsSet):
         each side of the holder or just on one side
         0: only at one side
         1: at both sides
+    min_width: make the rim the minimum: the diameter of the washer
+        0: normal width: the width of the aluminum profile
+        1: minimum width: diameter of the washer
     tol : float
         Tolerances to print
     axis_d : FreeCAD.Vector
@@ -1869,6 +1905,7 @@ class TensionerSet (fc_clss.PartsSet):
                  pulley_stroke_dist = 0,
                  nut_holder_thick = 4. ,
                  opt_tens_chmf = 1,
+                 min_width = 0,
                  tol = kcomp.TOL,
                  axis_d = VX,
                  axis_w = VY,
@@ -1935,6 +1972,7 @@ class TensionerSet (fc_clss.PartsSet):
                                hold_bas_h = hold_bas_h,
                                opt_tens_chmf = opt_tens_chmf,
                                hold_hole_2sides = hold_hole_2sides,
+                               min_width = min_width,
                                tol = tol,
                                axis_d = self.axis_d,
                                axis_w = self.axis_w,
@@ -2022,9 +2060,12 @@ class TensionerSet (fc_clss.PartsSet):
         self.place_fcos()
 
 
+
 t_set = TensionerSet(
                      aluprof_w = 20.,
-                     belt_pos_h = 17., 
+                     #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
+                     #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
+                     belt_pos_h = 12.5, #bottom of belt:45 + 2.5 to center
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,
@@ -2036,6 +2077,7 @@ t_set = TensionerSet(
                      pulley_stroke_dist = 0,
                      nut_holder_thick = 3. ,
                      opt_tens_chmf = 0,
+                     min_width = 1,
                      tol = kcomp.TOL,
                      axis_d = VX,
                      axis_w = VY,
