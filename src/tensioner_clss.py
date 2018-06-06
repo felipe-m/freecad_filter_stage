@@ -1549,7 +1549,7 @@ class ShpTensionerHolder (shp_clss.Obj3D):
 
         # chamfer the union, points A and B:
         # Radius of chamfer
-        chmf_rad = min(aluprof_w/2, self.belt_pos_h - tens_h/2.)
+        chmf_rad = min(self.rim_w/2, self.belt_pos_h - tens_h/2.)
         # add the points A,B to the list to have the edges chamfered
         pts = [self.get_pos_dwh(0,2,1), self.get_pos_dwh(0,-2,1)]
         shp09d = fcfun.shp_filletchamfer_dirpts (shp=shp09c,
@@ -2065,7 +2065,8 @@ t_set = TensionerSet(
                      aluprof_w = 20.,
                      #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
                      #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
-                     belt_pos_h = 12.5, #bottom of belt:45 + 2.5 to center
+                     #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
+                     belt_pos_h = 15., # to center of belt
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,
