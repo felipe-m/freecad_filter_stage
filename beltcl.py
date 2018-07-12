@@ -37,6 +37,9 @@ from fcfun import V0, VX, VY, VZ, V0ROT, addBox, addCyl, fillet_len
 from fcfun import addBolt, addBoltNut_hole, NutHole
 from kcomp import TOL
 
+stl_dir = "/stl/"
+
+
 logger = logging.getLogger(__name__)
 
 # Belt dimensions:
@@ -880,7 +883,8 @@ class BeltClamp (object):
         #filepath = os.getcwd()
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        #stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + stl_dir
         stlFileName = stlPath + name + ".stl"
         self.shp.exportStl(stlFileName)
 

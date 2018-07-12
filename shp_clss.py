@@ -299,7 +299,7 @@ class Obj3D (object):
                 return vec
 
     def get_d_ab(self, pta, ptb):
-        """ returns the vector along axis_d from pos_w = pta to pos_w = ptb
+        """ returns the vector along axis_d from pos_d = pta to pos_d = ptb
         """
         vec = self.get_o_to_d(ptb).sub(self.get_o_to_d(pta))
         return vec

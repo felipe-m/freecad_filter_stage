@@ -85,6 +85,8 @@ CIAN_08   = (0.8, 1.0, 1.0)
 DSKYBLUE   = (0.0, 0.7, 1.0)
 LSKYBLUE   = (0.5, 0.7, 1.0)
 
+GRAY_08  = (0.8, 0.8, 0.8)
+
 # no rotation vector
 V0ROT = FreeCAD.Rotation(VZ,0)
 
@@ -3456,16 +3458,16 @@ def shp_cableturn (d, w, thick_d, corner_r,
     return (shp_cable)
 
 
-shp_cable = shp_cableturn (d = 20, w=30, thick_d=1,
-                        corner_r=1,
-                        conn_d=4, conn_sep=3,
-                        xtr_conn_d = 10,
-                        closed = 0,
-                        axis_d = VY,
-                        axis_w = VX,
-                        pos_d = 0,
-                        pos_w = 0,
-                        pos=V0)
+#shp_cable = shp_cableturn (d = 20, w=30, thick_d=1,
+#                        corner_r=1,
+#                        conn_d=4, conn_sep=3,
+#                        xtr_conn_d = 10,
+#                        closed = 0,
+#                        axis_d = VY,
+#                        axis_w = VX,
+#                        pos_d = 0,
+#                        pos_w = 0,
+#                        pos=V0)
 
 
 

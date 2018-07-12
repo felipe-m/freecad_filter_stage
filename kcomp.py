@@ -576,7 +576,7 @@ SC10UU = {
         }
 
 SC12UU = {
-        'L'          : 36.,
+        'L'          : 40., # they say 36, but it is too small
         'W'          : 42.,
         'H'          : 28.,
         'axis_h'     : 15.,
@@ -624,13 +624,13 @@ SC12UU_Pr = {
 SCUU = {
          8: SC8UU,
         10: SC10UU,
-        12: SC10UU
+        12: SC12UU
        }
 
 SCUU_Pr = {
          8: SC8UU_Pr,
         10: SC10UU_Pr,
-        12: SC10UU_Pr
+        12: SC12UU_Pr
        }
 
 
