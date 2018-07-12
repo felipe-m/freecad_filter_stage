@@ -39,6 +39,7 @@ from fcfun import addBolt, addBoltNut_hole, NutHole
 from kcomp import TOL
 
 
+stl_dir = "/stl/"
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(%(levelname)s - %(message)s')
@@ -353,7 +354,7 @@ class AluProfBracketPerp (object):
         #filepath = os.getcwd()
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
         self.shp.exportStl(stlFileName)
        
@@ -820,7 +821,7 @@ class AluProfBracketPerpFlap (object):
         #filepath = os.getcwd()
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
         self.shp.exportStl(stlFileName)
 
@@ -1212,7 +1213,7 @@ class AluProfBracketPerpTwin (object):
         #filepath = os.getcwd()
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
         self.shp.exportStl(stlFileName)
 
@@ -1633,10 +1634,11 @@ class IdlePulleyHolder (object):
 
 #doc = FreeCAD.newDocument()
 
-#idp = IdlePulleyHolder( profile_size=30.,
+#idp = IdlePulleyHolder( profile_size=20.,
 #                        pulleybolt_d=3.,
 #                        holdbolt_d = 5,
-#                        above_h = 47-15-9.5,
+#                        #above_h = 47-15-9.5,
+#                        above_h = 35. - 1.,
 #                        mindepth = 0,
 #                        attach_dir = '-y',
 #                        endstop_side = 0,
@@ -2144,7 +2146,7 @@ class SimpleEndstopHolder (object):
     def export_stl (self, name = ""):
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + stl_dir
         stlFileName = stlPath + name + ".stl"
         self.fco.Shape.exportStl(stlFileName)
 
@@ -2953,7 +2955,7 @@ class ThinLinBearHouse (object):
         #filepath = os.getcwd()
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + stl_dir
         stlFileName_top = stlPath + name + "_top" + ".stl"
         # any of these options are valid
         #Mesh.export([self.fco_top], stlFileName_top)
@@ -3221,7 +3223,8 @@ class LinBearHouse (object):
         #filepath = os.getcwd()
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        #stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + stl_dir
         stlFileName_top = stlPath + name + "_top" + ".stl"
         # any of these options are valid
         #Mesh.export([self.fco_top], stlFileName_top)
@@ -3231,8 +3234,8 @@ class LinBearHouse (object):
         self.fco_bot.Shape.exportStl(stlFileName_bot)
 
 
-#doc = FreeCAD.newDocument()
-#LinBearHouse (kcomp.SCUU[10])
+doc = FreeCAD.newDocument()
+lin12 = LinBearHouse (kcomp.SCUU[12])
 #LinBearHouse (kcomp.SCUU_Pr[10])
 
 
@@ -3710,7 +3713,7 @@ class ThinLinBearHouseAsim (object):
         #filepath = os.getcwd()
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + stl_dir
         stlFileName_top = stlPath + name + "_top" + ".stl"
         self.fco_top.Shape.exportStl(stlFileName_top)
         stlFileName_bot = stlPath + name + "_bot" + ".stl"
@@ -3790,6 +3793,7 @@ class NemaMotorHolder (object):
                   reinf_thick = 4.,
                   motor_min_h =10.,
                   motor_max_h =20.,
+                  rail = 1, # if there is a rail or not at the profile side
                   motor_xtr_space = 2., # counting on one side
                   bolt_wall_d = 4.,
                   bolt_wall_sep = 30., # optional
@@ -3959,7 +3963,9 @@ class NemaMotorHolder (object):
             # hole for the rails
             hole_pos = (motaxwall_pos + add_p
                         + DraftVecUtils.scale(axis_h_n, motor_min_h))
-            shp_hole = fcfun.shp_box_dir_xtr(box_w = boltwallshank_r_tol * 2.,
+            if rail == 1:
+                shp_hole = fcfun.shp_box_dir_xtr(
+                                       box_w = boltwallshank_r_tol * 2.,
                                        box_d = wall_thick,
                                        box_h = motor_max_h - motor_min_h,
                                        fc_axis_h = axis_h_n,
@@ -3967,8 +3973,7 @@ class NemaMotorHolder (object):
                                        cw=1, cd=0, ch=0,
                                        xtr_d =1, xtr_nd=1, #to cut
                                        pos = hole_pos)
-            
-            holes.append(shp_hole)
+                holes.append(shp_hole)
             # hole for the ending of the rails (semicircles)
             for add_h in (DraftVecUtils.scale(axis_h_n, motor_min_h),
                           DraftVecUtils.scale(axis_h_n, motor_max_h)):
@@ -4024,9 +4029,9 @@ class NemaMotorHolder (object):
         
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
-        print (stlFileName)
+        print (" %s", stlFileName)
         self.shp.exportStl(stlFileName)
         #self.fco.Shape.exportStl(stlFileName)
 
@@ -4034,26 +4039,69 @@ class NemaMotorHolder (object):
 
 
 
+#doc = FreeCAD.newDocument()
+#h_nema = NemaMotorHolder ( 
+#                  nema_size = 17,
+#                  wall_thick = 5.,
+#                  motor_thick = 4.,
+#                  reinf_thick = 4.,
+#                  motor_min_h =8.,
+#                  motor_max_h = 12.,
+#                  motor_xtr_space = 2., # counting on one side
+#                  bolt_wall_d = 4.,
+#                  chmf_r = 1.,
+#                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
+#                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
+#                  #fc_axis_p = VY,
+#                  ref_axis = 1, 
+#                  #ref_bolt = 0,
+#                  pos = V0, # FreeCAD.Vector(3,2,5),
+#                  wfco = 1,
+#                  name = 'nema_holder')
 
-doc = FreeCAD.newDocument()
-h_nema = NemaMotorHolder ( 
-                  nema_size = 17,
-                  wall_thick = 6.,
-                  motor_thick = 4.,
-                  reinf_thick = 4.,
-                  motor_min_h =25.,
-                  motor_max_h = 55,
-                  motor_xtr_space = 2., # counting on one side
-                  bolt_wall_d = 4.,
-                  chmf_r = 1.,
-                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
-                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
-                  #fc_axis_p = VY,
-                  ref_axis = 1, 
-                  #ref_bolt = 0,
-                  pos = V0, # FreeCAD.Vector(3,2,5),
-                  wfco = 1,
-                  name = 'nema_holder')
+#doc = FreeCAD.newDocument()
+#h_nema = NemaMotorHolder ( 
+#                  nema_size = 17,
+#                  wall_thick = 5.,
+#                  motor_thick = 4.,
+#                  reinf_thick = 4.,
+#                  motor_min_h =8.,
+#                  motor_max_h = 33.,
+#                  rail = 0,
+#                  motor_xtr_space = 2., # counting on one side
+#                  bolt_wall_d = 3.,
+#                  chmf_r = 1.,
+#                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
+#                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
+#                  #fc_axis_p = VY,
+#                  ref_axis = 1, 
+#                  #ref_bolt = 0,
+#                  pos = V0, # FreeCAD.Vector(3,2,5),
+#                  wfco = 1,
+#                  name = 'nema_holder')
+
+
+# a porras:
+#doc = FreeCAD.newDocument()
+#h_nema = NemaMotorHolder ( 
+#                  nema_size = 17,
+#                  wall_thick = 5.,
+#                  motor_thick = 3.,
+#                  reinf_thick = 4.,
+#                  motor_min_h =8.,
+#                  motor_max_h = 43.,
+#                  rail = 1,
+#                  motor_xtr_space = 2., # counting on one side
+#                  bolt_wall_d = 3.,
+#                  chmf_r = 1.,
+#                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
+#                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
+#                  #fc_axis_p = VY,
+#                  ref_axis = 1, 
+#                  #ref_bolt = 0,
+#                  pos = V0, # FreeCAD.Vector(3,2,5),
+#                  wfco = 1,
+#                  name = 'nema_holder_52h')
 
 
 # ----------- Linear bearing housing 
@@ -4469,8 +4517,10 @@ class Plate3CageCubes (object):
     def export_stl (self, name = ""):
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        #stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + stl_dir
         stlFileName = stlPath + name + ".stl"
+        print (stlFileName)
         self.fco.Shape.exportStl(stlFileName)
 
                            
@@ -4719,7 +4769,7 @@ class hallestop_holder (object):
         #filepath = os.getcwd()
         if not name:
             name = self.name
-        stlPath = filepath + "/freecad/stl/"
+        stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
         self.shp.exportStl(stlFileName)
        

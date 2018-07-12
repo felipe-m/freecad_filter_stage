@@ -85,6 +85,8 @@ CIAN_08   = (0.8, 1.0, 1.0)
 DSKYBLUE   = (0.0, 0.7, 1.0)
 LSKYBLUE   = (0.5, 0.7, 1.0)
 
+GRAY_08  = (0.8, 0.8, 0.8)
+
 # no rotation vector
 V0ROT = FreeCAD.Rotation(VZ,0)
 
