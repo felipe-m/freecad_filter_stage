@@ -55,6 +55,8 @@ import math
 import FreeCAD
 import FreeCADGui
 import Part
+import Mesh
+import MeshPart
 import DraftVecUtils
 
 # to get the current directory. Freecad has to be executed from the same
@@ -76,6 +78,7 @@ import kcomp   # import material constants and other constants
 import fcfun   # import my functions for freecad. FreeCad Functions
 import comps   # import my CAD components
 import partgroup 
+import kparts 
 
 from fcfun import V0, VX, VY, VZ, V0ROT
 from fcfun import VXN, VYN, VZN
@@ -1473,7 +1476,13 @@ class Tensioner (object):
             fco_i.Placement.Base = pos0_i.negative() + self.place.negative()
             fco_i.Placement.Rotation = rotation
             doc.recompute()
-            fco_i.Shape.exportStl(stl_path + name_i + '.stl')
+            # exportStl is not working well with FreeCAD 0.17
+            #fco_i.Shape.exportStl(stl_path + name_i + '.stl')
+            mesh_shp = MeshPart.meshFromShape(shp,
+                                             LinearDeflection=kparts.LIN_DEFL, 
+                                             AngularDeflection=kparts.ANG_DEFL)
+            mesh_shp.write(stl_path + name_i + '.stl')
+            del mesh_shp
             fco_i.Placement.Base = self.place
             fco_i.Placement.Rotation = V0ROT
             self.set_pos_tensioner() # position of the tensioner

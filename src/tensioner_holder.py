@@ -61,6 +61,8 @@ import sys
 import FreeCAD
 import FreeCADGui
 import Part
+import Mesh
+import MeshPart
 
 # to get the current directory. Freecad has to be executed from the same
 # directory this file is
@@ -68,10 +70,11 @@ filepath = os.getcwd()
 # to get the components
 # In FreeCAD can be added: Preferences->General->Macro->Macro path
 sys.path.append(filepath) 
-sys.path.append(filepath + '/' + 'comps')
-#sys.path.append(filepath + '/../../' + 'comps')
+#sys.path.append(filepath + '/' + 'comps')
+sys.path.append(filepath + '/../../' + 'comps')
 
 import kidler  # import constants for the idler tensioner and holder
+import kparts
 
 # to make a comparision of equality in floats, less than this number
 mindif = 0.001
@@ -482,7 +485,14 @@ stlFileName = stlPath + 'tensioner_holder' + '.stl'
 # rotate to print without support:
 fcd_tens_holder.Placement.Rotation = (
                     FreeCAD.Rotation(FreeCAD.Vector(1,0,0), 90))
-fcd_tens_holder.Shape.exportStl(stlFileName)
+# exportStl is not working well with FreeCAD 0.17
+#fcd_tens_holder.Shape.exportStl(stlFileName)
+mesh_shp = MeshPart.meshFromShape(fcd_tens_holder.Shape,
+                                  LinearDeflection=kparts.LIN_DEFL, 
+                                  AngularDeflection=kparts.ANG_DEFL)
+mesh_shp.write(stlFileName)
+del mesh_shp
+
 
 # rotate back, to see it in its real position
 fcd_tens_holder.Placement.Rotation = (
