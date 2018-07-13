@@ -11,16 +11,17 @@
 # ----------------------------------------------------------------------------
 
 
-import FreeCAD;
-import Part;
+import FreeCAD
+import Part
 import logging
 import os
-import Draft;
-import DraftGeomUtils;
-import DraftVecUtils;
-import math;
-#import copy;
-#import Mesh;
+import Draft
+import DraftGeomUtils
+import DraftVecUtils
+import math
+#import copy
+import Mesh
+import MeshPart
 
 # ---------------------- can be taken away after debugging
 # directory this file is
@@ -34,6 +35,7 @@ sys.path.append(filepath)
 import kcomp 
 import kcomp_optic
 import fcfun
+import kparts 
 
 from fcfun import V0, VX, VY, VZ, V0ROT, addBox, addCyl, addCyl_pos, fillet_len
 from fcfun import VXN, VYN, VZN
@@ -1371,7 +1373,13 @@ class PlateThruholeMhole (object):
             name = self.name
         stlPath = filepath + "/freecad/stl/"
         stlFileName = stlPath + name + ".stl"
-        self.shp.exportStl(stlFileName)
+        # exportStl is not working well with FreeCAD 0.17
+        #self.shp.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.shp,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
 
 
 def lcp01m_plate (d_lcp01m_plate = kcomp_optic.LCP01M_PLATE,
@@ -1687,7 +1695,13 @@ class Lcpb1mBase (object):
             name = self.name
         stlPath = filepath + "/freecad/stl/"
         stlFileName = stlPath + name + ".stl"
-        self.shp.exportStl(stlFileName)
+        # exportStl is not working well with FreeCAD 0.17
+        #self.shp.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.shp,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
 
 
 def lcpb1m_base (d_lcpb1m_base = kcomp_optic.LCPB1M_BASE,
