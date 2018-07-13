@@ -10,10 +10,11 @@
 # --- LGPL Licence
 # ----------------------------------------------------------------------------
 
-import FreeCAD;
-import Part;
-import Draft;
+import FreeCAD
+import Part
+import Draft
 import Mesh
+import MeshPart
 import DraftVecUtils
 import logging
 
@@ -350,20 +351,29 @@ class AluProfBracketPerp (object):
             logger.debug("Bracket object with no fco")
         
     # exports the shape into stl format
+    # exportStl has problems in FreeCAD 0.17 when there are cylinders
+    # or fillets
     def export_stl (self, name = ""):
         #filepath = os.getcwd()
         if not name:
             name = self.name
         stlPath = filepath + "/stl/"
-        stlFileName = stlPath + name + ".stl"
-        self.shp.exportStl(stlFileName)
+        stlFileName = stlPath + name + "2.stl"
+        # not working well with FreeCAD 0.17
+        #self.shp.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.shp,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
        
 #doc = FreeCAD.newDocument()
 
-#AluProfBracketPerp ( alusize_lin = 10, alusize_perp = 10,
+#al = AluProfBracketPerp ( alusize_lin = 10, alusize_perp = 10,
 #                 br_perp_thick = 3.,
 #                 br_lin_thick = 3.,
-#                 bolt_d = 3,
+#                 bolt_lin_d = 3,
+#                 bolt_perp_d = 3,
 #                 nbolts_lin = 1,
 #                 xtr_bolt_head = 4,
 #                 xtr_bolt_head_d = 2*kcomp.TOL, # space for the nut
@@ -373,7 +383,7 @@ class AluProfBracketPerp (object):
 #                 pos = V0,
 #                 wfco=1,
 #                 name = 'bracket_lin3_1bolt_noreinfore')
-
+#al.export_stl()
 
 #AluProfBracketPerp ( alusize_lin = 10, alusize_perp = 10,
 #                 br_perp_thick = 3.,
@@ -823,7 +833,13 @@ class AluProfBracketPerpFlap (object):
             name = self.name
         stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
-        self.shp.exportStl(stlFileName)
+        # exportStl is not working well with FreeCAD 0.17
+        #self.shp.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.shp,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
 
 #doc = FreeCAD.newDocument()
 
@@ -1215,7 +1231,14 @@ class AluProfBracketPerpTwin (object):
             name = self.name
         stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
-        self.shp.exportStl(stlFileName)
+        # exportStl not working well with FreeCAD 0.17
+        #self.shp.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.shp,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
+
 
     
 #doc = FreeCAD.newDocument()
@@ -2148,7 +2171,14 @@ class SimpleEndstopHolder (object):
             name = self.name
         stlPath = filepath + stl_dir
         stlFileName = stlPath + name + ".stl"
-        self.fco.Shape.exportStl(stlFileName)
+        # exportStl not working well with FreeCAD 0.17
+        #self.fco.Shape.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.fco.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
+
 
 
 
@@ -2957,15 +2987,31 @@ class ThinLinBearHouse (object):
             name = self.name
         stlPath = filepath + stl_dir
         stlFileName_top = stlPath + name + "_top" + ".stl"
-        # any of these options are valid
-        #Mesh.export([self.fco_top], stlFileName_top)
-        self.fco_top.Shape.exportStl(stlFileName_top)
         stlFileName_bot = stlPath + name + "_bot" + ".stl"
+
+        # exportStl not working well with FreeCAD 0.17
+        #self.fco_top.Shape.exportStl(stlFileName_top)
+        #self.fco_bot.Shape.exportStl(stlFileName_bot)
+        # this would work:
+        #Mesh.export([self.fco_top], stlFileName_top)
         #Mesh.export([self.fco_bot], stlFileName_bot)
-        self.fco_bot.Shape.exportStl(stlFileName_bot)
+        mesh_shp_top = MeshPart.meshFromShape(self.fco_top.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp_top.write(stlFileName_top)
+        del mesh_shp_top
+
+        mesh_shp_bot = MeshPart.meshFromShape(self.fco_bot.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp_bot.write(stlFileName_bot)
+        del mesh_shp_bot
 
 
 
+
+
+#AAAAAAA
 #doc = FreeCAD.newDocument()
 #ThinLinBearHouse (kcomp.LMEUU[10])
 #ThinLinBearHouse (kcomp.LMEUU[10], mid_center=1)
@@ -3226,16 +3272,27 @@ class LinBearHouse (object):
         #stlPath = filepath + "/freecad/stl/"
         stlPath = filepath + stl_dir
         stlFileName_top = stlPath + name + "_top" + ".stl"
-        # any of these options are valid
-        #Mesh.export([self.fco_top], stlFileName_top)
-        self.fco_top.Shape.exportStl(stlFileName_top)
         stlFileName_bot = stlPath + name + "_bot" + ".stl"
-        #Mesh.export([self.fco_bot], stlFileName_bot)
-        self.fco_bot.Shape.exportStl(stlFileName_bot)
+
+        # exportStl not working well with FreeCAD 0.17
+        #self.fco_top.Shape.exportStl(stlFileName_top)
+        # this would be valid
+        #Mesh.export([self.fco_top], stlFileName_top)
+        mesh_shp_top = MeshPart.meshFromShape(self.fco_top.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp_top.write(stlFileName_top)
+        del mesh_shp_top
+
+        mesh_shp_bot = MeshPart.meshFromShape(self.fco_bot.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp_bot.write(stlFileName_bot)
+        del mesh_shp_bot
 
 
-doc = FreeCAD.newDocument()
-lin12 = LinBearHouse (kcomp.SCUU[12])
+#doc = FreeCAD.newDocument()
+#lin12 = LinBearHouse (kcomp.SCUU[12])
 #LinBearHouse (kcomp.SCUU_Pr[10])
 
 
@@ -3715,9 +3772,23 @@ class ThinLinBearHouseAsim (object):
             name = self.name
         stlPath = filepath + stl_dir
         stlFileName_top = stlPath + name + "_top" + ".stl"
-        self.fco_top.Shape.exportStl(stlFileName_top)
         stlFileName_bot = stlPath + name + "_bot" + ".stl"
-        self.fco_bot.Shape.exportStl(stlFileName_bot)
+        # exportStl not working well with FreeCAD 0.17
+        #self.fco_top.Shape.exportStl(stlFileName_top)
+        #self.fco_bot.Shape.exportStl(stlFileName_bot)
+
+        mesh_shp_top = MeshPart.meshFromShape(self.fco_top.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp_top.write(stlFileName_top)
+        del mesh_shp_top
+        mesh_shp_bot = MeshPart.meshFromShape(self.fco_bot.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp_bot.write(stlFileName_bot)
+        del mesh_shp_bot
+
+
 
 
 #doc = FreeCAD.newDocument()
@@ -4031,9 +4102,16 @@ class NemaMotorHolder (object):
             name = self.name
         stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
-        print (" %s", stlFileName)
-        self.shp.exportStl(stlFileName)
-        #self.fco.Shape.exportStl(stlFileName)
+        #print (" %s", stlFileName)
+
+        # exportStl is not working well with FreeCAD 0.17
+        #self.shp.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.shp,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
+
 
 
 
@@ -4520,8 +4598,15 @@ class Plate3CageCubes (object):
         #stlPath = filepath + "/freecad/stl/"
         stlPath = filepath + stl_dir
         stlFileName = stlPath + name + ".stl"
-        print (stlFileName)
-        self.fco.Shape.exportStl(stlFileName)
+        #print (stlFileName)
+        # exportStl is not working well with FreeCAD 0.17
+        #self.fco.Shape.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.fco.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
+
 
                            
 
@@ -4771,7 +4856,15 @@ class hallestop_holder (object):
             name = self.name
         stlPath = filepath + "/stl/"
         stlFileName = stlPath + name + ".stl"
-        self.shp.exportStl(stlFileName)
+
+        # exportStl is not working well with FreeCAD 0.17
+        #self.shp.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.shp,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
+
        
 #doc = FreeCAD.newDocument()
 

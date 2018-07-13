@@ -10,11 +10,13 @@
 # --- LGPL Licence
 # ----------------------------------------------------------------------------
 
-import FreeCAD;
-import Part;
-import Draft;
-import DraftVecUtils;
+import FreeCAD
+import Part
+import Draft
+import DraftVecUtils
 import logging
+import Mesh
+import MeshPart
 
 
 import os
@@ -30,6 +32,7 @@ sys.path.append(filepath)
 
 import kcomp  # import material constants and other constants
 import fcfun      # import my functions for freecad
+import kparts 
 
 
 
@@ -886,7 +889,14 @@ class BeltClamp (object):
         #stlPath = filepath + "/freecad/stl/"
         stlPath = filepath + stl_dir
         stlFileName = stlPath + name + ".stl"
-        self.shp.exportStl(stlFileName)
+        # exportStl is not working well with FreeCAD 0.17
+        #self.shp.exportStl(stlFileName)
+        mesh_shp = MeshPart.meshFromShape(self.shp,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
+
 
 # Revisar el caso con agujeros de bolt
 #BeltClamp (VX, VY, base_h = 0, bolt_d=3, bolt_csunk = 2)

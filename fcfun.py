@@ -2024,8 +2024,9 @@ def shp_stadium_wire (l, r, axis_rect='x', pos_z=0):
     p_nx_y  = FreeCAD.Vector(-l/2.,r, pos_z)
     p_x_ny   = FreeCAD.Vector(l/2.,-r, pos_z)
     p_nx_ny  = FreeCAD.Vector(-l/2.,-r, pos_z)
-    lin_y =  Part.Line(p_x_y, p_nx_y).toShape() 
-    lin_ny = Part.Line(p_nx_ny, p_x_ny).toShape() 
+    # In Freecad 0.17 Line is an infinite Line, change to LineSegment
+    lin_y =  Part.LineSegment(p_x_y, p_nx_y).toShape() 
+    lin_ny = Part.LineSegment(p_nx_ny, p_x_ny).toShape() 
 
     list_elem = [arch, lin_y, arch_n, lin_ny]
     if axis_rect == 'y':
@@ -2182,9 +2183,10 @@ def shp_stadium_wire_dir (length, radius, fc_axis_l = VX,
     ln_sn_pos = cs_pos + fc_1_2_l + fc_1_2_s
     lp_sn_pos = cs_pos + fc_1_4_l + fc_1_2_s
 
-    lin_p =  Part.Line(ln_sp_pos, lp_sp_pos).toShape() 
+    # In Freecad 0.17 Line is an infinite Line, change to LineSegment
+    lin_p =  Part.LineSegment(ln_sp_pos, lp_sp_pos).toShape() 
     arch_p = Part.Arc(lp_sp_pos, lp_s0_pos, lp_sn_pos).toShape()
-    lin_n = Part.Line(lp_sn_pos, ln_sn_pos).toShape() 
+    lin_n = Part.LineSegment(lp_sn_pos, ln_sn_pos).toShape() 
     arch_n = Part.Arc(ln_sn_pos, ln_s0_pos, ln_sp_pos).toShape()
     wire_stadium = Part.Wire ([lin_p, arch_p, lin_n, arch_n])
 
@@ -2606,9 +2608,10 @@ def shp_belt_wire_dir (center_sep, rad1, rad2, fc_axis_l = VX,
     lp_sn_pos = cs_rad2 + tan_axis_l_rad2add + tan_axis_s_rad2add.negative() 
     
     
-    lin_p =  Part.Line(ln_sp_pos, lp_sp_pos).toShape() 
+    # In Freecad 0.17 Line is an infinite Line, change to LineSegment
+    lin_p =  Part.LineSegment(ln_sp_pos, lp_sp_pos).toShape() 
     arch_p = Part.Arc(lp_sp_pos, lp_s0_pos, lp_sn_pos).toShape()
-    lin_n = Part.Line(lp_sn_pos, ln_sn_pos).toShape() 
+    lin_n = Part.LineSegment(lp_sn_pos, ln_sn_pos).toShape() 
     arch_n = Part.Arc(ln_sn_pos, ln_s0_pos, ln_sp_pos).toShape()
     wire_belt = Part.Wire ([lin_p, arch_p, lin_n, arch_n])
 
@@ -2843,19 +2846,20 @@ def shpRndRectWire (x=1, y=1, r= 0.5, zpos = 0):
     # toShape, because otherwise we couldn't make the wire.
     # by doing this we are creating an edge
     # an alternative would be to use makeLine
-    ly0 = Part.Line(p_r_0, p_rx_0).toShape() # Horizontal lower line
+    # In Freecad 0.17 Line is an infinite Line, change to LineSegment
+    ly0 = Part.LineSegment(p_r_0, p_rx_0).toShape() # Horizontal lower line
 
     p_x_r  = FreeCAD.Vector(x_x   ,y_r, zpos)
     p_x_ry = FreeCAD.Vector(x_x   ,y_ry, zpos)
-    lxx = Part.Line(p_x_r, p_x_ry).toShape() # vertical on the right
+    lxx = Part.LineSegment(p_x_r, p_x_ry).toShape() # vertical on the right
 
     p_r_y  = FreeCAD.Vector(x_r,  y_y, zpos)
     p_rx_y = FreeCAD.Vector(x_rx, y_y, zpos)
-    lyy = Part.Line(p_r_y, p_rx_y).toShape() # Horizontal top line
+    lyy = Part.LineSegment(p_r_y, p_rx_y).toShape() # Horizontal top line
 
     p_0_r  = FreeCAD.Vector(x_0, y_r,  zpos)
     p_0_ry = FreeCAD.Vector(x_0, y_ry, zpos)
-    lx0 = Part.Line(p_0_r, p_0_ry).toShape()  # vertical on the left
+    lx0 = Part.LineSegment(p_0_r, p_0_ry).toShape()  # vertical on the left
     # if I wanted to see these shapes
     #fc_ly0 = doc.addObject("Part::Feature", "ly0")
     #fc_ly0.Shape = ly0
@@ -2986,7 +2990,8 @@ def wire_sim_xy (vecList):
     if vecList[0].x != 0:
         # the first element is not on the Y axis,so we create a first point
         vec = FreeCAD.Vector (0, vecList[0].y, vecList[0].z)
-        seg = Part.Line(vec, vecList[0]) # segment
+        # In Freecad 0.17 Line is an infinite Line, change to LineSegment
+        seg = Part.LineSegment(vec, vecList[0]) # segment
         edg = seg.toShape() # edge
         edgList.append(edg) # append to the edge list
     listlen = len(vecList)
@@ -2994,13 +2999,13 @@ def wire_sim_xy (vecList):
         if vec.x < 0 or vec.y < 0:
             logger.error('WireSimXY with negative points')
         if index < listlen-1: # it is not the last element
-            seg = Part.Line(vec, vecList[index+1])
+            seg = Part.LineSegment(vec, vecList[index+1])
             edg = seg.toShape()
             edgList.append(edg)
         index += 1
     if vecList[-1].y != 0: # the last element is not on the X axis
         vec = FreeCAD.Vector (vecList[-1].x, 0, vecList[-1].z)
-        seg = Part.Line(vecList[-1], vec)
+        seg = Part.LineSegment(vecList[-1], vec)
         edg = seg.toShape()
         edgList.append(edg)
     # the wire for the first cuadrant, quarter
@@ -3198,9 +3203,10 @@ def wire_cableturn (d, w, corner_r,
         pt_D3 = pt_D + d_rad_n
         corner_D = Part.Arc(pt_D1, pt_D2, pt_D3).toShape()
 
-        line_AB = Part.Line(pt_A3, pt_B1).toShape()
-        line_BC = Part.Line(pt_B3, pt_C1).toShape()
-        line_CD = Part.Line(pt_C3, pt_D1).toShape()
+        # In Freecad 0.17 Line is an infinite Line, change to LineSegment
+        line_AB = Part.LineSegment(pt_A3, pt_B1).toShape()
+        line_BC = Part.LineSegment(pt_B3, pt_C1).toShape()
+        line_CD = Part.LineSegment(pt_C3, pt_D1).toShape()
 
         top_wire = Part.Wire([corner_A, line_AB,
                               corner_B, line_BC,
@@ -3211,7 +3217,7 @@ def wire_cableturn (d, w, corner_r,
         if conn_d == 0:
             # the turn ends here:
             if closed == 1:
-                line_bot = Part.Line(pt_D3, pt_A1).toShape()
+                line_bot = Part.LineSegment(pt_D3, pt_A1).toShape()
                 cable_wire = Part.Wire([line_bot,top_wire,])
             else:
                 #
@@ -3220,8 +3226,8 @@ def wire_cableturn (d, w, corner_r,
                 #      
                 pt_E =  pos_o + w_hsep_n
                 pt_F =  pos_o + w_hsep
-                line_EA = Part.Line(pt_E, pt_A1).toShape()
-                line_DF = Part.Line(pt_D3, pt_F).toShape()
+                line_EA = Part.LineSegment(pt_E, pt_A1).toShape()
+                line_DF = Part.LineSegment(pt_D3, pt_F).toShape()
                 cable_wire = Part.Wire([line_EA,top_wire, line_DF])
         else :
             if conn_d < corner_r :
@@ -3244,26 +3250,26 @@ def wire_cableturn (d, w, corner_r,
             
             corner_E = Part.Arc(pt_E1, pt_E2, pt_E3).toShape()
             corner_F = Part.Arc(pt_F1, pt_F2, pt_F3).toShape()
-            line_EA = Part.Line(pt_E3, pt_A1).toShape()
-            line_DF = Part.Line(pt_D3, pt_F1).toShape()
+            line_EA = Part.LineSegment(pt_E3, pt_A1).toShape()
+            line_DF = Part.LineSegment(pt_D3, pt_F1).toShape()
 
             pt_G =  pos_o + w_hsep_n + d_o[0] + xtr_conn_d_vec
             pt_H =  pos_o + w_hsep + d_o[0] + xtr_conn_d_vec
-            line_GE = Part.Line(pt_G, pt_E1).toShape()
-            line_FH = Part.Line(pt_F3, pt_H).toShape()
+            line_GE = Part.LineSegment(pt_G, pt_E1).toShape()
+            line_FH = Part.LineSegment(pt_F3, pt_H).toShape()
 
 
             cable_wire = Part.Wire([line_GE, corner_E, line_EA,top_wire,
                                     line_DF, corner_F, line_FH])
             if closed == 1:
-                line_HG = Part.Line(pt_H, pt_G).toShape()
+                line_HG = Part.LineSegment(pt_H, pt_G).toShape()
                 cable_wire = Part.Wire([cable_wire, line_HG])
         
         
     else : # no corners
-        line_AB = Part.Line(pt_A, pt_B).toShape()
-        line_BC = Part.Line(pt_B, pt_C).toShape()
-        line_CD = Part.Line(pt_C, pt_D).toShape()
+        line_AB = Part.LineSegment(pt_A, pt_B).toShape()
+        line_BC = Part.LineSegment(pt_B, pt_C).toShape()
+        line_CD = Part.LineSegment(pt_C, pt_D).toShape()
         top_wire = Part.Wire([line_AB, line_BC,line_CD])
         top_wire_firstpt = pt_A
         top_wire_lastpt = pt_D
@@ -3274,19 +3280,19 @@ def wire_cableturn (d, w, corner_r,
         if conn_d == 0:
             # the turn ends here:
             if closed == 1:
-                line_bot = Part.Line(pt_D, pt_A).toShape()
+                line_bot = Part.LineSegment(pt_D, pt_A).toShape()
                 cable_wire = Part.Wire([line_bot,top_wire,])
             else :
                 pt_E =  pos_o + w_hsep_n
                 pt_F =  pos_o + w_hsep
-                line_EA = Part.Line(pt_E, pt_A).toShape()
-                line_DF = Part.Line(pt_D, pt_F).toShape()
+                line_EA = Part.LineSegment(pt_E, pt_A).toShape()
+                line_DF = Part.LineSegment(pt_D, pt_F).toShape()
                 cable_wire = Part.Wire([line_EA,top_wire, line_DF])
         else:
             pt_E =  pos_o + w_hsep_n
             pt_F =  pos_o + w_hsep
-            line_EA = Part.Line(pt_E, pt_A).toShape()
-            line_DF = Part.Line(pt_D, pt_F).toShape()
+            line_EA = Part.LineSegment(pt_E, pt_A).toShape()
+            line_DF = Part.LineSegment(pt_D, pt_F).toShape()
             # points E - F
             #      |            |
             #      |____E   F___|
@@ -3295,12 +3301,12 @@ def wire_cableturn (d, w, corner_r,
             #           G   H
             pt_G =  pt_E + d_o[0] + xtr_conn_d_vec
             pt_H =  pt_F + d_o[0] + xtr_conn_d_vec
-            line_GE = Part.Line(pt_G, pt_E).toShape()
-            line_FH = Part.Line(pt_F, pt_H).toShape()
+            line_GE = Part.LineSegment(pt_G, pt_E).toShape()
+            line_FH = Part.LineSegment(pt_F, pt_H).toShape()
             cable_wire = Part.Wire([line_GE, line_EA,top_wire,
                                     line_DF, line_FH])
             if closed == 1 :
-                line_HG = Part.Line(pt_H, pt_G).toShape()
+                line_HG = Part.LineSegment(pt_H, pt_G).toShape()
                 cable_wire = Part.Wire([cable_wire, line_HG])
 
 

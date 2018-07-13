@@ -18,6 +18,8 @@ import FreeCAD
 import FreeCADGui
 import Part
 import DraftVecUtils
+import Mesh
+import MeshPart
 
 # to get the current directory. Freecad has to be executed from the same
 # directory this file is
@@ -32,6 +34,7 @@ sys.path.append(filepath + '/../../' + 'comps')
 import kcomp   # import material constants and other constants
 import fcfun   # import my functions for freecad. FreeCad Functions
 import shp_clss
+import kparts
 
 from fcfun import V0, VX, VY, VZ, V0ROT
 from fcfun import VXN, VYN, VZN
@@ -244,7 +247,15 @@ class SinglePart (object):
         self.fco.Placement.Base = pos0.negative() + self.place.negative()
         self.fco.Placement.Rotation = rotation
         self.doc.recompute()
-        self.fco.Shape.exportStl(self.stl_path + filename + '.stl')
+
+        # exportStl is not working well with FreeCAD 0.17
+        #self.fco.Shape.exportStl(self.stl_path + filename + '.stl')
+        mesh_shp = MeshPart.meshFromShape(self.fco.Shape,
+                                          LinearDeflection=kparts.LIN_DEFL, 
+                                          AngularDeflection=kparts.ANG_DEFL)
+        mesh_shp.write(stlFileName)
+        del mesh_shp
+
         self.fco.Placement.Base = self.place
         self.fco.Placement.Rotation = V0ROT
         self.doc.recompute()
