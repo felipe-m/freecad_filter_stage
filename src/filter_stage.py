@@ -201,7 +201,13 @@ filter_holder.set_color(fcfun.YELLOW_05)
 belt_pos = filter_holder.get_pos_dwh(2,0,7)
 
 tensioner_pos = (  belt_pos
-                 + DraftVecUtils.scale(axis_mov, mov_distance)
+                 + DraftVecUtils.scale(axis_mov,
+                                       mov_distance + filter_holder.tot_w/2.)
+                 + DraftVecUtils.scale(axis_up, belt_w/2.))
+
+pulley_pos = (  belt_pos
+                 + DraftVecUtils.scale(axis_mov,
+                                       mov_distance + filter_holder.tot_w/2.)
                  + DraftVecUtils.scale(axis_up, belt_w/2.))
 
 print (str(belt_pos))
@@ -240,6 +246,8 @@ tensioner = tensioner_clss.TensionerSet(
 tensioner.set_color(fcfun.ORANGE,1)   #1: the tensioner
 tensioner.set_color(fcfun.LSKYBLUE,2) #2: the holder
 
+#pulley_pos = 
+
 motor_holder_pos = (  belt_pos
                   + DraftVecUtils.scale(axis_mov, - mov_distance)
                   + DraftVecUtils.scale(axis_up, -(motorshaft_l - beltclamp_h)))
@@ -270,13 +278,18 @@ motor_holder = parts.PartNemaMotorHolder (
 motor_holder.set_color(fcfun.GREEN)   #1: the tensioner
 
 
-motor = comps.NemaMotor(size = nema_size, 
-                        length = 32.,
+motor = comps.PartNemaMotor(nema_size = nema_size, 
+                        base_l = 32.,
                         shaft_l = motorshaft_l,
                         circle_r = 11.,
                         circle_h = 2.,
-                        name = nema_name,
-                        container = 0,
+                        chmf_r = 1.,
+                        axis_d = axis_mov,
+                        axis_w = axis_front,
+                        axis_h = axis_up,
+                        pos_d = 0,
+                        pos_w = 0,
+                        pos_h = 3,
                         # at the shaft axis (d=3, w=0)
                         # at the inner side of the top wall (h=1)
                         pos = motor_holder.get_pos_dwh(3,0,1))
