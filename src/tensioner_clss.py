@@ -254,7 +254,6 @@ class ShpIdlerTensioner (shp_clss.Obj3D):
         
         shp_clss.Obj3D.__init__(self, axis_d, axis_w, axis_h)
 
-
         # save the arguments as attributes:
         frame = inspect.currentframe()
         args, _, _, values = inspect.getargvalues(frame)
@@ -1011,7 +1010,7 @@ class ShpTensionerHolder (shp_clss.Obj3D):
                                :
                              axis_d
 
-        pos_o (origin) is at pos_d=0, pos_w=0, pos_h=0, It marked with o
+        pos_o (origin) is at pos_d=0, pos_w=0, pos_h=0, It's marked with o
 
     The part is referenced along 3 perpendicular axis
       (cartesian coordinate systems):

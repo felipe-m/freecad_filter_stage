@@ -154,6 +154,13 @@ filter_pos_d = 9
 filter_pos_w = 0
 filter_pos_h = 1
 
+# width of the belt
+belt_w =  6.
+# height of the belt clamp
+beltclamp_h = belt_w + 2
+# length of the motor shaft
+motorshaft_l = 20.
+
 filter_holder = filter_holder_clss.PartFilterHolder(
                  filter_l = 60.,
                  filter_w = 25.,
@@ -175,7 +182,7 @@ filter_holder = filter_holder_clss.PartFilterHolder(
                  bolt_linguide_mtr = 3,
                  beltclamp_t = 3.,
                  beltclamp_l = 12.,
-                 beltclamp_h = 8.,
+                 beltclamp_h = beltclamp_h,
                  clamp_post_dist = 4.,
                  sm_beltpost_r = 1.,
                  tol = kcomp.TOL,
@@ -188,7 +195,7 @@ filter_holder = filter_holder_clss.PartFilterHolder(
                  pos = filter_pos,
                  name = 'filter_holder')
 
-filter_holder.set_color(fcfun.ORANGE_08)
+filter_holder.set_color(fcfun.YELLOW_05)
 
 # get the position of the belt of the filter, at center of symmetry
 belt_pos = filter_holder.get_pos_dwh(2,0,7)
@@ -230,30 +237,72 @@ tensioner = tensioner_clss.TensionerSet(
                      pos = tensioner_pos,
                      name = 'tensioner_set')
 
+tensioner.set_color(fcfun.ORANGE,1)   #1: the tensioner
+tensioner.set_color(fcfun.LSKYBLUE,2) #2: the holder
+
 motor_holder_pos = (  belt_pos
-                     + DraftVecUtils.scale(axis_mov, - mov_distance)
-                     + DraftVecUtils.scale(axis_up, -20))
+                  + DraftVecUtils.scale(axis_mov, - mov_distance)
+                  + DraftVecUtils.scale(axis_up, -(motorshaft_l - beltclamp_h)))
 
 
-motor_holder = parts.NemaMotorHolder ( 
-                  nema_size = 17,
-                  wall_thick = 6.,
-                  motor_thick = 4.,
+nema_size = 11
+nema_name = 'nema_' + str(nema_size)
+
+
+motor_holder = parts.PartNemaMotorHolder ( 
+                  nema_size = nema_size,
+                  wall_thick = 4.,
+                  motorside_thick = 4.,
                   reinf_thick = 4.,
                   motor_min_h = 10.,
-                  motor_max_h = 30,
+                  motor_max_h = 20,
                   motor_xtr_space = 2., # counting on one side
                   bolt_wall_d = 4.,
                   chmf_r = 1.,
-                  fc_axis_h = axis_up,
-                  fc_axis_n = axis_mov.negative(),
-                  ref_axis = 0, 
-                  #ref_bolt = 0,
-                  pos = motor_holder_pos,
-                  wfco = 1,
-                  name = 'nema_holder')
+                  axis_h = axis_up.negative(),
+                  axis_d = axis_mov.negative(),
+                  # pos_h=1: inner wall of the motor side, the top of the motor
+                  pos_h = 1,
+                  pos_d = 0, #0: at the wall where this holder is attached
+                  pos_w = 0, #0: center of symmetry
+                  pos = motor_holder_pos)
+
+motor_holder.set_color(fcfun.GREEN)   #1: the tensioner
 
 
+motor = comps.NemaMotor(size = nema_size, 
+                        length = 32.,
+                        shaft_l = motorshaft_l,
+                        circle_r = 11.,
+                        circle_h = 2.,
+                        name = nema_name,
+                        container = 0,
+                        # at the shaft axis (d=3, w=0)
+                        # at the inner side of the top wall (h=1)
+                        pos = motor_holder.get_pos_dwh(3,0,1))
+
+# Motor top axis position
+motor_axis_top_pos = (  motor_holder.get_pos_dwh(3,0,1)
+                      + DraftVecUtils.scale(axis_up, motorshaft_l))
+
+GT2Pulley = comps.PartGtPulley(
+                 pitch = 2.,
+                 n_teeth = 20,
+                 toothed_h = 7.5,
+                 top_flange_h = 1.,
+                 bot_flange_h = 0,
+                 tot_h = 16.,
+                 flange_d = 15.,
+                 base_d = 15.,
+                 shaft_d = 5.,
+                 tol = 0,
+                 #axis_d = VX,
+                 #axis_w = VY,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 5,
+                 pos = motor_axis_top_pos)
 
 
 doc.recompute()
