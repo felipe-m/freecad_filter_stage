@@ -89,10 +89,14 @@ extrud_sep = 40.0
 
 # DIN-912 bolt dimmensions
 # head: the index is the M, i.e: M3, M4, ..., the value is the diameter of the head of the bolt
-D912_HEAD_D = {3: 5.5, 4: 7.0, 5: 8.5, 6:10.0, 8:13.0, 10:18.0} 
+D912_HEAD_D = {2: 3.8,  2.5:4.5,
+               3: 5.5,  4: 7.0,  5:  8.5,
+               6:10.0,  8:13.0,  10:18.0} 
 # length: the index is the M, i.e: M3, M4, ..., the value is the length of the head of the bolt
 # well, it is the same as the M, never mind...
-D912_HEAD_L =  {3: 3.0, 4: 4.0, 5: 5.0,  6:6.0, 8:8.0,  10:10.0} 
+D912_HEAD_L =  {2: 2.,  2.5: 2.5,
+                3: 3.0, 4: 4.0,  5: 5.0,
+                6: 6.0, 8:8.0,  10:10.0} 
 
 M3_HEAD_R = D912_HEAD_D[3] / 2.0
 M3_HEAD_L = D912_HEAD_L[3]
@@ -639,6 +643,7 @@ SCUU_Pr = {
 
 # width of the motor (both dimensions: it is a square)
 NEMA_W  = {
+             8:   20.2,
              11:  28.2,
              14:  35.2,
              17:  42.3,
@@ -648,6 +653,7 @@ NEMA_W  = {
 
 # Separation of the holes for the bolts 
 NEMA_BOLT_SEP  = {
+             8:   16.0,
              11:  23.0,
              14:  26.0,
              17:  31.0,
@@ -657,6 +663,7 @@ NEMA_BOLT_SEP  = {
 
 # Diameter of the shaft
 NEMA_SHAFT_D  = {
+             8:    4.0,
              11:   5.0,
              14:   5.0,
              17:   5.0,
@@ -666,6 +673,7 @@ NEMA_SHAFT_D  = {
 
 # Bolt diameter
 NEMA_BOLT_D  = {
+              8:   2.0,  # M2
              11:   2.5,  # M2.5
              14:   3.0,  # M3
              17:   3.0,  # M3
@@ -1147,3 +1155,34 @@ ENDSTOP_B = { 'L': 12.7,
             'BOLT_SEP' : 6.5,
             'BOLT_H' : 1.5,
             'BOLT_D' : 1.8 }
+
+# GT2 Belt dimensions
+#
+#
+#      _   _   _   _ ...............................
+#    _/ \_/ \_/ \_/ \_....:+ tooth_height: 0.75    + belt_height: 1.38        
+#                     ....:+ PLD: 0.254            :            
+#    _________________.............................:
+#      :   :
+#      :...:
+#        + tooth separation 2mm (pitch)
+#
+#
+#    PLD: Pitch Line Distance (I think), where the tensile cord is
+#         when the belt is on a pulley, that would be the distance added
+#         to the outside diameter of the belt. What is called the pitch
+#         diameter: for a GT2 is 
+#
+
+GT2 = { 'BELT_H'  : 1.38, # total height
+        'TOOTH_H' : 0.75, # tooth height
+        'PLD'     : 0.254 # pitch line distance
+      }
+
+
+GT = {
+          2 : GT2
+     }
+
+        
+
