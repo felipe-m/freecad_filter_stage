@@ -97,7 +97,7 @@ import fcfun   # import my functions for freecad. FreeCad Functions
 import shp_clss # import my TopoShapes classes 
 import fc_clss # import my freecad classes 
 import comps   # import my CAD components
-import partgroup 
+import partset 
 
 from fcfun import V0, VX, VY, VZ, V0ROT
 from fcfun import VXN, VYN, VZN
@@ -821,7 +821,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         # them, and then move them and calculate the vectors h_o, d_o, w_o
 
         # Creation of the idler pulley, we put it in the center
-        pulley = fc_clss.BearWashSet(metric = bolttens_mtr,
+        pulley = partset.BearWashSet(metric = bolttens_mtr,
                                             axis_h = axis_h, pos_h = 0,
                                             axis_d = axis_d, pos_d = 0,
                                             axis_w = axis_w, pos_w = 0,

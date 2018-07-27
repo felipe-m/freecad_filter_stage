@@ -897,49 +897,49 @@ class PartFilterHolder (fc_clss.SinglePart, ShpFilterHolder):
 
 
 
-doc = FreeCAD.newDocument()
+#doc = FreeCAD.newDocument()
 
-fco = PartFilterHolder(
-                 filter_l = 60.,
-                 filter_w = 25.,
-                 filter_t = 2.5,
-                 base_h = 6.,
-                 hold_d = 12.,
-                 filt_supp_in = 2.,
-                 filt_rim = 3.,
-                 filt_cen_d = 30,
-                 fillet_r = 1.,
-                 # linear guides SEBLV16 y SEBS15, y MGN12H:
-                 boltcol1_dist = 20/2.,
-                 boltcol2_dist = 12.5, #thorlabs breadboard distance
-                 boltcol3_dist = 25,
-                 boltrow1_h = 0,
-                 boltrow1_2_dist = 12.5,
-                 # linear guide MGN12H
-                 boltrow1_3_dist = 20.,
-                 # linear guide SEBLV16 and SEBS15
-                 boltrow1_4_dist = 25.,
+#fco = PartFilterHolder(
+#                 filter_l = 60.,
+#                 filter_w = 25.,
+#                 filter_t = 2.5,
+#                 base_h = 6.,
+#                 hold_d = 12.,
+#                 filt_supp_in = 2.,
+#                 filt_rim = 3.,
+#                 filt_cen_d = 30,
+#                 fillet_r = 1.,
+#                 # linear guides SEBLV16 y SEBS15, y MGN12H:
+#                 boltcol1_dist = 20/2.,
+#                 boltcol2_dist = 12.5, #thorlabs breadboard distance
+#                 boltcol3_dist = 25,
+#                 boltrow1_h = 0,
+#                 boltrow1_2_dist = 12.5,
+#                 # linear guide MGN12H
+#                 boltrow1_3_dist = 20.,
+#                 # linear guide SEBLV16 and SEBS15
+#                 boltrow1_4_dist = 25.,
 
-                 bolt_cen_mtr = 4, 
-                 bolt_linguide_mtr = 3, # linear guide bolts
+#                 bolt_cen_mtr = 4, 
+#                 bolt_linguide_mtr = 3, # linear guide bolts
 
-                 beltclamp_t = 3.,
-                 beltclamp_l = 12.,
-                 beltclamp_h = 8.,
-                 clamp_post_dist = 4.,
-                 sm_beltpost_r = 1.,
+#                 beltclamp_t = 3.,
+#                 beltclamp_l = 12.,
+#                 beltclamp_h = 8.,
+#                 clamp_post_dist = 4.,
+#                 sm_beltpost_r = 1.,
 
-                 tol = kcomp.TOL,
-                 axis_d = VX,
-                 axis_w = VY,
-                 axis_h = VZ,
-                 pos_d = 0,
-                 pos_w = 0,
-                 pos_h = 0,
-                 pos = V0)
+#                 tol = kcomp.TOL,
+#                 axis_d = VX,
+#                 axis_w = VY,
+#                 axis_h = VZ,
+#                 pos_d = 0,
+#                 pos_w = 0,
+#                 pos_h = 0,
+#                 pos = V0)
 
-fco.set_color(fcfun.ORANGE_08)
+#fco.set_color(fcfun.ORANGE_08)
 
 
 
-doc.recompute()
+#doc.recompute()
