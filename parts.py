@@ -17,6 +17,7 @@ import Mesh
 import MeshPart
 import DraftVecUtils
 import logging
+import inspect
 
 # ---------------------- can be taken away after debugging
 import os
@@ -33,6 +34,8 @@ import kcomp_optic
 import fcfun
 import comps
 import kparts
+import shp_clss
+import fc_clss
 
 from fcfun import V0, VX, VY, VZ, V0ROT, addBox, addCyl, addCyl_pos, fillet_len
 from fcfun import VXN, VYN, VZN
@@ -3804,13 +3807,10 @@ class ThinLinBearHouseAsim (object):
 
 
 # ----------- NemaMotorHolder
-
 class NemaMotorHolder (object):
 
     """
-
-
-
+    Creates a holder for a Nema motor
          __________________
         ||                ||
         || O     __     O ||
@@ -3821,9 +3821,9 @@ class NemaMotorHolder (object):
         ||________________|| .....
         ||_______2________|| ..... wall_thick
 
-
-
-         ________3_________        3_________________ ....
+                                      motor_xtr_space
+                                       ::
+         ________3_________        3___::____________ ....
         |  ::  :    :  ::  |       |      :     :    |    + motor_thick
         |__::__:_1__:__::__|       2......:..1..:....|....:..........> fc_axis_n
         ||                ||       | :              /
@@ -3847,6 +3847,11 @@ class NemaMotorHolder (object):
         || ||          || ||                   :              :
         || ||          || ||...................:              :
         ||________________||..................................:
+        :  :            :  :
+        :  :            :  :
+        :  :............:  :
+        :   bolt_wall_sep  :
+        :                  :
         :                  :
         :.....tot_w........:
 
@@ -3854,6 +3859,50 @@ class NemaMotorHolder (object):
        1: ref_axis = 1 & ref_bolt = 0 
        2: ref_axis = 0 & ref_bolt = 0 
        --3: ref_axis = 0 & ref_bolt = 0 
+
+    Parameters:
+    -----------
+    nema_size : int
+        size of the motor (NEMA)
+    wall_thick: float
+        thickness of the side where the holder will be screwed to
+    motor_thick: float
+        thickness of the top side where the motor will be screwed to
+    reinf_thick: float
+        thickness of the reinforcement walls
+    motor_min_h: float
+        distance of from the inner top side to the top hole of the bolts to 
+        attach the holder (see drawing)
+    motor_max_h: float
+        distance of from the inner top side to the bottom hole of the bolts to 
+        attach the holder
+    rail: int
+        1: the holes for the bolts are not holes, there are 2 rails, from
+           motor_min_h to motor_max_h
+        0: just 2 pairs of holes. One pair at defined by motor_min_h and the
+           other defined by motor_max_h
+    motor_xtr_space: float
+        extra separation between the motor and the wall side
+    bolt_wall_d: int/float
+        metric of the bolts to attach the holder
+    bolt_wall_sep: float
+        separation between the 2 bolt holes (or rails). Optional.
+    chmf_r: float
+        radius of the chamfer, whenever chamfer is done
+    fc_axis_h: FreeCAD Vector
+        axis along the axis of the motor
+    fc_axis_n: FreeCAD Vector
+        axis normal to surface where the holder will be attached to
+    ref_axis: int
+        1: the zero of the vertical axis (axis_h) is on the motor axis
+        0: the zero of the vertical axis (axis_h) is at the wall
+    pos: FreeCAD.Vector
+        position of the holder (considering ref_axis)
+    wfco: int
+        1: creates a FreeCAD object
+        0: only creates a shape
+    name: string
+        Name of the FreeCAD object
 
     """
 
@@ -3866,7 +3915,7 @@ class NemaMotorHolder (object):
                   motor_max_h =20.,
                   rail = 1, # if there is a rail or not at the profile side
                   motor_xtr_space = 2., # counting on one side
-                  bolt_wall_d = 4.,
+                  bolt_wall_d = 4., # Metric of the wall bolts
                   bolt_wall_sep = 30., # optional
                   chmf_r = 1.,
                   fc_axis_h = VZ,
@@ -3931,6 +3980,7 @@ class NemaMotorHolder (object):
         # distance of the motor axis to de wall
         motax2wall_dist = (wall_thick + motor_w/2. + motor_xtr_space
                                + boltwallhead_l + washer_thick)
+        self.motax2wall_dist = motax2wall_dist
         if ref_axis == 1:
             ref2motax = V0  #point 1
             ref2motaxwall = DraftVecUtils.scale(axis_n_n, motax2wall_dist) 
@@ -3942,7 +3992,7 @@ class NemaMotorHolder (object):
         motaxwall_pos = pos + ref2motaxwall
 
         # point centered on the symmetrical plane, on top of axis_h and
-        # on the wall (pint 3)
+        # on the wall (point 3)
         ref2topwallcent = (  ref2motaxwall
                              + DraftVecUtils.scale(axis_h, motor_thick))
         topwallcent_pos = pos + ref2topwallcent
@@ -4029,8 +4079,8 @@ class NemaMotorHolder (object):
                 holes.append(shp_hole)
 
         # rail holes. To mount the motor holder to a profile or whatever
-        for add_p in (DraftVecUtils.scale(axis_p, motor_bolt_sep/2.),
-                      DraftVecUtils.scale(axis_p,-motor_bolt_sep/2.)):
+        for add_p in (DraftVecUtils.scale(axis_p, bolt_wall_sep/2.),
+                      DraftVecUtils.scale(axis_p,-bolt_wall_sep/2.)):
             # hole for the rails
             hole_pos = (motaxwall_pos + add_p
                         + DraftVecUtils.scale(axis_h_n, motor_min_h))
@@ -4160,29 +4210,470 @@ class NemaMotorHolder (object):
 
 
 # a porras:
+doc = FreeCAD.newDocument()
+h_nema = NemaMotorHolder ( 
+                  nema_size = 17,
+                  wall_thick = 5.,
+                  motor_thick = 3.,
+                  reinf_thick = 4.,
+                  motor_min_h =8.,
+                  motor_max_h = 43.,
+                  rail = 1,
+                  motor_xtr_space = 2., # counting on one side
+                  bolt_wall_d = 3.,
+                  chmf_r = 1.,
+                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
+                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
+                  #fc_axis_p = VY,
+                  ref_axis = 1, 
+                  #ref_bolt = 0,
+                  pos = V0, # FreeCAD.Vector(3,2,5),
+                  wfco = 1,
+                  name = 'nema_holder_52h')
+
+
+
+
+
+
+
+
+# ----------- ShpNemaMotorHolder
+class ShpNemaMotorHolder (shp_clss.Obj3D):
+    """
+    Creates a holder for a Nema motor. Similar to NemaMotorHolder but creating
+    the classes defined for shapes and parts. See shp_clss and fc_clss
+
+              axis_d
+                 :
+                 :
+         ________:_________
+        ||                ||
+        || O     __     O ||
+        ||    /      \    ||
+        ||   |        |   ||
+        ||    \      /    ||
+        || O     __     O ||
+        ||________________|| .....
+        ||________________|| ..... wall_thick.....> axis_w
+
+           motor_xtr_space           motor_xtr_space
+          ::            ::             ::
+         _::____________::_         ___::____________ ..............> axis_d
+        |  ::  :    :  ::  |       |      :     :    |    + motorside_thick
+        |__::__:____:__::__|       0.1....:..3..:....5....:
+        ||                ||       | :              /
+        || ||          || ||       | :           /
+        || ||          || ||       | :        /
+        || ||          || ||       | :      /
+        || ||          || ||       | :   /
+        ||________________||       |_: /
+        ::       :                 :                 :
+         + reinf_thick             :....tot_d........:
+                 :                 :
+                 v                 v
+               axis_h            axis_h
+
+
+              axis_d
+                 :
+         ________5_________
+        ||                ||
+        || O     4_     O ||
+        ||    /      \    ||
+        ||   |   3    |   ||
+        ||    \      /    ||
+        || O     2_     O ||
+        ||_______1________|| .....
+        ||_______o____::__|| ..... wall_thick.....> axis_w
+                 0    1 2  3 (axis_w)
+
+         ________o_________ ....................................> axis_w
+        |  ::  :    :  ::  |                                  :
+        |__::__:_1__:__::__|....................              :
+        ||                ||....+ motor_min_h  :              :
+        ||  ||   2    ||  ||                   :              +tot_h
+        ||  ||        ||  ||                   + motor_max_h  :
+        ||  ||        ||  ||                   :              :
+        ||  ||   3    ||  ||...................:              :
+        ||_______4________||..................................:
+        :   :    :     :   :
+        :   :    v     :   :
+        :   :  axis_h  :   :
+        :   :          :   :
+        :   :..........:   :
+        :   bolt_wall_sep  :
+        :                  :
+        :                  :
+        :.....tot_w........:
+
+
+    pos_o (origin) is at pos_d=0, pos_w=0, pos_h=0, it's marked with o
+        
+    Parameters:
+    -----------
+    nema_size : int
+        size of the motor (NEMA)
+    wall_thick: float
+        thickness of the side where the holder will be screwed to
+    motorside_thick: float
+        thickness of the top side where the motor will be screwed to
+    reinf_thick: float
+        thickness of the reinforcement walls
+    motor_min_h: float
+        distance of from the inner top side to the top hole of the bolts to 
+        attach the holder (see drawing)
+    motor_max_h: float
+        distance of from the inner top side to the bottom hole of the bolts to 
+        attach the holder
+    rail: int
+        1: the holes for the bolts are not holes, there are 2 rails, from
+           motor_min_h to motor_max_h
+        0: just 2 pairs of holes. One pair at defined by motor_min_h and the
+           other defined by motor_max_h
+    motor_xtr_space: float
+        extra separation between the motor and the wall side
+        and also between the motor and each of the sides
+    bolt_wall_d: int/float
+        metric of the bolts to attach the holder
+    bolt_wall_sep: float
+        separation between the 2 bolt holes (or rails). Optional.
+    chmf_r: float
+        radius of the chamfer, whenever chamfer is done
+    axis_h: FreeCAD Vector
+        axis along the axis of the motor
+    axis_d: FreeCAD Vector
+        axis normal to surface where the holder will be attached to
+    axis_w: FreeCAD Vector
+        axis perpendicular to axis_h and axis_d, symmetrical (not necessary)
+    pos_d : int
+        location of pos along axis_d (0,1,2,3,4,5)
+        0: at the beginning, touching the wall where it is attached
+        1: at the inner side of the side where it will be screwed
+        2: bolts holes closed to the wall to attach the motor
+        3: at the motor axis
+        4: bolts holes away from to the wall to attach the motor
+        5: at the end of the piece
+    pos_w : int
+        location of pos along axis_w (0,1,2,3). Symmetrical
+        0: at the center of symmetry
+        1: at the center of the rails (or holes) to attach the holder
+        2: at the center of the holes to attach the motor
+        3: at the end of the piece
+    pos_h : int
+        location of pos along axis_h (0,1,2,3)
+        0: at the top (on the side of the motor axis)
+        1: inside the motor wall
+        2: Top end of the rail
+        3: Bottom end of the rail
+        4: Bottom end of the piece
+    pos : FreeCAD.Vector
+        position of the piece
+
+    """
+
+    def __init__ (self,
+                  nema_size = 17,
+                  wall_thick = 4.,
+                  motorside_thick = 4.,
+                  reinf_thick = 4.,
+                  motor_min_h =10.,
+                  motor_max_h =20.,
+                  rail = 1, # if there is a rail or not at the profile side
+                  motor_xtr_space = 2., # counting on one side
+                  bolt_wall_d = 4., # Metric of the wall bolts
+                  bolt_wall_sep = 0, # optional
+                  chmf_r = 1.,
+                  axis_h = VZ,
+                  axis_d = VX,
+                  axis_w = None,
+                  pos_h = 1,  # 1: inner wall of the motor side
+                  pos_d = 3,  # 3: motor axis
+                  pos_w = 0,  # 0: center of symmetry
+                  pos = V0):
+
+        if axis_w is None or axis_w == V0:
+            axis_w = axis_h.cross(axis_d)
+
+        shp_clss.Obj3D.__init__(self, axis_d, axis_w, axis_h)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i):
+                setattr(self, i, values[i])
+
+        # normal axes to print without support
+        self.prnt_ax = self.axis_h
+
+        self.motor_w = kcomp.NEMA_W[nema_size]
+        self.motor_bolt_sep = kcomp.NEMA_BOLT_SEP[nema_size]
+        self.motor_bolt_d = kcomp.NEMA_BOLT_D[nema_size]
+
+        self.boltwallshank_r_tol = kcomp.D912[bolt_wall_d]['shank_r_tol']
+        self.boltwallhead_l = kcomp.D912[bolt_wall_d]['head_l']
+        self.boltwallhead_r = kcomp.D912[bolt_wall_d]['head_r']
+        self.washer_thick = kcomp.WASH_D125_T[bolt_wall_d]
+
+        # calculation of the bolt wall separation
+        self.max_bolt_wall_sep = self.motor_w - 2 * self.boltwallhead_r
+      
+        if bolt_wall_sep == 0:
+            self.bolt_wall_sep = self.max_bolt_wall_sep
+        elif bolt_wall_sep > self.max_bolt_wall_sep:
+            logger.debug('bolt wall separtion too large: ' + str(bolt_wall_sep))
+            self.bolt_wall_sep = self.max_bolt_wall_sep
+            logger.debug('taking larges value: ' + str(self.bolt_wall_sep))
+        elif bolt_wall_sep <  4 * self.boltwallhead_r:
+            logger.debug('bolt wall separtion too short: ' + str(bolt_wall_sep))
+            self.bolt_wall_sep = self.self.max_bolt_wall_sep
+            logger.debug('taking larges value: ' + str(self.bolt_wall_sep))
+        # else: the given separation is good
+
+        # distance from the motor to the inner wall (in axis_d)
+        self.motor_inwall_space = (  motor_xtr_space
+                                   + self.boltwallhead_l + self.washer_thick)
+        # making the big box that will contain everything and will be cut
+        self.tot_h = motorside_thick + motor_max_h + 2 * bolt_wall_d
+        self.tot_w = 2* reinf_thick + self.motor_w + 2 * motor_xtr_space
+        self.tot_d = (   wall_thick + self.motor_w + self.motor_inwall_space)
+        # distance from the motor axis to the wall (in axis_d)
+        self.motax2wall = wall_thick + self.motor_inwall_space + self.motor_w/2.
+
+        # definition of which axis is symmetrical
+        self.h0_cen = 0
+        self.d0_cen = 0
+        self.w0_cen = 1 # symmetrical
+
+        # vectors from the origin to the points along axis_h:
+        self.h_o[0] = V0
+        self.h_o[1] = self.vec_h(motorside_thick)
+        self.h_o[2] = self.vec_h(motorside_thick + motor_min_h)
+        self.h_o[3] = self.vec_h(motorside_thick + motor_max_h)
+        self.h_o[4] = self.vec_h(self.tot_h)
+
+        # position along axis_d
+        self.d_o[0] = V0
+        self.d_o[1] = self.vec_d(wall_thick) # inner wall
+        # distance to the inner bolts of the motor
+        self.d_o[2] = self.vec_d(self.motax2wall - self.motor_bolt_sep/2.)
+        self.d_o[3] = self.vec_d(self.motax2wall)  # motor axis
+        self.d_o[4] = self.vec_d(self.motax2wall + self.motor_bolt_sep/2.)
+        self.d_o[5] = self.vec_d(self.tot_d)
+
+        # vectors from the origin to the points along axis_w:
+        # these are negative because actually the pos_w indicates a negative
+        # position along axis_w (this happens when it is symmetrical)
+        self.w_o[0] = V0
+        self.w_o[1] = self.vec_w(-self.bolt_wall_sep/2.)
+        self.w_o[2] = self.vec_w(-self.motor_bolt_sep/2.)
+        self.w_o[3] = self.vec_w(-self.tot_w/2.)
+
+        # calculates the position of the origin, and keeps it in attribute pos_o
+        self.set_pos_o()
+
+        # make the whole box, extra height and depth to cut all the way
+        # back and down:
+        shp_box = fcfun.shp_box_dir (box_w = self.tot_w,
+                                     box_d = self.tot_d,
+                                     box_h = self.tot_h,
+                                     fc_axis_h = self.axis_h,
+                                     fc_axis_d = self.axis_d,
+                                     cw=1, cd=0, ch=0, pos = self.pos_o)
+        # little chamfer at the corners, if fillet there are some problems
+        shp_box = fcfun.shp_filletchamfer_dir(shp_box, self.axis_h,
+                                              fillet=0,
+                                              radius = chmf_r)
+        shp_box = shp_box.removeSplitter()
+
+        # chamfer of the box to make a 'triangular' reinforcement
+        chmf_reinf_r = min(self.tot_d- wall_thick, self.tot_h-motorside_thick)
+        # chamfer at the lower point (h=4), and the other end of d (d=5)
+        shp_box = fcfun.shp_filletchamfer_dirpt(shp_box, self.axis_w,
+                                              fc_pt =self.get_pos_dwh(5,0,4),
+                                              fillet=0,
+                                              radius = chmf_reinf_r)
+        shp_box = shp_box.removeSplitter()
+
+        # holes:
+        holes = []
+        # the space for the motor
+        shp_motor = fcfun.shp_box_dir (
+                                    box_w = self.motor_w + 2 * motor_xtr_space,
+                                    box_d = self.tot_d + chmf_r,
+                                    box_h = self.tot_h,
+                                    fc_axis_h = self.axis_h,
+                                    fc_axis_d = self.axis_d,
+                                    cw=1, cd=0, ch=0,
+                                    # at the inner walls
+                                    pos = self.get_pos_dwh(1,0,1))
+
+        shp_motor = fcfun.shp_filletchamfer_dir(shp_motor, fc_axis=self.axis_h,
+                                                fillet=0, radius=chmf_r)
+        holes.append(shp_motor)
+
+        # central circle of the motor
+        shp_hole = fcfun.shp_cylcenxtr(
+                                 r=(self.motor_bolt_sep - self.motor_bolt_d)/2.,
+                                 h = motorside_thick,
+                                 normal = self.axis_h,
+                                 ch = 0,
+                                 xtr_top = 1,
+                                 xtr_bot = 1,
+                                 # position of the motor axis, at the top
+                                 pos = self.get_pos_d(3))
+        holes.append(shp_hole)
+
+        # motor bolt holes
+        for pt_d in (2,4):  # points of the motor holes along axis d
+            for pt_w in (-2,2): # points of the motor holes along axis_w
+                shp_hole = fcfun.shp_cylcenxtr( r = self.motor_bolt_d/2.+TOL,
+                                            h = motorside_thick,
+                                            normal = self.axis_h,
+                                            ch = 0,
+                                            xtr_top = 1,
+                                            xtr_bot = 1,
+                                            pos = self.get_pos_dwh(pt_d,pt_w,0))
+                holes.append(shp_hole)
+       
+        # rail holes. To mount the motor holder to a profile or whatever
+        for pt_w in (-1,1): # points of the holes to attach the holder
+            # hole for the rails
+            if rail == 1:
+                shp_hole = fcfun.shp_box_dir_xtr(
+                                       box_w = self.boltwallshank_r_tol * 2.,
+                                       box_d = wall_thick,
+                                       box_h = motor_max_h - motor_min_h,
+                                       fc_axis_h = self.axis_h,
+                                       fc_axis_d = self.axis_d,
+                                       cw=1, cd=0, ch=0,
+                                       xtr_d =1, xtr_nd=1, #to cut
+                                       # h:2 the position on top of the rail
+                                       pos = self.get_pos_dwh(0,pt_w,2))
+                holes.append(shp_hole)
+            # hole for the ending of the rails (4 semicircles)
+            for pt_h in (2,3) : # both ends of the rail (along axis_h)
+                shp_hole = fcfun.shp_cylcenxtr(
+                                            r = self.boltwallshank_r_tol,
+                                            h = wall_thick,
+                                            normal = self.axis_d,
+                                            ch = 0,
+                                            xtr_top = 1,
+                                            xtr_bot = 1,
+                                            pos = self.get_pos_dwh(0,pt_w,pt_h))
+                holes.append(shp_hole)
+
+        shp_holes = fcfun.fuseshplist(holes)
+        shp_motorholder = shp_box.cut(shp_holes)
+        shp_bracket =shp_motorholder.removeSplitter()
+        self.shp = shp_motorholder
+
+
 #doc = FreeCAD.newDocument()
-#h_nema = NemaMotorHolder ( 
+#shpob_nema = ShpNemaMotorHolder ( 
 #                  nema_size = 17,
-#                  wall_thick = 5.,
-#                  motor_thick = 3.,
+#                  wall_thick = 4.,
+#                  motorside_thick = 4.,
 #                  reinf_thick = 4.,
-#                  motor_min_h =8.,
-#                  motor_max_h = 43.,
-#                  rail = 1,
+#                  motor_min_h =10.,
+#                  motor_max_h =20.,
+#                  rail = 1, # if there is a rail or not at the profile side
 #                  motor_xtr_space = 2., # counting on one side
-#                  bolt_wall_d = 3.,
+#                  bolt_wall_d = 4., # Metric of the wall bolts
+#                  #bolt_wall_sep = 30., # optional
 #                  chmf_r = 1.,
-#                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
-#                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
-#                  #fc_axis_p = VY,
-#                  ref_axis = 1, 
-#                  #ref_bolt = 0,
-#                  pos = V0, # FreeCAD.Vector(3,2,5),
-#                  wfco = 1,
-#                  name = 'nema_holder_52h')
+#                  axis_h = VZ,
+#                  axis_d = VX,
+#                  axis_w = None,
+#                  pos_h = 1,  # 1: inner wall of the motor side
+#                  pos_d = 3,  # 3: motor axis
+#                  pos_w = 0,  # 0: center of symmetry
+#                  pos = V0)
 
+#Part.show(shpob_nema.shp)
 
-# ----------- Linear bearing housing 
+class PartNemaMotorHolder(fc_clss.SinglePart, ShpNemaMotorHolder):
+    """ Integration of a ShpNemaMotorHolder object into PartNemaMotorHolder
+    object, so it is a FreeCAD object that can be visualized in FreeCAD
+    """
+
+    def __init__ (self,
+                  nema_size = 17,
+                  wall_thick = 4.,
+                  motorside_thick = 4.,
+                  reinf_thick = 4.,
+                  motor_min_h =10.,
+                  motor_max_h =20.,
+                  rail = 1, # if there is a rail or not at the profile side
+                  motor_xtr_space = 2., # counting on one side
+                  bolt_wall_d = 4., # Metric of the wall bolts
+                  bolt_wall_sep = 0, # optional
+                  chmf_r = 1.,
+                  axis_h = VZ,
+                  axis_d = VX,
+                  axis_w = None,
+                  pos_h = 1,  # 1: inner wall of the motor side
+                  pos_d = 3,  # 3: motor axis
+                  pos_w = 0,  # 0: center of symmetry
+                  pos = V0,
+                  model_type = 3, #to be printed
+                  name = ''):
+
+        default_name = 'nema' + str(nema_size) + '_motorholder'
+        self.set_name (name, default_name, change = 0)
+        # First the shape is created
+        ShpNemaMotorHolder.__init__(self,
+                  nema_size = nema_size,
+                  wall_thick = wall_thick,
+                  motorside_thick = motorside_thick,
+                  reinf_thick = reinf_thick,
+                  motor_min_h = motor_min_h,
+                  motor_max_h = motor_max_h,
+                  rail = rail, 
+                  motor_xtr_space = motor_xtr_space,
+                  bolt_wall_d = bolt_wall_d,
+                  bolt_wall_sep = bolt_wall_sep,
+                  chmf_r = chmf_r,
+                  axis_h = axis_h,
+                  axis_d = axis_d,
+                  axis_w = axis_w,
+                  pos_h = pos_h,
+                  pos_d = pos_d,
+                  pos_w = pos_w,
+                  pos = pos)
+
+        #then the part:
+        fc_clss.SinglePart.__init__(self)
+
+        # save the arguments that haven't been assigned as attributes
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): 
+                setattr(self, i, values[i])
+
+#doc = FreeCAD.newDocument()
+#part_nemahold = PartNemaMotorHolder ( 
+#                  nema_size = 23,
+#                  wall_thick = 4.,
+#                  motorside_thick = 4.,
+#                  reinf_thick = 4.,
+#                  motor_min_h =10.,
+#                  motor_max_h =20.,
+#                  rail = 1, # if there is a rail or not at the profile side
+#                  motor_xtr_space = 2., # counting on one side
+#                  bolt_wall_d = 4., # Metric of the wall bolts
+#                  #bolt_wall_sep = 30., # optional
+#                  chmf_r = 1.,
+#                  axis_h = VZ,
+#                  axis_d = VX,
+#                  axis_w = None,
+#                  pos_h = 1,  # 1: inner wall of the motor side
+#                  pos_d = 3,  # 3: motor axis
+#                  pos_w = 0,  # 0: center of symmetry
+#                  pos = V0)
+
 
 class Plate3CageCubes (object):
 
