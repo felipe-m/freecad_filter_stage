@@ -1913,6 +1913,7 @@ class TensionerSet (fc_clss.PartsSet):
                  pos_w = 0,
                  pos_h = 0,
                  pos = V0,
+                 group = 0,
                  name = ''):
 
         default_name = 'tensioner_set'
@@ -2023,6 +2024,8 @@ class TensionerSet (fc_clss.PartsSet):
                                              + self.get_o_to_h(3))
 
         self.place_fcos()
+        if group == 1:
+            self.make_group()
 
     def get_tensioner_holder(self):
         """ gets the tensioner holder"""

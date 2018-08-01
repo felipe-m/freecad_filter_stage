@@ -126,6 +126,7 @@ import filter_holder_clss # Filter holder
 import comps   # CAD components
 import partgroup 
 import parts
+import partset
 
 from fcfun import V0, VX, VY, VZ, V0ROT
 from fcfun import VXN, VYN, VZN
@@ -278,44 +279,33 @@ motor_holder = parts.PartNemaMotorHolder (
 motor_holder.set_color(fcfun.GREEN)   #1: the tensioner
 
 
-motor = comps.PartNemaMotor(nema_size = nema_size, 
+motor_pulley = partset.NemaMotorPulleySet(
+                        nema_size = nema_size, 
                         base_l = 32.,
                         shaft_l = motorshaft_l,
                         circle_r = 11.,
                         circle_h = 2.,
                         chmf_r = 1.,
+
+                        pulley_pitch = 2.,
+                        pulley_n_teeth = 20,
+                        pulley_toothed_h = 7.5,
+                        pulley_top_flange_h = 1.,
+                        pulley_bot_flange_h = 0,
+                        pulley_tot_h = 16.,
+                        pulley_flange_d = 15.,
+                        pulley_base_d = 15.,
+                        #pulley_tol = 0,
+                        pulley_pos_h = -1,                        
+
                         axis_d = axis_mov,
                         axis_w = axis_front,
                         axis_h = axis_up,
                         pos_d = 0,
                         pos_w = 0,
-                        pos_h = 3,
+                        pos_h = 0,
                         # at the shaft axis (d=3, w=0)
                         # at the inner side of the top wall (h=1)
                         pos = motor_holder.get_pos_dwh(3,0,1))
-
-# Motor top axis position
-motor_axis_top_pos = (  motor_holder.get_pos_dwh(3,0,1)
-                      + DraftVecUtils.scale(axis_up, motorshaft_l))
-
-GT2Pulley = comps.PartGtPulley(
-                 pitch = 2.,
-                 n_teeth = 20,
-                 toothed_h = 7.5,
-                 top_flange_h = 1.,
-                 bot_flange_h = 0,
-                 tot_h = 16.,
-                 flange_d = 15.,
-                 base_d = 15.,
-                 shaft_d = 5.,
-                 tol = 0,
-                 #axis_d = VX,
-                 #axis_w = VY,
-                 axis_h = VZ,
-                 pos_d = 0,
-                 pos_w = 0,
-                 pos_h = 5,
-                 pos = motor_axis_top_pos)
-
 
 doc.recompute()
