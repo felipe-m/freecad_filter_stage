@@ -794,7 +794,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
                  pos_w = 0,
                  pos_h = 0,
                  pos = V0,
-                 group = 1,
+                 group = 0,
                  name = ''):
 
         default_name = 'idler_tensioner_set'

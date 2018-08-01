@@ -160,7 +160,10 @@ belt_w =  6.
 # height of the belt clamp
 beltclamp_h = belt_w + 2
 # length of the motor shaft
-motorshaft_l = 20.
+motorshaft_l = 24.
+
+# width of the aluminum profile
+aluprof_w = 20.
 
 filter_holder = filter_holder_clss.PartFilterHolder(
                  filter_l = 60.,
@@ -203,12 +206,15 @@ belt_pos = filter_holder.get_pos_dwh(2,0,7)
 
 tensioner_pos = (  belt_pos
                  + DraftVecUtils.scale(axis_mov,
-                                       mov_distance + filter_holder.tot_w/2.)
+                                       mov_distance/2. + filter_holder.tot_w/2.)
                  + DraftVecUtils.scale(axis_up, belt_w/2.))
 
-pulley_pos = (  belt_pos
+nemaholder_w_motor_pos = (
+                   belt_pos
                  + DraftVecUtils.scale(axis_mov,
-                                       mov_distance + filter_holder.tot_w/2.)
+                                       - mov_distance/2.
+                                       - filter_holder.tot_w/2.
+                                       - aluprof_w)
                  + DraftVecUtils.scale(axis_up, belt_w/2.))
 
 print (str(belt_pos))
@@ -217,7 +223,7 @@ print (str(tensioner_pos))
 # at the end of the idler tensioner, when it is all the way out
 tensioner_pos_d = 8
 #tensioner_pos_d = 2
-tensioner_pos_w = 1 # at the pulley radius
+tensioner_pos_w = -1 # at the pulley radius
 tensioner_pos_h = 3 # middle point of the pulley
 
 tensioner = tensioner_clss.TensionerSet(
@@ -247,7 +253,10 @@ tensioner = tensioner_clss.TensionerSet(
 tensioner.set_color(fcfun.ORANGE,1)   #1: the tensioner
 tensioner.set_color(fcfun.LSKYBLUE,2) #2: the holder
 
-#pulley_pos = 
+# set with:
+# + motor holder
+# + motor
+# + pulley
 
 motor_holder_pos = (  belt_pos
                   + DraftVecUtils.scale(axis_mov, - mov_distance)
@@ -255,37 +264,14 @@ motor_holder_pos = (  belt_pos
 
 
 nema_size = 11
-nema_name = 'nema_' + str(nema_size)
 
-
-motor_holder = parts.PartNemaMotorHolder ( 
-                  nema_size = nema_size,
-                  wall_thick = 4.,
-                  motorside_thick = 4.,
-                  reinf_thick = 4.,
-                  motor_min_h = 10.,
-                  motor_max_h = 20,
-                  motor_xtr_space = 2., # counting on one side
-                  bolt_wall_d = 4.,
-                  chmf_r = 1.,
-                  axis_h = axis_up.negative(),
-                  axis_d = axis_mov.negative(),
-                  # pos_h=1: inner wall of the motor side, the top of the motor
-                  pos_h = 1,
-                  pos_d = 0, #0: at the wall where this holder is attached
-                  pos_w = 0, #0: center of symmetry
-                  pos = motor_holder_pos)
-
-motor_holder.set_color(fcfun.GREEN)   #1: the tensioner
-
-
-motor_pulley = partset.NemaMotorPulleySet(
+nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         nema_size = nema_size, 
-                        base_l = 32.,
-                        shaft_l = motorshaft_l,
-                        circle_r = 11.,
-                        circle_h = 2.,
-                        chmf_r = 1.,
+                        motor_base_l = 32.,
+                        motor_shaft_l = motorshaft_l,
+                        motor_circle_r = 11.,
+                        motor_circle_h = 2.,
+                        motor_chmf_r = 1.,
 
                         pulley_pitch = 2.,
                         pulley_n_teeth = 20,
@@ -296,16 +282,23 @@ motor_pulley = partset.NemaMotorPulleySet(
                         pulley_flange_d = 15.,
                         pulley_base_d = 15.,
                         #pulley_tol = 0,
-                        pulley_pos_h = -1,                        
-
-                        axis_d = axis_mov,
-                        axis_w = axis_front,
+                        #pulley_pos_h = -1,                        
+                        hold_wall_thick = 4.,
+                        hold_motorside_thick = 4.,
+                        hold_reinf_thick = 4.,
+                        hold_rail_min_h = 10.,
+                        hold_rail_max_h = 40,
+                        hold_motor_xtr_space = 2.,
+                        hold_bolt_wall_d = 4.,
+                        # hold_chmf_r = 1.,
                         axis_h = axis_up,
-                        pos_d = 0,
-                        pos_w = 0,
-                        pos_h = 0,
-                        # at the shaft axis (d=3, w=0)
-                        # at the inner side of the top wall (h=1)
-                        pos = motor_holder.get_pos_dwh(3,0,1))
+                        axis_d = axis_mov.negative(),
+                        pos_h = 11, # middle point of the pulley toothed part
+                        pos_d = 0, #0: at the wall where this holder is attached
+                        pos_w = 5, #5: inner radius of the pulley (to the back
+                        pos = nemaholder_w_motor_pos)
+
+nemaholder_w_motor.set_color(fcfun.GREEN_05,1)   #1: the tensioner
+
 
 doc.recompute()
