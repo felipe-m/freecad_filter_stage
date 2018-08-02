@@ -164,6 +164,8 @@ motorshaft_l = 24.
 
 # width of the aluminum profile
 aluprof_w = 20.
+# dictionary with the dimensions of the aluminum profile
+aluprof_dict = kcomp.ALU_PROF[aluprof_w]
 
 filter_holder = filter_holder_clss.PartFilterHolder(
                  filter_l = 60.,
@@ -209,6 +211,8 @@ tensioner_pos = (  belt_pos
                                        mov_distance/2. + filter_holder.tot_w/2.)
                  + DraftVecUtils.scale(axis_up, belt_w/2.))
 
+
+# position of the set: motor pulley holder
 nemaholder_w_motor_pos = (
                    belt_pos
                  + DraftVecUtils.scale(axis_mov,
@@ -252,6 +256,27 @@ tensioner = tensioner_clss.TensionerSet(
 
 tensioner.set_color(fcfun.ORANGE,1)   #1: the tensioner
 tensioner.set_color(fcfun.LSKYBLUE,2) #2: the holder
+
+# position of the aluminum profile that supports the tensioner
+# point at the base, centered where the bolt holes are
+aluprof_tens_pos = tensioner.get_pos_dwh (2,0,0)
+
+# length of the aluminum profile that supports the tensioner
+aluprof_tens_l = tensioner.get_tensioner_holder().hold_bas_w
+
+aluprof_tens = comps.getaluprof_dir(aluprof_dict,
+                                length = aluprof_tens_l,
+                                fc_axis_l = axis_front,
+                                fc_axis_w = axis_mov,
+                                fc_axis_p = axis_up.negative(),
+                                ref_l = 1, # centered
+                                ref_w = 1, # centered
+                                ref_p = 2, # from top
+                                xtr_l = aluprof_tens_l/2., # extra length
+                                pos = aluprof_tens_pos,
+                                wfco = 1,
+                                name = 'aluprof_tens')
+
 
 # set with:
 # + motor holder
@@ -298,7 +323,7 @@ nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         pos_w = 5, #5: inner radius of the pulley (to the back
                         pos = nemaholder_w_motor_pos)
 
-nemaholder_w_motor.set_color(fcfun.GREEN_05,1)   #1: the tensioner
+nemaholder_w_motor.set_color(fcfun.GREEN_05,2)   #2: the holder
 
 
 doc.recompute()
