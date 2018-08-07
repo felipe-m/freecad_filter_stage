@@ -149,7 +149,9 @@ mov_distance = 60.
 belt_w = 6.
 
 # position of the filter
-filter_pos = V0
+filter_pos = V0 + DraftVecUtils.scale(axis_mov,-30)
+# position of the filter in the middle
+filter_pos_0 = V0
 # the point of this position is the filter center of symmetry and its base
 filter_pos_d = 9
 filter_pos_w = 0
@@ -324,6 +326,48 @@ nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         pos = nemaholder_w_motor_pos)
 
 nemaholder_w_motor.set_color(fcfun.GREEN_05,2)   #2: the holder
+
+# linear guide:
+
+linguide_dict = kcomp.SEB15A
+
+linguide_blk_dict = linguide_dict['block']
+linguide_rail_dict = linguide_dict['rail']
+
+# block:
+partLinGuideBlock = comps.PartLinGuideBlock (
+                                     block_dict = linguide_blk_dict,
+                                     rail_dict  = linguide_rail_dict,
+                                     axis_d = axis_mov,
+                                     axis_w = axis_up,
+                                     axis_h = axis_front,
+                                     pos_d = 0, pos_w = -2, pos_h = 3,
+                                     pos = filter_holder.get_pos_dwh(0,0,3))
+
+# rail
+# the rail will be in the direcion of:
+#   axis_up: defined by partLinGuideBlock
+#   axis_front: defined by partLinGuideBlock
+#   axis_mov: NOT defined by partLinGuideBlock, because it moves along
+#             this axis
+#             Defined by filter_pos_0
+
+pos_fromblock = partLinGuideBlock.get_pos_dwh(0,0,4)
+dif_pos = pos_fromblock - filter_pos_0
+min_axis_mov = DraftVecUtils.project(dif_pos, axis_mov)
+
+pos_rail = pos_fromblock - min_axis_mov 
+
+partLinGuideRail = comps.PartLinGuideRail (
+                         rail_d = filter_holder.tot_w + mov_distance + 10.,
+                         rail_dict = linguide_rail_dict,
+                         boltend_sep = 0,
+                         axis_d = axis_mov,
+                         axis_w = axis_up,
+                         axis_h = axis_front,
+                         pos_d = 2, pos_w = 0, pos_h = 0,
+                         pos = pos_rail)
+                            
 
 
 doc.recompute()
