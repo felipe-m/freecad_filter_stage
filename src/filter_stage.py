@@ -149,9 +149,10 @@ mov_distance = 60.
 belt_w = 6.
 
 # position of the filter
-filter_pos = V0 + DraftVecUtils.scale(axis_mov,-30)
+#filter_pos = V0 + DraftVecUtils.scale(axis_mov,-30)
 # position of the filter in the middle
 filter_pos_0 = V0
+filter_pos = filter_pos_0
 # the point of this position is the filter center of symmetry and its base
 filter_pos_d = 9
 filter_pos_w = 0
@@ -234,7 +235,7 @@ tensioner_pos_h = 3 # middle point of the pulley
 
 tensioner = tensioner_clss.TensionerSet(
                      aluprof_w = 20.,
-                     belt_pos_h = 30., 
+                     belt_pos_h = 0., 
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,
@@ -246,6 +247,7 @@ tensioner = tensioner_clss.TensionerSet(
                      pulley_stroke_dist = 0,
                      nut_holder_thick = 4. ,
                      opt_tens_chmf = 1,
+                     min_width = 1,
                      tol = kcomp.TOL,
                      axis_d = axis_mov.negative(),
                      axis_w = axis_front.negative(),
@@ -309,12 +311,12 @@ nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         pulley_flange_d = 15.,
                         pulley_base_d = 15.,
                         #pulley_tol = 0,
-                        #pulley_pos_h = -1,                        
+                        pulley_pos_h = 5.,                        
                         hold_wall_thick = 4.,
-                        hold_motorside_thick = 4.,
-                        hold_reinf_thick = 4.,
-                        hold_rail_min_h = 10.,
-                        hold_rail_max_h = 40,
+                        hold_motorside_thick = 3.,
+                        hold_reinf_thick = 3.,
+                        hold_rail_min_h = 3.,
+                        hold_rail_max_h = 20.,
                         hold_motor_xtr_space = 2.,
                         hold_bolt_wall_d = 4.,
                         # hold_chmf_r = 1.,
