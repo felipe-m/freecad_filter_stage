@@ -149,10 +149,11 @@ mov_distance = 60.
 belt_w = 6.
 
 # position of the filter
-#filter_pos = V0 + DraftVecUtils.scale(axis_mov,-30)
 # position of the filter in the middle
 filter_pos_0 = V0
-filter_pos = filter_pos_0
+# position of the filter relative to it 0 position
+filter_mov = DraftVecUtils.scale(axis_mov,30)
+filter_pos = filter_pos_0 + filter_mov
 # the point of this position is the filter center of symmetry and its base
 filter_pos_d = 9
 filter_pos_w = 0
@@ -207,7 +208,9 @@ filter_holder = filter_holder_clss.PartFilterHolder(
 filter_holder.set_color(fcfun.YELLOW_05)
 
 # get the position of the belt of the filter, at center of symmetry
-belt_pos = filter_holder.get_pos_dwh(2,0,7)
+belt_pos_mov = filter_holder.get_pos_dwh(2,0,7)
+# get the position of the belt of the filter if not moved
+belt_pos = filter_holder.get_pos_dwh(2,0,7) - filter_mov
 
 tensioner_pos = (  belt_pos
                  + DraftVecUtils.scale(axis_mov,
@@ -355,10 +358,10 @@ partLinGuideBlock = comps.PartLinGuideBlock (
 #             Defined by filter_pos_0
 
 pos_fromblock = partLinGuideBlock.get_pos_dwh(0,0,4)
-dif_pos = pos_fromblock - filter_pos_0
-min_axis_mov = DraftVecUtils.project(dif_pos, axis_mov)
+#dif_pos = pos_fromblock - filter_mov
+#min_axis_mov = DraftVecUtils.project(dif_pos, axis_mov)
 
-pos_rail = pos_fromblock - min_axis_mov 
+pos_rail = pos_fromblock - filter_mov
 
 partLinGuideRail = comps.PartLinGuideRail (
                          rail_d = filter_holder.tot_w + mov_distance + 10.,
