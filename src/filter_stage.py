@@ -238,10 +238,14 @@ pos_fromblock = partLinGuideBlock.get_pos_dwh(0,0,4)
 #dif_pos = pos_fromblock - filter_mov
 #min_axis_mov = DraftVecUtils.project(dif_pos, axis_mov)
 
-pos_rail = pos_fromblock - filter_mov
+rail_xtr_d = 10.
+
+pos_rail = (  pos_fromblock - filter_mov
+            + DraftVecUtils.scale(axis_mov, rail_xtr_d/2.))
 
 partLinGuideRail = comps.PartLinGuideRail (
-                         rail_d = filter_holder.tot_w + mov_distance + 10.,
+                         rail_d = (   filter_holder.tot_w + mov_distance
+                                    + rail_xtr_d),
                          rail_dict = linguide_rail_dict,
                          boltend_sep = 0,
                          axis_d = axis_mov,
@@ -342,19 +346,18 @@ print 'aluprof: ' + str(aluprof_tens_l)
 # length of the aluminum profile that supports the tensioner
 #aluprof_tens_l = tensioner.get_tensioner_holder().hold_bas_w
 
-aluprof_tens = comps.getaluprof_dir(aluprof_dict,
-                                length = aluprof_tens_l,
-                                fc_axis_l = axis_front.negative(),
-                                fc_axis_w = axis_mov,
-                                fc_axis_p = axis_up.negative(),
-                                ref_l = 2, # from the end
-                                ref_w = 1, # centered
-                                ref_p = 2, # from top
-                                xtr_nl = aluprof_tens_l/2., # extra length
-                                pos = aluprof_tens_pos,
-                                wfco = 1,
-                                name = 'aluprof_tens')
-
+aluprof_tens = comps.PartAluProf(depth = aluprof_tens_l,
+                                 aluprof_dict = aluprof_dict,
+                                 xtr_d = 0,
+                                 xtr_nd = aluprof_tens_l/2., # extra length
+                                 axis_d = axis_front.negative(),
+                                 axis_w = axis_mov,
+                                 axis_h = axis_up,
+                                 pos_d = 1, #end not counting xtr_nd
+                                 pos_w = 0, # centered
+                                 pos_h = 3,
+                                 pos = aluprof_tens_pos)
+                                 
 
 # set with:
 # + motor holder
@@ -402,6 +405,28 @@ nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         pos = nemaholder_w_motor_pos)
 
 nemaholder_w_motor.set_color(fcfun.GREEN_05,2)   #2: the holder
+
+# aluminum profile for the motor holder
+
+aluprof_distance = (  aluprof_tens_pos.distanceToPlane(nemaholder_w_motor_pos,
+                                                     axis_mov))
+
+aluprof_motor_pos = (  aluprof_tens_pos
+                     - DraftVecUtils.scale(axis_mov, aluprof_distance))
+
+aluprof_motor = comps.PartAluProf(depth = aluprof_tens_l,
+                                 aluprof_dict = aluprof_dict,
+                                 xtr_d = 0,
+                                 xtr_nd = aluprof_tens_l/2., # extra length
+                                 axis_d = axis_front.negative(),
+                                 axis_w = axis_mov,
+                                 axis_h = axis_up,
+                                 pos_d = 1, #end not counting xtr_nd
+                                 pos_w = -3, #not centered, touching the holder
+                                 pos_h = 3,
+                                 pos = aluprof_motor_pos)
+
+
 
 
 
