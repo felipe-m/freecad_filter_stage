@@ -207,10 +207,61 @@ filter_holder = filter_holder_clss.PartFilterHolder(
 
 filter_holder.set_color(fcfun.YELLOW_05)
 
+
+
+# ------ linear guide for the filter holder
+
+linguide_dict = kcomp.SEB15A
+
+linguide_blk_dict = linguide_dict['block']
+linguide_rail_dict = linguide_dict['rail']
+
+# block:
+partLinGuideBlock = comps.PartLinGuideBlock (
+                                     block_dict = linguide_blk_dict,
+                                     rail_dict  = linguide_rail_dict,
+                                     axis_d = axis_mov,
+                                     axis_w = axis_up,
+                                     axis_h = axis_front,
+                                     pos_d = 0, pos_w = -2, pos_h = 3,
+                                     pos = filter_holder.get_pos_dwh(0,0,3))
+
+# rail
+# the rail will be in the direcion of:
+#   axis_up: defined by partLinGuideBlock
+#   axis_front: defined by partLinGuideBlock
+#   axis_mov: NOT defined by partLinGuideBlock, because it moves along
+#             this axis
+#             Defined by filter_pos_0
+
+pos_fromblock = partLinGuideBlock.get_pos_dwh(0,0,4)
+#dif_pos = pos_fromblock - filter_mov
+#min_axis_mov = DraftVecUtils.project(dif_pos, axis_mov)
+
+pos_rail = pos_fromblock - filter_mov
+
+partLinGuideRail = comps.PartLinGuideRail (
+                         rail_d = filter_holder.tot_w + mov_distance + 10.,
+                         rail_dict = linguide_rail_dict,
+                         boltend_sep = 0,
+                         axis_d = axis_mov,
+                         axis_w = axis_up,
+                         axis_h = axis_front,
+                         # center along axis_d and axis_d, base along axis_h
+                         pos_d = 2, pos_w = 0, pos_h = 0,
+                         pos = pos_rail)
+
+                      
+
+
+
+
+
 # get the position of the belt of the filter, at center of symmetry
 belt_pos_mov = filter_holder.get_pos_dwh(2,0,7)
 # get the position of the belt of the filter if not moved
 belt_pos = filter_holder.get_pos_dwh(2,0,7) - filter_mov
+
 
 tensioner_pos = (  belt_pos
                  + DraftVecUtils.scale(axis_mov,
@@ -236,9 +287,22 @@ tensioner_pos_d = 8
 tensioner_pos_w = -1 # at the pulley radius
 tensioner_pos_h = 3 # middle point of the pulley
 
+# calculating the distance from the base of the tensioner to the middle of the
+# pulley, distance along axis_up (two planes)
+# these to sentences are equivalent
+# no need to be this complicated if using axis_z
+
+#tensioner_belt_h = ((DraftVecUtils.project(
+#                         tensioner_pos-pos_rail, axis_up)).Length
+#                       - aluprof_w / 2.)
+
+tensioner_belt_h = (pos_rail.distanceToPlane(tensioner_pos,axis_up.negative())
+                    - aluprof_w/2.)
+
+
 tensioner = tensioner_clss.TensionerSet(
                      aluprof_w = 20.,
-                     belt_pos_h = 0., 
+                     belt_pos_h = tensioner_belt_h, 
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,
@@ -265,21 +329,28 @@ tensioner.set_color(fcfun.ORANGE,1)   #1: the tensioner
 tensioner.set_color(fcfun.LSKYBLUE,2) #2: the holder
 
 # position of the aluminum profile that supports the tensioner
-# point at the base, centered where the bolt holes are
-aluprof_tens_pos = tensioner.get_pos_dwh (2,0,0)
+# point at the base, at the end along axis w, centered along axis_d (bolts)
+aluprof_tens_pos = tensioner.get_pos_dwh (2,-4,0)
+
+#distance from this end of the aluprofile to the linear guide rail
+
+aluprof_tens_l = (  aluprof_tens_pos.distanceToPlane(pos_rail, axis_front)
+                  + aluprof_w)
+
+print 'aluprof: ' + str(aluprof_tens_l)
 
 # length of the aluminum profile that supports the tensioner
-aluprof_tens_l = tensioner.get_tensioner_holder().hold_bas_w
+#aluprof_tens_l = tensioner.get_tensioner_holder().hold_bas_w
 
 aluprof_tens = comps.getaluprof_dir(aluprof_dict,
                                 length = aluprof_tens_l,
-                                fc_axis_l = axis_front,
+                                fc_axis_l = axis_front.negative(),
                                 fc_axis_w = axis_mov,
                                 fc_axis_p = axis_up.negative(),
-                                ref_l = 1, # centered
+                                ref_l = 2, # from the end
                                 ref_w = 1, # centered
                                 ref_p = 2, # from top
-                                xtr_l = aluprof_tens_l/2., # extra length
+                                xtr_nl = aluprof_tens_l/2., # extra length
                                 pos = aluprof_tens_pos,
                                 wfco = 1,
                                 name = 'aluprof_tens')
@@ -332,47 +403,6 @@ nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
 
 nemaholder_w_motor.set_color(fcfun.GREEN_05,2)   #2: the holder
 
-# linear guide:
-
-linguide_dict = kcomp.SEB15A
-
-linguide_blk_dict = linguide_dict['block']
-linguide_rail_dict = linguide_dict['rail']
-
-# block:
-partLinGuideBlock = comps.PartLinGuideBlock (
-                                     block_dict = linguide_blk_dict,
-                                     rail_dict  = linguide_rail_dict,
-                                     axis_d = axis_mov,
-                                     axis_w = axis_up,
-                                     axis_h = axis_front,
-                                     pos_d = 0, pos_w = -2, pos_h = 3,
-                                     pos = filter_holder.get_pos_dwh(0,0,3))
-
-# rail
-# the rail will be in the direcion of:
-#   axis_up: defined by partLinGuideBlock
-#   axis_front: defined by partLinGuideBlock
-#   axis_mov: NOT defined by partLinGuideBlock, because it moves along
-#             this axis
-#             Defined by filter_pos_0
-
-pos_fromblock = partLinGuideBlock.get_pos_dwh(0,0,4)
-#dif_pos = pos_fromblock - filter_mov
-#min_axis_mov = DraftVecUtils.project(dif_pos, axis_mov)
-
-pos_rail = pos_fromblock - filter_mov
-
-partLinGuideRail = comps.PartLinGuideRail (
-                         rail_d = filter_holder.tot_w + mov_distance + 10.,
-                         rail_dict = linguide_rail_dict,
-                         boltend_sep = 0,
-                         axis_d = axis_mov,
-                         axis_w = axis_up,
-                         axis_h = axis_front,
-                         pos_d = 2, pos_w = 0, pos_h = 0,
-                         pos = pos_rail)
-                            
 
 
 doc.recompute()
