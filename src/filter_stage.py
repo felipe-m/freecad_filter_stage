@@ -426,6 +426,23 @@ aluprof_motor = comps.PartAluProf(depth = aluprof_tens_l,
                                  pos_h = 3,
                                  pos = aluprof_motor_pos)
 
+# get the top-right-corner:
+aluprof_linguide_pos = aluprof_motor.get_pos_dwh(5,3,3)
+
+aluprof_linguide = comps.PartAluProf(
+                                 depth = aluprof_distance- 3*aluprof_w/2.,
+                                 aluprof_dict = aluprof_dict,
+                                 xtr_d = 0,
+                                 xtr_nd = 0,
+                                 axis_d = axis_mov,
+                                 axis_w = axis_front,
+                                 axis_h = axis_up,
+                                 pos_d = 0, #end not counting xtr_nd
+                                 pos_w = -3,
+                                 pos_h = 3,
+                                 pos = aluprof_linguide_pos)
+
+
 
 
 
