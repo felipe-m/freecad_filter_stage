@@ -139,8 +139,8 @@ logger = logging.getLogger(__name__)
 doc = FreeCAD.newDocument()
 
 # definition of the axes
-axis_mov   = VY # the filter will move along axis Y
-axis_front = VX
+axis_mov   = VX # the filter will move along axis X
+axis_front = VYN
 axis_up    = VZ
 
 # distance in mm that the filter is going to move
@@ -153,7 +153,7 @@ belt_w = 6.
 # position of the filter in the middle
 filter_pos_0 = V0
 # position of the filter relative to it 0 position
-filter_mov = DraftVecUtils.scale(axis_mov,30)
+filter_mov = DraftVecUtils.scale(axis_mov,0)
 filter_pos = filter_pos_0 + filter_mov
 # the point of this position is the filter center of symmetry and its base
 filter_pos_d = 9
@@ -269,10 +269,11 @@ belt_pos_mov = filter_holder.get_pos_dwh(2,0,7)
 # get the position of the belt of the filter if not moved
 belt_pos = filter_holder.get_pos_dwh(2,0,7) - filter_mov
 
+tens_stroke = 15.
 
 tensioner_pos = (  belt_pos
                  + DraftVecUtils.scale(axis_mov,
-                      mov_distance/2. + filter_holder.tot_w/2. + rail_xtr_d)
+                      mov_distance/2. + filter_holder.tot_w/2. + tens_stroke)
                  + DraftVecUtils.scale(axis_up, belt_w/2.))
 
 
@@ -315,7 +316,7 @@ tensioner = tensioner_clss.TensionerSet(
                      boltidler_mtr = 3,
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
-                     tens_stroke = 15. ,
+                     tens_stroke = tens_stroke ,
                      wall_thick = 3.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
@@ -402,6 +403,7 @@ nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         # hold_chmf_r = 1.,
                         axis_h = axis_up,
                         axis_d = axis_mov.negative(),
+                        axis_w = axis_front,
                         pos_h = 11, # middle point of the pulley toothed part
                         pos_d = 0, #0: at the wall where this holder is attached
                         pos_w = 5, #5: inner radius of the pulley (to the back
@@ -476,12 +478,9 @@ filthold_clamp_pos = filter_holder.get_pos_dwh(1,7,8)
 motorpull_clamp_sep = filthold_clamp_pos_n - motor_pull_pos
 motorpull_clamp_sep_mov = motorpull_clamp_sep.dot(axis_mov)
 motorpull_clamp_sep_front = motorpull_clamp_sep.dot(axis_front)
-print 'motorpull_clamp_sep_mov: ' + str(motorpull_clamp_sep_mov)
 idlpull_clamp_sep_mov = (  pull_sep_mov
                          - motorpull_clamp_sep_mov
                          - filter_holder.tot_w)
-print 'idlpull_clamp_sep_mov: ' + str(idlpull_clamp_sep_mov)
-print 'motorpull_clamp_sep_mov: ' + str(pull_sep_mov)
 
 belt = beltcl.PartBeltClamped (
                      pull1_dm   = motor_pull_dm,
@@ -505,6 +504,7 @@ belt = beltcl.PartBeltClamped (
                      pos_h = 0,
                      pos=motor_pull_pos)
 
+belt.set_color(fcfun.YELLOW_095)
 
 
 
