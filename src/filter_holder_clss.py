@@ -107,8 +107,8 @@ class ShpFilterHolder (shp_clss.Obj3D):
        pos_h         axis_h   :   :
        |                 :    :    clamp_post_dist
        v pos_w           :    :   ....
-       8 7___6  5___4    :    :___:  :___ 
-         |   |  |   |    :    |   |  |   |
+       9 7___6  5___4    :    :___:  :___ 
+       8 |   |  |   |    :    |   |  |   |
        7 |...|__|___|____:____|___|__|...|...
          |         _           _         |   2 * bolt_linguide_head_r_tol
        6 |        |o|         |o|        |-----------------------
@@ -306,7 +306,8 @@ class ShpFilterHolder (shp_clss.Obj3D):
         5: third row of bolts
         6: 4th row of bolts
         7: at the base of the belt clamp
-        8: at the top of the piece
+        8: at the middle of the belt clamp
+        9: at the top of the piece
     pos : FreeCAD.Vector
         Position of the cylinder, taking into account where the center is
 
@@ -324,6 +325,13 @@ class ShpFilterHolder (shp_clss.Obj3D):
 
     beltclamp_blk_t : float
         thickness (along axis_d) of each of the belt clamp blocks
+    beltpost_l : float
+        length of the belt post (that has a shap of 2 circles and the tangent
+    lr_beltpost_r : float
+        radius of the larger belt post (it has a belt shape)
+    clamp_lrbeltpostcen_dist : float
+        distance from the center of the larger belt post cylinder to the clamp
+        post
 
     prnt_ax : FreeCAD.Vector
         Best axis to print (normal direction, pointing upwards)
@@ -334,6 +342,22 @@ class ShpFilterHolder (shp_clss.Obj3D):
         axis_h, axis_d, axis_w, or if it is at the end.
         1 : at the center (symmetrical, or almost symmetrical)
         0 : at the end
+
+
+
+                  lr_beltpost_r  clamp_lrbeltpostcen_dist
+                              + ..+..
+       pos_h         axis_h   ::     :
+       |                 :    ::   clamp_post_dist
+                              ::   .+.
+                              ::  :  :
+                              ::  :  : beltclamp_l
+       v pos_w           :    ::  :  :.+..
+       9 7___6  5___4    :    ::__:  :___: 
+       8 |   |  |   |    :    |   |  |   |
+       7 |...|__|___|____:____|___|__|...|...
+         |         _           _         |   2 * bolt_linguide_head_r_tol
+       6 |        |o|         |o|        |-----------------------
 
     """
     def __init__(self,
@@ -457,6 +481,9 @@ class ShpFilterHolder (shp_clss.Obj3D):
 
 
         self.beltpost_l = (3*self.lr_beltpost_r) + sm_beltpost_r
+        self.clamp_lrbeltpostcen_dist = (  self.beltpost_l
+                                         - self.lr_beltpost_r
+                                         + self.clamp_post_dist)
 
 
 
@@ -523,8 +550,10 @@ class ShpFilterHolder (shp_clss.Obj3D):
         self.h_o[6] = self.h_o[3] + self.vec_h(boltrow1_4_dist)
         #7: at the base of the belt clamp
         self.h_o[7] = self.vec_h(self.hold_h)
-        #8: at the top of the piece
-        self.h_o[8] = self.vec_h(self.tot_h)
+        #8: at the middle of the belt clamp
+        self.h_o[8] = self.vec_h(self.hold_h + self.beltclamp_h/2.)
+        #9: at the top of the piece
+        self.h_o[9] = self.vec_h(self.tot_h)
 
         # calculates the position of the origin, and keeps it in attribute pos_o
         self.set_pos_o()

@@ -127,6 +127,7 @@ import comps   # CAD components
 import partgroup 
 import parts
 import partset
+import beltcl
 
 from fcfun import V0, VX, VY, VZ, V0ROT
 from fcfun import VXN, VYN, VZN
@@ -170,6 +171,8 @@ motorshaft_l = 24.
 aluprof_w = 20.
 # dictionary with the dimensions of the aluminum profile
 aluprof_dict = kcomp.ALU_PROF[aluprof_w]
+
+belt_dict = kcomp.GT[2]
 
 filter_holder = filter_holder_clss.PartFilterHolder(
                  filter_l = 60.,
@@ -269,7 +272,7 @@ belt_pos = filter_holder.get_pos_dwh(2,0,7) - filter_mov
 
 tensioner_pos = (  belt_pos
                  + DraftVecUtils.scale(axis_mov,
-                                       mov_distance/2. + filter_holder.tot_w/2.)
+                      mov_distance/2. + filter_holder.tot_w/2. + rail_xtr_d)
                  + DraftVecUtils.scale(axis_up, belt_w/2.))
 
 
@@ -285,8 +288,8 @@ nemaholder_w_motor_pos = (
 print (str(belt_pos))
 print (str(tensioner_pos))
 
-# at the end of the idler tensioner, when it is all the way out
-tensioner_pos_d = 8
+# at the end of the idler tensioner, when it is all the way in
+tensioner_pos_d = 6
 #tensioner_pos_d = 2
 tensioner_pos_w = -1 # at the pulley radius
 tensioner_pos_h = 3 # middle point of the pulley
@@ -318,7 +321,7 @@ tensioner = tensioner_clss.TensionerSet(
                      pulley_stroke_dist = 0,
                      nut_holder_thick = 4. ,
                      opt_tens_chmf = 1,
-                     min_width = 1,
+                     min_width = 0,
                      tol = kcomp.TOL,
                      axis_d = axis_mov.negative(),
                      axis_w = axis_front.negative(),
@@ -442,7 +445,65 @@ aluprof_linguide = comps.PartAluProf(
                                  pos_h = 3,
                                  pos = aluprof_linguide_pos)
 
+nema_motor_pull = nemaholder_w_motor.get_nema_motor_pulley()
+motor_pull = nema_motor_pull.get_gt_pulley()
+# external diameter of the motor pulley
+motor_pull_dm = 2 * (motor_pull.tooth_in_r + belt_dict['BELT_H'])
 
+tens_idler_set = tensioner.get_idler_tensioner()
+tens_pull = tens_idler_set.get_bear_wash_set()
+
+tens_pull_dm = 2 * (tens_pull.bear_r_out + belt_dict['BELT_H'])
+
+
+# d=5: center of pulley, inside
+# h=3: center of pulley on the height
+tens_pull_pos = tensioner.get_pos_dwh (5,0,3)
+# d=3: center of pulley
+# h=11: center of pulley on the height
+motor_pull_pos = nema_motor_pull.get_pos_dwh (3,0,11)
+
+pull_sep = tens_pull_pos - motor_pull_pos
+pull_sep_mov = pull_sep.dot(axis_mov)
+pull_sep_front = pull_sep.dot(axis_front.negative())
+
+# position of the internal side of the clamp block, closer to the motor
+# and closer to the linear guide
+filthold_clamp_pos_n = filter_holder.get_pos_dwh(1,-7,8)
+filthold_clamp_pos = filter_holder.get_pos_dwh(1,7,8)
+
+# distances to the belt
+motorpull_clamp_sep = filthold_clamp_pos_n - motor_pull_pos
+motorpull_clamp_sep_mov = motorpull_clamp_sep.dot(axis_mov)
+motorpull_clamp_sep_front = motorpull_clamp_sep.dot(axis_front.negative())
+print 'motorpull_clamp_sep_mov: ' + str(motorpull_clamp_sep_mov)
+idlpull_clamp_sep_mov = (  pull_sep_mov
+                         - motorpull_clamp_sep_mov
+                         - filter_holder.tot_w)
+print 'idlpull_clamp_sep_mov: ' + str(idlpull_clamp_sep_mov)
+print 'motorpull_clamp_sep_mov: ' + str(pull_sep_mov)
+
+belt = beltcl.PartBeltClamped (
+                       pull1_dm   = motor_pull_dm,
+                       pull2_dm   = tens_pull_dm,
+                       pull_sep_d = pull_sep_mov,
+                       pull_sep_w = pull_sep_front,
+                       clamp_pull1_d = motorpull_clamp_sep_mov,
+                       clamp_pull1_w = motorpull_clamp_sep_front,
+                       clamp_pull2_d = idlpull_clamp_sep_mov,
+                       clamp_d = filter_holder.beltclamp_l,
+                       clamp_w = filter_holder.beltclamp_t,
+                       clamp_cyl_sep = filter_holder.clamp_lrbeltpostcen_dist,
+                       cyl_r = filter_holder.lr_beltpost_r,
+                       belt_width = belt_w,
+                       belt_thick = belt_dict['BELT_H'],
+                       axis_d = axis_mov,
+                       axis_w = axis_front.negative(),
+                       axis_h = axis_up,
+                       pos_d = 0,
+                       pos_w = 0,
+                       pos_h = 0,
+                       pos=motor_pull_pos)
 
 
 

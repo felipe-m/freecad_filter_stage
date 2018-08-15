@@ -928,6 +928,21 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         if group == 1:
             self.make_group()
 
+    def get_idler_tensioner(self):
+        """gets the idler tensioner"""
+        part_list = self.get_parts()
+        for part_i in part_list:
+            if isinstance(part_i,PartIdlerTensioner):
+                return part_i 
+
+    def get_bear_wash_set(self):
+        """gets the idler tensioner"""
+        part_list = self.get_parts()
+        for part_i in part_list:
+            if isinstance(part_i,partset.BearWashSet):
+                return part_i 
+
+
 
 #partset= IdlerTensionerSet (
 #                 boltidler_mtr = 3,
@@ -1117,7 +1132,7 @@ class ShpTensionerHolder (shp_clss.Obj3D):
     pos : FreeCAD.Vector
         position of the piece
 
-    Paramenters for the set
+    Parameters for the set
 
     tens_in_ratio : float
         from 0 to 1, the ratio of the stroke that the tensioner is inside.
