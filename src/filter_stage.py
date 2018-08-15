@@ -461,7 +461,7 @@ tens_pull_dm = 2 * (tens_pull.bear_r_out + belt_dict['BELT_H'])
 tens_pull_pos = tensioner.get_pos_dwh (5,0,3)
 # d=3: center of pulley
 # h=11: center of pulley on the height
-motor_pull_pos = nema_motor_pull.get_pos_dwh (3,0,11)
+motor_pull_pos = nemaholder_w_motor.get_pos_dwh (3,0,11)
 
 pull_sep = tens_pull_pos - motor_pull_pos
 pull_sep_mov = pull_sep.dot(axis_mov)
@@ -475,7 +475,7 @@ filthold_clamp_pos = filter_holder.get_pos_dwh(1,7,8)
 # distances to the belt
 motorpull_clamp_sep = filthold_clamp_pos_n - motor_pull_pos
 motorpull_clamp_sep_mov = motorpull_clamp_sep.dot(axis_mov)
-motorpull_clamp_sep_front = motorpull_clamp_sep.dot(axis_front.negative())
+motorpull_clamp_sep_front = motorpull_clamp_sep.dot(axis_front)
 print 'motorpull_clamp_sep_mov: ' + str(motorpull_clamp_sep_mov)
 idlpull_clamp_sep_mov = (  pull_sep_mov
                          - motorpull_clamp_sep_mov
@@ -484,26 +484,26 @@ print 'idlpull_clamp_sep_mov: ' + str(idlpull_clamp_sep_mov)
 print 'motorpull_clamp_sep_mov: ' + str(pull_sep_mov)
 
 belt = beltcl.PartBeltClamped (
-                       pull1_dm   = motor_pull_dm,
-                       pull2_dm   = tens_pull_dm,
-                       pull_sep_d = pull_sep_mov,
-                       pull_sep_w = pull_sep_front,
-                       clamp_pull1_d = motorpull_clamp_sep_mov,
-                       clamp_pull1_w = motorpull_clamp_sep_front,
-                       clamp_pull2_d = idlpull_clamp_sep_mov,
-                       clamp_d = filter_holder.beltclamp_l,
-                       clamp_w = filter_holder.beltclamp_t,
-                       clamp_cyl_sep = filter_holder.clamp_lrbeltpostcen_dist,
-                       cyl_r = filter_holder.lr_beltpost_r,
-                       belt_width = belt_w,
-                       belt_thick = belt_dict['BELT_H'],
-                       axis_d = axis_mov,
-                       axis_w = axis_front.negative(),
-                       axis_h = axis_up,
-                       pos_d = 0,
-                       pos_w = 0,
-                       pos_h = 0,
-                       pos=motor_pull_pos)
+                     pull1_dm   = motor_pull_dm,
+                     pull2_dm   = tens_pull_dm,
+                     pull_sep_d = pull_sep_mov,
+                     pull_sep_w = pull_sep_front,
+                     clamp_pull1_d = motorpull_clamp_sep_mov,
+                     clamp_pull1_w = motorpull_clamp_sep_front,
+                     clamp_pull2_d = idlpull_clamp_sep_mov,
+                     clamp_d = filter_holder.beltclamp_l,
+                     clamp_w = filter_holder.beltclamp_t,
+                     clamp_cyl_sep = filter_holder.clamp_lrbeltpostcen_dist,
+                     cyl_r = filter_holder.lr_beltpost_r + belt_dict['BELT_H'],
+                     belt_width = belt_w,
+                     belt_thick = belt_dict['BELT_H'],
+                     axis_d = axis_mov,
+                     axis_w = axis_front.negative(),
+                     axis_h = axis_up,
+                     pos_d = 0,
+                     pos_w = 0,
+                     pos_h = 0,
+                     pos=motor_pull_pos)
 
 
 
