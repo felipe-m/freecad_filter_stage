@@ -60,10 +60,8 @@ sys.path.append(filepath)
 #sys.path.append(filepath + '/' + 'comps')
 sys.path.append(filepath + '/../../' + 'comps')
 
-import kcomp   # import material constants and other constants
-import fcfun   # import my functions for freecad. FreeCad Functions
-import comps   # import my CAD components
 import kidler  # import constants for the idler tensioner and holder
+import kparts
 
 # to make a comparision of equality in floats, less than this number
 mindif = 0.001
@@ -305,9 +303,9 @@ Option A:
     fcd06.Width = kidler.tens_l_inside+1
     fcd06.Height = kidler.tens_h_tol
     fcd06.Placement.Base = (  fcd03.Placement.Base 
-                            + FreeCAD.Vector(kidler.wall_thick-kcomp.TOL/2.,
+                            + FreeCAD.Vector(kidler.wall_thick-kidler.TOL/2.,
                                              kidler.hold_l-kidler.tens_l_inside,
-                                             kidler.tens_pos_h--kcomp.TOL/2.))
+                                             kidler.tens_pos_h-kidler.TOL/2.))
 
     # chamfer:
     edgechmf_list = []
@@ -321,8 +319,8 @@ Option A:
             if (abs(v0.Z -v1.Z) < mindif  or
                 kidler.opt_tens_chmf == 1):
                 edgechmf_list.append((edge_ind+1, # numbered starting in 1
-                                      2*kidler.in_fillet-kcomp.TOL,
-                                      2*kidler.in_fillet-kcomp.TOL))
+                                      2*kidler.in_fillet-kidler.TOL,
+                                      2*kidler.in_fillet-kidler.TOL))
     fcd06chmf = doc.addObject ("Part::Chamfer", 'tens_hole_chmf_st06')
     fcd06chmf.Base = fcd06
     fcd06chmf.Edges = edgechmf_list
@@ -556,7 +554,13 @@ stlFileName = stlPath + 'tensioner_holder' + '.stl'
 # rotate to print without support:
 fcd_tens_holder.Placement.Rotation = (
                     FreeCAD.Rotation(FreeCAD.Vector(1,0,0), 90))
-fcd_tens_holder.Shape.exportStl(stlFileName)
+# exportStl is not working well with FreeCAD 0.17 (worked on 0.16 and 0.15)
+#fcd_tens_holder.Shape.exportStl(stlFileName)
+mesh_shp = MeshPart.meshFromShape(fcd_tens_holder.Shape,
+                                  LinearDeflection=kparts.LIN_DEFL, 
+                                  AngularDeflection=kparts.ANG_DEFL)
+mesh_shp.write(stlFileName)
+del mesh_shp
 
 # rotate back, to see it in its real position
 fcd_tens_holder.Placement.Rotation = (

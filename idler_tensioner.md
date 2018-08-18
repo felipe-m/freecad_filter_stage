@@ -38,14 +38,12 @@ sys.path.append(filepath)
 #sys.path.append(filepath + '/' + 'comps')
 sys.path.append(filepath + '/../../' + 'comps')
 
-# where the freecad document is going to be saved
-savepath = filepath + "/../../freecad/citometro/py/"
-
 import kcomp   # import material constants and other constants
 import fcfun   # import my functions for freecad. FreeCad Functions
 import comps   # import my CAD components
 import partgroup   # import my CAD components
 import kidler  # import constants for the idler tensioner and holder
+import kparts
 
 
 def idler_tens ():
@@ -447,7 +445,13 @@ stlFileName = stlPath + 'ilder_tensioner' + '.stl'
 # rotate to print without support:
 fcd_idler_tens.Placement.Rotation = (
                     FreeCAD.Rotation(FreeCAD.Vector(0,1,0), -90))
-fcd_idler_tens.Shape.exportStl(stlFileName)
+# exportStl is not working well with FreeCAD 0.17 (worked on 0.16 and 0.15)
+#fcd_idler_tens.Shape.exportStl(stlFileName)
+mesh_shp = MeshPart.meshFromShape(fcd_idler_tens.Shape,
+                                  LinearDeflection=kparts.LIN_DEFL, 
+                                  AngularDeflection=kparts.ANG_DEFL)
+mesh_shp.write(stlFileName)
+del mesh_shp
 
 # rotate back
 fcd_idler_tens.Placement.Rotation = (
