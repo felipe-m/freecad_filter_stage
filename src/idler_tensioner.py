@@ -378,7 +378,9 @@ def idler_tens ():
 doc = FreeCAD.newDocument()
 # creation of the idler tensioner
 fcd_idler_tens = idler_tens()
-fcd_idler_tens.ViewObject.ShapeColor = fcfun.LSKYBLUE
+#fcd_idler_tens.ViewObject.ShapeColor = fcfun.LSKYBLUE
+# change color to orange:
+fcd_idler_tens.ViewObject.ShapeColor = (1.0, 0.5, 0.0)
 
 
 # ---------- export to stl

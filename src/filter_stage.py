@@ -139,8 +139,10 @@ logger = logging.getLogger(__name__)
 doc = FreeCAD.newDocument()
 
 # definition of the axes
-axis_mov   = VX # the filter will move along axis X
-axis_front = VYN
+#axis_mov   = VX # the filter will move along axis X
+#axis_front = VYN
+axis_mov   = VY
+axis_front = VX
 axis_up    = VZ
 
 # distance in mm that the filter is going to move
@@ -353,7 +355,8 @@ print 'aluprof: ' + str(aluprof_tens_l)
 aluprof_tens = comps.PartAluProf(depth = aluprof_tens_l,
                                  aluprof_dict = aluprof_dict,
                                  xtr_d = 0,
-                                 xtr_nd = aluprof_tens_l/2., # extra length
+                                 #xtr_nd = aluprof_tens_l/2., # extra length
+                                 xtr_nd = 0,
                                  axis_d = axis_front.negative(),
                                  axis_w = axis_mov,
                                  axis_h = axis_up,
@@ -422,7 +425,8 @@ aluprof_motor_pos = (  aluprof_tens_pos
 aluprof_motor = comps.PartAluProf(depth = aluprof_tens_l,
                                  aluprof_dict = aluprof_dict,
                                  xtr_d = 0,
-                                 xtr_nd = aluprof_tens_l/2., # extra length
+                                 #xtr_nd = aluprof_tens_l/2., # extra length
+                                 xtr_nd = 0,
                                  axis_d = axis_front.negative(),
                                  axis_w = axis_mov,
                                  axis_h = axis_up,
