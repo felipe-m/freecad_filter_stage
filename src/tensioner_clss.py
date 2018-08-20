@@ -2078,33 +2078,36 @@ class TensionerSet (fc_clss.PartsSet):
 
 
 
-#t_set = TensionerSet(
-#                     aluprof_w = 20.,
-#                     #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
-#                     #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
-#                     #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
-#                     belt_pos_h = 15., # to center of belt
-#                     hold_bas_h = 0,
-#                     hold_hole_2sides = 1,
-#                     boltidler_mtr = 3,
-#                     bolttens_mtr = 3,
-#                     boltaluprof_mtr = 3,
-#                     tens_stroke = 10. ,
-#                     wall_thick = 3.,
-#                     in_fillet = 2.,
-#                     pulley_stroke_dist = 0,
-#                     nut_holder_thick = 3. ,
-#                     opt_tens_chmf = 0,
-#                     min_width = 1,
-#                     tol = kcomp.TOL,
-#                     axis_d = VX,
-#                     axis_w = VY,
-#                     axis_h = VZ,
-#                     pos_d = 1,
-#                     pos_w = 0,
-#                     pos_h = 4,
-#                     #pos = FreeCAD.Vector(1,0,10),
-#                     pos = FreeCAD.Vector(0,0,0),
-#                     name = 'tensioner_set')
+t_set = TensionerSet(
+                     aluprof_w = 20.,
+                     #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
+                     #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
+                     #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
+                     belt_pos_h = 25., # to center of belt
+                     hold_bas_h = 0,
+                     hold_hole_2sides = 1,
+                     boltidler_mtr = 3,
+                     bolttens_mtr = 3,
+                     boltaluprof_mtr = 3,
+                     tens_stroke = 10. ,
+                     wall_thick = 3.,
+                     in_fillet = 2.,
+                     pulley_stroke_dist = 0,
+                     nut_holder_thick = 3. ,
+                     opt_tens_chmf = 0,
+                     min_width = 0,
+                     tol = kcomp.TOL,
+                     axis_d = VX,
+                     axis_w = VYN,
+                     axis_h = VZ,
+                     pos_d = 0,
+                     pos_w = 0,
+                     pos_h = 0,
+                     #pos = FreeCAD.Vector(1,0,10),
+                     pos = FreeCAD.Vector(0,0,0),
+                     name = 'tensioner_set')
+
+t_set.get_idler_tensioner().set_color(fcfun.ORANGE)
+t_set.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
 
 
