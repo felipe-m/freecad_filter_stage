@@ -860,6 +860,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         self.tens_w = idler_tens_part.tens_w
         self.tens_h = idler_tens_part.tens_h
         self.tens_d_inside = idler_tens_part.tens_d_inside
+        self.nut_holder_tot = idler_tens_part.nut_holder_tot
 
         
 
@@ -1773,7 +1774,7 @@ class TensionerSet (fc_clss.PartsSet):
                               \_/
                                :
                                :
-                             axis_l
+                             axis_d
 
                              axis_h            axis_h 
                                :         pos_h    :
@@ -2054,6 +2055,24 @@ class TensionerSet (fc_clss.PartsSet):
 
         self.set_part_place(idler_tensioner,   self.get_o_to_d(1)
                                              + self.get_o_to_h(3))
+
+        # bolt for the leadscrew
+        bolt_length_list = kcomp.D912_L[bolttens_mtr]
+
+        min_tens_bolt_l =  (  idler_tensioner.tens_stroke
+                            + idler_tensioner.nut_holder_tot)
+        tens_bolt_l = next(length for length in bolt_length_list
+                             if length > min_tens_bolt_l)
+        tens_bolt = fc_clss.Din912Bolt(metric  = bolttens_mtr,
+                                         shank_l = tens_bolt_l,
+                                         axis_h  = self.axis_d,
+                                         pos_h   = 3,
+                                         pos_d   = 0,
+                                         pos_w   = 0,
+                                         pos     = self.get_pos_dwh(0,0,3))
+        self.append_part(tens_bolt)
+        tens_bolt.parent = self
+
 
         self.place_fcos()
         if group == 1:
