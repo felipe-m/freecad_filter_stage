@@ -335,7 +335,10 @@ tensioner = tensioner_clss.TensionerSet(
                      pos = tensioner_pos,
                      name = 'tensioner_set')
 
-tensioner.set_color(fcfun.ORANGE,1)   #1: the tensioner
+# get_idler_tensioner gets the set, including the pulley. Either of these 2
+# would be correct
+#tensioner.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
+tensioner.get_idler_tensioner().set_color(fcfun.ORANGE,2)   #2: the tensioner
 tensioner.set_color(fcfun.LSKYBLUE,2) #2: the holder
 
 # position of the aluminum profile that supports the tensioner

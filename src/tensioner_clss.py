@@ -928,16 +928,18 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         # time to put the bolt
         bolt_length_list = kcomp.D912_L[boltidler_mtr]
         min_pulley_bolt_l = (  self.tens_h
-                             + kcomp.D912[boltidler_mtr]['head_l']/2.)
+                             + kcomp.D912[boltidler_mtr]['head_l'])
         pulley_bolt_l = next(length for length in bolt_length_list
-                             if length > min_pulley_bolt_l)
-        pulley_bolt = fc_clss.Din912Bolt(metric  = boltidler_mtr,
-                                         shank_l = pulley_bolt_l,
+                             if length >= min_pulley_bolt_l)
+        pulley_bolt = partset.Din912BoltWashSet(metric  = boltidler_mtr,
+                                         shank_l = min_pulley_bolt_l,
+                                         shank_l_exact = 0,
                                          axis_h  = self.axis_h.negative(),
                                          pos_h   = 3,
                                          pos_d   = 0,
                                          pos_w   = 0,
                                          pos     = self.get_pos_dwh(5,0,3))
+        self.pulley_bolt_l = pulley_bolt.shank_l
         self.append_part(pulley_bolt)
         pulley_bolt.parent = self
                                    
@@ -2114,36 +2116,37 @@ class TensionerSet (fc_clss.PartsSet):
 
 
 
-t_set = TensionerSet(
-                     aluprof_w = 20.,
-                     #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
-                     #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
-                     #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
-                     belt_pos_h = 20., # to center of belt
-                     hold_bas_h = 0,
-                     hold_hole_2sides = 1,
-                     boltidler_mtr = 3,
-                     bolttens_mtr = 3,
-                     boltaluprof_mtr = 3,
-                     tens_stroke = 10. ,
-                     wall_thick = 3.,
-                     in_fillet = 2.,
-                     pulley_stroke_dist = 0,
-                     nut_holder_thick = 3. ,
-                     opt_tens_chmf = 0,
-                     min_width = 0,
-                     tol = kcomp.TOL,
-                     axis_d = VX,
-                     axis_w = VYN,
-                     axis_h = VZ,
-                     pos_d = 0,
-                     pos_w = 0,
-                     pos_h = 0,
-                     #pos = FreeCAD.Vector(1,0,10),
-                     pos = FreeCAD.Vector(0,0,0),
-                     name = 'tensioner_set')
+#t_set = TensionerSet(
+#                     aluprof_w = 20.,
+#                     #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
+#                     #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
+#                     #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
+#                     belt_pos_h = 20., # to center of belt
+#                     hold_bas_h = 0,
+#                     hold_hole_2sides = 1,
+#                     boltidler_mtr = 3,
+#                     bolttens_mtr = 3,
+#                     boltaluprof_mtr = 3,
+#                     tens_stroke = 10. ,
+#                     wall_thick = 3.,
+#                     in_fillet = 2.,
+#                     pulley_stroke_dist = 0,
+#                     nut_holder_thick = 3. ,
+#                     opt_tens_chmf = 0,
+#                     min_width = 0,
+#                     tol = kcomp.TOL,
+#                     axis_d = VX,
+#                     axis_w = VYN,
+#                     axis_h = VZ,
+#                     pos_d = 0,
+#                     pos_w = 0,
+#                     pos_h = 0,
+#                     #pos = FreeCAD.Vector(1,0,10),
+#                     pos = FreeCAD.Vector(0,0,0),
+#                     name = 'tensioner_set')
 
-t_set.get_idler_tensioner().set_color(fcfun.ORANGE)
-t_set.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
+## get the set, and the the part
+#t_set.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
+#t_set.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
 
 
