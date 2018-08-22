@@ -924,6 +924,23 @@ class IdlerTensionerSet (fc_clss.PartsSet):
 
         self.set_part_place(pulley, self.get_o_to_d(5))
 
+        # time to put the bolt
+        bolt_length_list = kcomp.D912_L[boltidler_mtr]
+        min_pulley_bolt_l = (  self.tens_h
+                             + kcomp.D912[boltidler_mtr]['head_l']/2.)
+        pulley_bolt_l = next(length for length in bolt_length_list
+                             if length > min_pulley_bolt_l)
+        pulley_bolt = fc_clss.Din912Bolt(metric  = boltidler_mtr,
+                                         shank_l = pulley_bolt_l,
+                                         axis_h  = self.axis_h.negative(),
+                                         pos_h   = 3,
+                                         pos_d   = 0,
+                                         pos_w   = 0,
+                                         pos     = self.get_pos_dwh(5,0,3))
+        self.append_part(pulley_bolt)
+        pulley_bolt.parent = self
+                                   
+
         self.place_fcos()
         if group == 1:
             self.make_group()
@@ -944,7 +961,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
 
 
 
-#partset= IdlerTensionerSet (
+#idlertensioner= IdlerTensionerSet (
 #                 boltidler_mtr = 3,
 #                 bolttens_mtr = 3,
 #                 tens_stroke = 20. ,
@@ -2083,7 +2100,7 @@ t_set = TensionerSet(
                      #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
                      #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
                      #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
-                     belt_pos_h = 25., # to center of belt
+                     belt_pos_h = 20., # to center of belt
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,

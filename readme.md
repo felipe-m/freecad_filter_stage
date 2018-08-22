@@ -31,7 +31,7 @@ You can compare the same pieces made using OpenSCAD: https://github.com/felipe-m
 ![Tensioner Set](imgs/small/tensioner_set.png )
 1. [filter_holder_clss.py](src/filter_holder_clss.py) Filter holder, similar to the one made with OpenSCAD (https://github.com/felipe-m/oscad_filter_stage)
 ![Filter Holder](imgs/small/filter_holder.png )
-1. [filter_stage.py](src/filter_stage.py) In the same design includes the filter holder, the belt tensioner and the motor holder
+1. [filter_stage.py](src/filter_stage.py) In the same design includes the filter holder, the belt tensioner and the motor holder, and also some other non-printable models, such as the stepper motor, aluminum profile, linear guide, belt and pulleys
 ![Filter Stage](imgs/small/filter_stage_1.png )
 
 
