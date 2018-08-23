@@ -925,7 +925,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
 
         self.set_part_place(pulley, self.get_o_to_d(5))
 
-        # time to put the bolt for the pulley
+        # the bolt for the pulley
         bolt_length_list = kcomp.D912_L[boltidler_mtr]
         min_pulley_bolt_l = (  self.tens_h
                              + kcomp.D912[boltidler_mtr]['head_l'])
@@ -942,6 +942,14 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         self.pulley_bolt_l = pulley_bolt.shank_l
         self.append_part(pulley_bolt)
         pulley_bolt.parent = self
+
+        # the nut for the pulley
+        pulley_nut = partset.Din934NutWashSet(metric  = boltidler_mtr,
+                                              axis_h = self.axis_h.negative(),
+                                              pos_h = 0,
+                                              pos = self.get_pos_dwh(5,0,-3))
+        self.append_part(pulley_nut)
+        pulley_nut.parent = self
 
         # the nut for the leadscrew
         nut = fc_clss.Din934Nut(metric = bolttens_mtr,
