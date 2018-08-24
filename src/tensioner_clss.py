@@ -2078,7 +2078,8 @@ class TensionerSet (fc_clss.PartsSet):
         bolt_length_list = kcomp.D912_L[bolttens_mtr]
 
         max_tens_bolt_l =  (  idler_tensioner.tens_stroke
-                            + idler_tensioner.nut_holder_tot + 0.5)
+                            + idler_tensioner.nut_holder_tot
+                            + tensioner_holder.wall_thick)
         print 'max tens:' + str(max_tens_bolt_l)
         tens_bolt = partset.Din912BoltWashSet(
                                          metric  = bolttens_mtr,
@@ -2146,7 +2147,7 @@ t_set = TensionerSet(
                      boltidler_mtr = 3,
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
-                     tens_stroke = 10. ,
+                     tens_stroke = 12. ,
                      wall_thick = 3.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
