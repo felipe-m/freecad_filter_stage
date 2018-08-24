@@ -511,7 +511,7 @@ belt = beltcl.PartBeltClamped (
                      pos_h = 0,
                      pos=motor_pull_pos)
 
-belt.set_color(fcfun.YELLOW_095)
+belt.set_color(fcfun.GRAY_08)
 
 
 
