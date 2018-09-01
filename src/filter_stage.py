@@ -176,6 +176,12 @@ aluprof_dict = kcomp.ALU_PROF[aluprof_w]
 
 belt_dict = kcomp.GT[2]
 
+# ------ linear guide for the filter holder
+linguide_dict = kcomp.SEB15A
+linguide_blk_dict = linguide_dict['block']
+linguide_rail_dict = linguide_dict['rail']
+bolt_linguide_mtr = linguide_blk_dict['boltd']
+
 filter_holder = filter_holder_clss.PartFilterHolder(
                  filter_l = 60.,
                  filter_w = 25.,
@@ -194,7 +200,7 @@ filter_holder = filter_holder_clss.PartFilterHolder(
                  boltrow1_3_dist = 20.,
                  boltrow1_4_dist = 25.,
                  bolt_cen_mtr = 4, 
-                 bolt_linguide_mtr = 3,
+                 bolt_linguide_mtr = bolt_linguide_mtr,
                  beltclamp_t = 3.,
                  beltclamp_l = 12.,
                  beltclamp_h = beltclamp_h,
@@ -212,15 +218,10 @@ filter_holder = filter_holder_clss.PartFilterHolder(
 
 filter_holder.set_color(fcfun.YELLOW_05)
 
+ 
 
 
 # ------ linear guide for the filter holder
-
-linguide_dict = kcomp.SEB15A
-
-linguide_blk_dict = linguide_dict['block']
-linguide_rail_dict = linguide_dict['rail']
-
 # block:
 partLinGuideBlock = comps.PartLinGuideBlock (
                                      block_dict = linguide_blk_dict,
@@ -230,6 +231,28 @@ partLinGuideBlock = comps.PartLinGuideBlock (
                                      axis_h = axis_front,
                                      pos_d = 0, pos_w = -2, pos_h = 3,
                                      pos = filter_holder.get_pos_dwh(0,0,3))
+
+
+# 4 bolts to attach the filter holder to the linear guide
+# the bolt head has to be touching the hole for the bolt: pos_d = 5
+bolt_head_pos = filter_holder.get_o_to_d(5)
+for w_i in [-2, 2]:
+    for d_i in [-1, 1]:
+        # positions of the bolts at the linear guide
+        filter_bolt_pos_i = (  partLinGuideBlock.get_pos_dwh(d_i, w_i, 3)
+                             + bolt_head_pos)
+        fc_clss.Din912Bolt(metric = bolt_linguide_mtr,
+                           shank_l = (  bolt_head_pos.Length
+                                      + partLinGuideBlock.bolt_l),
+                           shank_l_adjust = -1, # shorter to shank_l
+                           axis_h = axis_front.negative(),
+                           pos_h = 3,
+                           pos = filter_bolt_pos_i,
+                           name = 'filter_bolt_w' + str(w_i) + '_d' + str(d_i)
+                           )
+
+          
+ 
 
 # rail
 # the rail will be in the direcion of:

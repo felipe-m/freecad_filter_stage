@@ -2147,7 +2147,7 @@ t_set1 = TensionerSet(
                      boltidler_mtr = 3,
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
-                     tens_stroke = 12. ,
+                     tens_stroke = 10. ,
                      wall_thick = 3.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
@@ -2181,7 +2181,7 @@ t_set2 = TensionerSet(
                      boltidler_mtr = 3,
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
-                     tens_stroke = 12. ,
+                     tens_stroke = 20. ,
                      wall_thick = 3.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
@@ -2196,102 +2196,29 @@ t_set2 = TensionerSet(
                      pos_w = 0,
                      pos_h = 0,
                      pos = FreeCAD.Vector(
-                           t_set1.get_tensioner_holder().hold_bas_w,0,0),
-                     name = 'tensioner_set_extend')
+                           t_set1.get_idler_tensioner().tens_d + 10,0,0),
+                     name = 'tensioner_set_stroke20')
 
 # get the set, and the the part
 t_set2.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
 t_set2.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
-t_set2.set_pos_tensioner(1)
+#t_set2.set_pos_tensioner(1)
 
 
 # --------- 
 
 
-doc = FreeCAD.newDocument()
-t_set1 = TensionerSet(
-                     aluprof_w = 20.,
-                     #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
-                     #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
-                     #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
-                     belt_pos_h = 45., # to center of belt
-                     hold_bas_h = 0,
-                     hold_hole_2sides = 1,
-                     boltidler_mtr = 3,
-                     bolttens_mtr = 3,
-                     boltaluprof_mtr = 3,
-                     tens_stroke = 12. ,
-                     wall_thick = 3.,
-                     in_fillet = 2.,
-                     pulley_stroke_dist = 0,
-                     nut_holder_thick = 3. ,
-                     opt_tens_chmf = 0,
-                     min_width = 0,
-                     tol = kcomp.TOL,
-                     axis_d = VX,
-                     axis_w = VYN,
-                     axis_h = VZ,
-                     pos_d = 0,
-                     pos_w = 0,
-                     pos_h = 0,
-                     #pos = FreeCAD.Vector(1,0,10),
-                     pos = FreeCAD.Vector(0,0,0),
-                     name = 'tensioner_set')
-
-# get the set, and the the part
-t_set1.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
-t_set1.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
-
-
-t_set2 = TensionerSet(
-                     aluprof_w = 20.,
-                     #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
-                     #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
-                     #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
-                     belt_pos_h = 25., # to center of belt
-                     hold_bas_h = 0,
-                     hold_hole_2sides = 1,
-                     boltidler_mtr = 3,
-                     bolttens_mtr = 3,
-                     boltaluprof_mtr = 3,
-                     tens_stroke = 12. ,
-                     wall_thick = 3.,
-                     in_fillet = 2.,
-                     pulley_stroke_dist = 0,
-                     nut_holder_thick = 3. ,
-                     opt_tens_chmf = 0,
-                     min_width = 0,
-                     tol = kcomp.TOL,
-                     axis_d = VX,
-                     axis_w = VYN,
-                     axis_h = VZ,
-                     pos_d = 0,
-                     pos_w = 0,
-                     pos_h = 0,
-                     pos = FreeCAD.Vector(
-                           55,0,0),
-                     name = 'tensioner_set_extend')
-
-# get the set, and the the part
-t_set2.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
-t_set2.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
-# all the way extended
-#t_set2.set_pos_tensioner(1)
-
-
-
 t_set3 = TensionerSet(
-                     aluprof_w = 20.,
                      #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
                      #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
                      #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
-                     belt_pos_h = 5., # to center of belt
+                     belt_pos_h = 20., # to center of belt
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
-                     tens_stroke = 12. ,
+                     tens_stroke = 30. ,
                      wall_thick = 3.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
@@ -2306,49 +2233,14 @@ t_set3 = TensionerSet(
                      pos_w = 0,
                      pos_h = 0,
                      pos = FreeCAD.Vector(
-                           100,0,0),
-                     name = 'tensioner_set_extend')
+                               t_set1.get_idler_tensioner().tens_d
+                               + t_set2.get_idler_tensioner().tens_d + 20
+                               ,0,0),
+                     name = 'tensioner_set_stroke40')
 
 # get the set, and the the part
 t_set3.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
 t_set3.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
-# all the way extended
-#t_set3.set_pos_tensioner(1)
-
-
-
-#t_set30 = TensionerSet(
-#                     aluprof_w = 30.,
-#                     #belt_pos_h = 32.5, #bottom of belt:30 + 2.5 to center
-#                     #belt_pos_h = 37.5, #bottom of belt:35 + 2.5 to center
-#                     #belt_pos_h = 47.5, #bottom of belt:45 + 2.5 to center
-#                     belt_pos_h = 33.5,
-#                     hold_bas_h = 8,
-#                     hold_hole_2sides = 1,
-#                     boltidler_mtr = 4,
-#                     bolttens_mtr = 4,
-#                     boltaluprof_mtr = 4,
-#                     tens_stroke = 20. ,
-#                     wall_thick = 5.,
-#                     in_fillet = 2.,
-#                     pulley_stroke_dist = 0,
-#                     nut_holder_thick = 4. ,
-#                     opt_tens_chmf = 1,
-#                     min_width = 0,
-#                     tol = kcomp.TOL,
-#                     axis_d = VX,
-#                     axis_w = VYN,
-#                     axis_h = VZ,
-#                     pos_d = 0,
-#                     pos_w = 0,
-#                     pos_h = 0,
-#                     #pos = FreeCAD.Vector(1,0,10),
-#                     pos = FreeCAD.Vector(-80,0,0),
-#                     name = 'tensioner_set')
-#
-## get the set, and the the part
-#t_set30.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
-#t_set30.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
 
 
 
