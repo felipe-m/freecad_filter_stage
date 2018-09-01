@@ -2134,6 +2134,7 @@ class TensionerSet (fc_clss.PartsSet):
         self.place_fcos()
 
 
+"""
 
 doc = FreeCAD.newDocument()
 t_set1 = TensionerSet(
@@ -2315,7 +2316,7 @@ t_set3.get_tensioner_holder().set_color(fcfun.LSKYBLUE)
 # all the way extended
 #t_set3.set_pos_tensioner(1)
 
-
+"""
 
 #t_set30 = TensionerSet(
 #                     aluprof_w = 30.,

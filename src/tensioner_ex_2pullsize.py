@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# -- Set of idler tensioner and its holder
+# -- Examples of tensioners with different pulley sizes
 # ----------------------------------------------------------------------------
 # -- (c) Felipe Machado
 # -- Area of Electronic Technology. Rey Juan Carlos University (urjc.es)
