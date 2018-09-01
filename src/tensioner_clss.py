@@ -821,7 +821,7 @@ class IdlerTensionerSet (fc_clss.PartsSet):
         # them, and then move them and calculate the vectors h_o, d_o, w_o
 
         # Creation of the idler pulley, we put it in the center
-        pulley = partset.BearWashSet(metric = bolttens_mtr,
+        pulley = partset.BearWashSet(metric = boltidler_mtr,
                                             axis_h = axis_h, pos_h = 0,
                                             axis_d = axis_d, pos_d = 0,
                                             axis_w = axis_w, pos_w = 0,
