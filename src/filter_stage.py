@@ -332,6 +332,8 @@ tensioner_pos_h = 3 # middle point of the pulley
 tensioner_belt_h = (pos_rail.distanceToPlane(tensioner_pos,axis_up.negative())
                     - aluprof_w/2.)
 
+# metric of the bolt to attach the tensioner
+boltaluprof_mtr = 4
 
 tensioner = tensioner_clss.TensionerSet(
                      aluprof_w = 20.,
@@ -340,7 +342,7 @@ tensioner = tensioner_clss.TensionerSet(
                      hold_hole_2sides = 1,
                      boltidler_mtr = 3,
                      bolttens_mtr = 3,
-                     boltaluprof_mtr = 3,
+                     boltaluprof_mtr = boltaluprof_mtr,
                      tens_stroke = tens_stroke ,
                      wall_thick = 3.,
                      in_fillet = 2.,
@@ -391,6 +393,24 @@ aluprof_tens = comps.PartAluProf(depth = aluprof_tens_l,
                                  pos_h = 3,
                                  pos = aluprof_tens_pos)
                                  
+
+# Bolts for the belt tensioner
+max_tens_bolt_l = (aluprof_tens.get_h_ab(3,1).Length # space for bolt in profile
+                + tensioner.get_tensioner_holder().hold_bas_h) # base thickness
+print 'shank_l ' + str(max_tens_bolt_l)
+for w_i in [-3, 3]: # position of bolts
+    tens_bolt_i_pos = tensioner.get_pos_dwh(2,w_i,1)
+    tens_bolt_i = partset.Din912BoltWashSet(
+                                         metric  = boltaluprof_mtr,
+                                         shank_l = max_tens_bolt_l,
+                                         # smaller considering the washer
+                                         shank_l_adjust = -2,
+                                         axis_h  = axis_up.negative(),
+                                         pos_h   = 3,
+                                         pos_d   = 0,
+                                         pos_w   = 0,
+                                         pos     = tens_bolt_i_pos)
+
 
 # set with:
 # + motor holder

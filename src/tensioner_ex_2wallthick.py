@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# -- Examples of tensioners with different pulley sizes
+# -- Examples of tensioners with different wall thickness
 # ----------------------------------------------------------------------------
 # -- (c) Felipe Machado
 # -- Area of Electronic Technology. Rey Juan Carlos University (urjc.es)
@@ -59,7 +59,7 @@ t_set1 = tensioner_clss.TensionerSet(
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
                      tens_stroke = 12. ,
-                     wall_thick = 3.,
+                     wall_thick = 2.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
                      nut_holder_thick = 3. ,
@@ -89,11 +89,11 @@ t_set2 = tensioner_clss.TensionerSet(
                      belt_pos_h = 20., # to center of belt
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
-                     boltidler_mtr = 4,
+                     boltidler_mtr = 3,
                      bolttens_mtr = 3,
                      boltaluprof_mtr = 3,
                      tens_stroke = 12. ,
-                     wall_thick = 3.,
+                     wall_thick = 4.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
                      nut_holder_thick = 3. ,

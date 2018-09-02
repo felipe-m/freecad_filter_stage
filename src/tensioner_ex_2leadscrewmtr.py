@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# -- Examples of tensioners with different pulley sizes
+# -- Examples of tensioners with different wall thickness
 # ----------------------------------------------------------------------------
 # -- (c) Felipe Machado
 # -- Area of Electronic Technology. Rey Juan Carlos University (urjc.es)
@@ -66,15 +66,14 @@ t_set1 = tensioner_clss.TensionerSet(
                      opt_tens_chmf = 0,
                      min_width = 0,
                      tol = kcomp.TOL,
-                     axis_d = VX,
+                     axis_d = VXN,
                      axis_w = VYN,
                      axis_h = VZ,
                      pos_d = 0,
                      pos_w = 0,
                      pos_h = 0,
-                     #pos = FreeCAD.Vector(1,0,10),
-                     pos = FreeCAD.Vector(0,0,0),
-                     name = 'tensioner_set_3')
+                     pos = FreeCAD.Vector(-5,0,0),
+                     name = 'tensioner_set_1')
 
 # get the set, and the the part
 t_set1.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
@@ -89,8 +88,8 @@ t_set2 = tensioner_clss.TensionerSet(
                      belt_pos_h = 20., # to center of belt
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
-                     boltidler_mtr = 4,
-                     bolttens_mtr = 3,
+                     boltidler_mtr = 3,
+                     bolttens_mtr = 4,
                      boltaluprof_mtr = 3,
                      tens_stroke = 12. ,
                      wall_thick = 3.,
@@ -100,14 +99,14 @@ t_set2 = tensioner_clss.TensionerSet(
                      opt_tens_chmf = 0,
                      min_width = 0,
                      tol = kcomp.TOL,
-                     axis_d = VXN,
+                     axis_d = VX,
                      axis_w = VYN,
                      axis_h = VZ,
                      pos_d = 0,
                      pos_w = 0,
                      pos_h = 0,
-                     pos = FreeCAD.Vector(90,0,0),
-                     name = 'tensioner_set_4')
+                     pos = FreeCAD.Vector(5,0,0),
+                     name = 'tensioner_set_2')
 
 # get the set, and the the part
 t_set2.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)

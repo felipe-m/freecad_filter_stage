@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------
-# -- Examples of tensioners with different pulley sizes
+# -- Examples of tensioners with different wall thickness
 # ----------------------------------------------------------------------------
 # -- (c) Felipe Machado
 # -- Area of Electronic Technology. Rey Juan Carlos University (urjc.es)
@@ -72,9 +72,8 @@ t_set1 = tensioner_clss.TensionerSet(
                      pos_d = 0,
                      pos_w = 0,
                      pos_h = 0,
-                     #pos = FreeCAD.Vector(1,0,10),
                      pos = FreeCAD.Vector(0,0,0),
-                     name = 'tensioner_set_3')
+                     name = 'tensioner_set_1')
 
 # get the set, and the the part
 t_set1.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
@@ -90,24 +89,24 @@ t_set2 = tensioner_clss.TensionerSet(
                      hold_bas_h = 0,
                      hold_hole_2sides = 1,
                      boltidler_mtr = 4,
-                     bolttens_mtr = 3,
+                     bolttens_mtr = 4,
                      boltaluprof_mtr = 3,
-                     tens_stroke = 12. ,
-                     wall_thick = 3.,
+                     tens_stroke = 22. ,
+                     wall_thick = 5.,
                      in_fillet = 2.,
                      pulley_stroke_dist = 0,
                      nut_holder_thick = 3. ,
                      opt_tens_chmf = 0,
                      min_width = 0,
                      tol = kcomp.TOL,
-                     axis_d = VXN,
+                     axis_d = VX,
                      axis_w = VYN,
                      axis_h = VZ,
                      pos_d = 0,
                      pos_w = 0,
                      pos_h = 0,
-                     pos = FreeCAD.Vector(90,0,0),
-                     name = 'tensioner_set_4')
+                     pos = FreeCAD.Vector(0,60,0),
+                     name = 'tensioner_set_2')
 
 # get the set, and the the part
 t_set2.get_idler_tensioner().get_idler_tensioner().set_color(fcfun.ORANGE)
