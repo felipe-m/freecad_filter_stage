@@ -101,6 +101,24 @@ aluprof_tens1 = comps.PartAluProf(depth = aluprof_tens1_l,
                                  pos = aluprof_tens1_pos)
 
 
+# Bolts for the belt tensioner
+max_tens1_bolt_l = (
+                  aluprof_tens1.get_h_ab(3,1).Length # spacefor bolt inprofile
+                + t_set1.get_tensioner_holder().hold_bas_h) # base thickness
+for w_i in [-3, 3]: # position of bolts
+    tens1_bolt_i_pos = t_set1.get_pos_dwh(2,w_i,1)
+    tens1_bolt_i = partset.Din912BoltWashSet(
+                                         metric  = 3,
+                                         shank_l = max_tens1_bolt_l,
+                                         # smaller considering the washer
+                                         shank_l_adjust = -2,
+                                         axis_h  = axis_up.negative(),
+                                         pos_h   = 3,
+                                         pos_d   = 0,
+                                         pos_w   = 0,
+                                         pos     = tens1_bolt_i_pos)
+
+
 aluprof_w2 = 15
 t_set2 = tensioner_clss.TensionerSet(
                      aluprof_w = aluprof_w2,
@@ -153,6 +171,24 @@ aluprof_tens2 = comps.PartAluProf(depth = aluprof_tens2_l,
                                  pos_w = 0, # centered
                                  pos_h = 3,
                                  pos = aluprof_tens2_pos)
+
+# Bolts for the belt tensioner
+max_tens2_bolt_l = (
+                  aluprof_tens2.get_h_ab(3,1).Length # spacefor bolt inprofile
+                + t_set2.get_tensioner_holder().hold_bas_h) # base thickness
+for w_i in [-3, 3]: # position of bolts
+    tens2_bolt_i_pos = t_set2.get_pos_dwh(2,w_i,1)
+    tens2_bolt_i = partset.Din912BoltWashSet(
+                                         metric  = 3,
+                                         shank_l = max_tens2_bolt_l,
+                                         # smaller considering the washer
+                                         shank_l_adjust = -2,
+                                         axis_h  = axis_up.negative(),
+                                         pos_h   = 3,
+                                         pos_d   = 0,
+                                         pos_w   = 0,
+                                         pos     = tens2_bolt_i_pos)
+
 
 
 aluprof_w3 = 20
@@ -207,4 +243,21 @@ aluprof_tens3 = comps.PartAluProf(depth = aluprof_tens3_l,
                                  pos_w = 0, # centered
                                  pos_h = 3,
                                  pos = aluprof_tens3_pos)
+
+# Bolts for the belt tensioner
+max_tens3_bolt_l = (
+                  aluprof_tens3.get_h_ab(3,1).Length # spacefor bolt inprofile
+                + t_set3.get_tensioner_holder().hold_bas_h) # base thickness
+for w_i in [-3, 3]: # position of bolts
+    tens3_bolt_i_pos = t_set3.get_pos_dwh(2,w_i,1)
+    tens3_bolt_i = partset.Din912BoltWashSet(
+                                         metric  = 3,
+                                         shank_l = max_tens3_bolt_l,
+                                         # smaller considering the washer
+                                         shank_l_adjust = -2,
+                                         axis_h  = axis_up.negative(),
+                                         pos_h   = 3,
+                                         pos_d   = 0,
+                                         pos_w   = 0,
+                                         pos     = tens3_bolt_i_pos)
 
