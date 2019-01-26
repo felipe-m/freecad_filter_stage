@@ -83,16 +83,67 @@ For example, if using a DIN 912 bolt, it can be built this way:
 Following, the main parameters are explained.
 There are some other parameters that can be seen in the Python code.
 
-### Filter Holder Parameters <a name="filter_holder_parameters"></a>
+---
+
+### Filter Holder Parameters <a name="filter_holder_param"></a>
 
 
 ![Filter holder parameters](imgs/filter_holder/filter_holder_params.png)
-<img src="imgs/filter_holder/filter_holder_params.svg">
 
 Example of 2 filter holders having different parameters:
 
 ![2 Filter holder size](imgs/small/filter_holder/filter_holder_2sizes.jpg)
-<img src="imgs/filter_holder/filter_holder_2sizes.jpg">
+
+---
+
+### Belt tensioner Parameters <a name="belt_tensioner_param"></a>
+
+
+Idler tensioner size depending on the idler pulley:
+
+![Idler tensioner size depending on the idler pulley](imgs/small/belt_tensioner/idler_tensioner_idler_pulley_top.jpg)
+
+---
+
+The tensioner stroke can be modified:
+
+![tensioner stroke](imgs/small/belt_tensioner/idler_tensioner_stroke_draw.png)
+
+---
+
+The thickness of the walls can be modified
+
+![tensioner wall thick](imgs/small/belt_tensioner/wall_thick.jpg)
+
+---
+
+The metric size of the leadscrew can be modified:
+
+![Leadscrew size](imgs/small/belt_tensioner/leadscrew_metric.jpg)
+
+---
+
+These modifications lead to automatic modifications on the tensioner holder size:
+
+![Tensioner holder size](imgs/small/belt_tensioner/tensioner_holder_ex_2idlertens.jpg)
+
+---
+
+The belt height is parametrizable, leading to modifications on the tensioner holder:
+
+![Belt height](imgs/small/belt_tensioner/belt_height.png)
+
+---
+
+![Belt height](imgs/small/belt_tensioner/tensioner_set_3belt_h.jpg)
+
+
+---
+
+The base width, ie. the aluminum profile width, is parametrizable:
+
+![Base width](imgs/small/belt_tensioner/tensioner_holder_ex_3profiles_side.jpg)
+
 
 
 ---
@@ -107,13 +158,16 @@ Example of 2 filter holders having different parameters:
     +--- small: reduced size images
     +--- tens_hold_steps: images for the step by step explanation for the tensioer holder
     +--- idler_tens_steps: images for the step by step explanation for the idler tensioner
+    +--- belt_tensioner: belt tensioner images
+    +--- filter_holder: filter holder images
+    +--- filter_stage: filter stage images
 ```
 
  comps: are python functions and classes to make the shapes easier. Check https://github.com/felipe-m/fcad-comps
 
 ---
  
-## Step by step explanations:
+## Step by step explanations <a name="printed_parts"></a>:
 1. [idler_tensioner.md](./idler_tensioner.md) Detailed explanation for the idler tensioner
 ![Idler Tensioner](imgs/small/idler_tensioner.png )
 1. [tensioner_holder.md](./tensioner_holder.md) Detailed explanation for the tensioner holder
