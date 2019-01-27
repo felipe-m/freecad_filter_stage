@@ -218,6 +218,7 @@ filter_holder = filter_holder_clss.PartFilterHolder(
 
 filter_holder.set_color(fcfun.YELLOW_05)
 
+filter_holder.export_stl(stl_path=stl_path)
  
 
 

@@ -409,6 +409,10 @@ class ShpFilterHolder (shp_clss.Obj3D):
             if not hasattr(self,i):
                 setattr(self, i, values[i])
 
+        # normal axes to print without support
+        self.prnt_ax = self.axis_h
+
+
         # calculation of the dimensions:
         # hole for the filter, including tolerances:
         # Note that now the dimensions width and length are changed.

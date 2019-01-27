@@ -14,6 +14,7 @@ It can be compared with the OpenSCAD version: https://github.com/felipe-m/oscad_
 5.  [Printable Parts](#printed_parts)
     1. [Parts with step by step tutorial](#tutorial_step)
     2. [The rest of the parts](#no_tutorial)
+6.  [Print settings](#print_set)
 
     
 **The pictures of this readme.md are reduced in size to make the document more readable** larger pictures can be found in the img folder (see [Project organization](#directory))
@@ -194,6 +195,12 @@ You can compare the same pieces designed using OpenSCAD: https://github.com/feli
 ![Filter Holder](imgs/small/filter_holder.png )
 1. [filter_stage.py](src/filter_stage.py) In the same design includes the filter holder, the belt tensioner and the motor holder, and also some other non-printable models, such as the stepper motor, aluminum profile, linear guide, belt and pulleys
 ![Filter Stage](imgs/small/filter_stage_1.png )
+
+## Print settings <a name="print_set"></a>:
+
+There is no need to have supports as long as the parts are printed with the following orientation:
+
+![Print orientatio](imgs/small/filter_stage/filter_stage_printable_parts_2.jpg)
 
 
 
