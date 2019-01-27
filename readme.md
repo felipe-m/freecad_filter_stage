@@ -12,6 +12,8 @@ It can be compared with the OpenSCAD version: https://github.com/felipe-m/oscad_
     2. [Belt Tensioner](#belt_tensioner_param)
 4.  [Project organization](#directory)
 5.  [Printable Parts](#printed_parts)
+    1. [Parts with step by step tutorial](#tutorial_step)
+    2. [The rest of the parts](#no_tutorial)
 
 ---
 
@@ -166,8 +168,13 @@ The base width, ie. the aluminum profile width, is parametrizable:
  comps: are python functions and classes to make the shapes easier. Check https://github.com/felipe-m/fcad-comps
 
 ---
+
+
  
 ## Step by step explanations <a name="printed_parts"></a>:
+
+### Step by step explanations <a name="tutorial_step"></a>:
+
 1. [idler_tensioner.md](./idler_tensioner.md) Detailed explanation for the idler tensioner
 ![Idler Tensioner](imgs/small/idler_tensioner.png )
 1. [tensioner_holder.md](./tensioner_holder.md) Detailed explanation for the tensioner holder
@@ -177,7 +184,7 @@ You can compare the same pieces designed using OpenSCAD: https://github.com/feli
 
 ---
 
-## Designs with no step by step explanations
+### Designs with no step by step explanations <a name="no_tutorial"></a>:
 1. The [tensioner_set.py](src/tensioner_set.py) module has no detailed explanation, but the code is explained based on the previous. This code combines the parts of the tensioner set and uses Python classes and methods.
 ![Tensioner Set](imgs/small/tensioner_set.png )
 1. [filter_holder_clss.py](src/filter_holder_clss.py) Filter holder, similar to the one made with OpenSCAD (https://github.com/felipe-m/oscad_filter_stage)
