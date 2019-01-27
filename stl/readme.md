@@ -11,3 +11,6 @@
 
 ![Print orientation](../imgs/filter_stage/filter_stage_printable_parts.jpg)
 
+---
+
+![Print orientation 2](../imgs/filter_stage/filter_stage_printable_parts_2.jpg)
