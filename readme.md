@@ -15,6 +15,9 @@ It can be compared with the OpenSCAD version: https://github.com/felipe-m/oscad_
     1. [Parts with step by step tutorial](#tutorial_step)
     2. [The rest of the parts](#no_tutorial)
 
+    
+**The pictures of this readme.md are reduced in size to make the document more readable** larger pictures can be found in the img folder (see [Project organization](#directory))
+
 ---
 
 ## Description <a name="description"></a>
