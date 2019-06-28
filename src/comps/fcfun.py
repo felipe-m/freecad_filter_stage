@@ -87,6 +87,9 @@ LSKYBLUE   = (0.5, 0.7, 1.0)
 
 GRAY_08  = (0.8, 0.8, 0.8)
 
+GRAY_09  = (0.9, 0.9, 0.9)
+YELLOW_095 = (1.0, 1.0, 0.95)
+
 # no rotation vector
 V0ROT = FreeCAD.Rotation(VZ,0)
 
@@ -249,6 +252,367 @@ def get_fc_perpend1(fcv):
         fcp = FreeCAD.Vector(fcv.y, -fcv.x, 0)
 
     return fcp
+
+# get_tangent_circle_pt
+
+def get_tangent_circle_pt (ext_pt,
+                           center_pt,
+                           rad,
+                           axis_n,
+                           axis_side = None):
+    """ If axis_side is not given:
+        - returns a list with the 2 points that each point forms a line tangent
+          to the circle. The 2 lines are defined by one of each point and the 
+          external point.
+        If axis_side is given:
+        - Only returns a point (FreeCAD.Vector) with the tangent point defined
+          by the direction of axis_side
+        If there is an error it will return 0
+
+    (difficult to draw in using ASCII text)
+
+          external point
+           :     tangent point 1
+           *---  _
+            \  /   \
+             \(     ) circle
+       tangent \ _ /
+        point 2
+
+    Parameters:
+    -----------
+    ext_pt : FreeCAD.Vector
+        external point
+    center_pt : FreeCAD.Vector
+        center of the circle
+    rad : float
+        radius of the circle
+    axis_n : FreeCAD.Vector
+        direction of the normal of the circle
+    axis_side : FreeCAD.Vector
+        direction to the side of the tangent point, if not given,
+        it will return both points
+        The 2 tangent points will be at each side of axis_c. The smaller than
+        90 degree angle between axis_side and the 2 possible axis_p
+        
+
+    The 3 points: center(C), ext_pt(E) and tangent_pt(T) form a
+    rectangle triangle
+
+                        axis_p
+                           :    axis_side
+                           :      /
+                           : <90 /
+                           T    /
+                        .  *.  /
+                   .      90 .  rad
+               .               .
+           . alpha         beta .
+         *-----------------------*   ---- axis_c (axis going thru centers)
+        E                  :      C
+         :                 :     :
+         :.................:     :
+         :       +               :
+         :   axis_c_ET_d         :
+         :                       :
+         :.......................:
+                     +
+              EC_d (hypotenuse)
+
+    Interesting variables:
+    -----------
+    axis_p : FreeCAD.Vecrtor
+        vector of the circle plane, perpendicular to axis_d. It can have
+        to possible directions. If paremeter axis_side is defined, it will
+        have the direction that has less than 90 degress related to axis_side
+      
+   
+    """
+    # normalize axis_n vector (just in case)
+    axis_n = DraftVecUtils.scaleTo(axis_n,1)
+
+    E_pt = ext_pt
+    C_pt = center_pt
+
+    # vector from the external point to the center:
+    EC = C_pt - E_pt
+    # normalized vector:
+    axis_c = DraftVecUtils.scaleTo(EC,1)
+
+    if fc_isperp(axis_c, axis_n) == 0:
+        logger.error('axis_n is not perpendicular to the line formed by the')
+        logger.error('external point and the circle center')
+        return 0
+
+    #calculation of axis_p vector, and its negative
+    axis_p = axis_n.cross(axis_c)
+    axis_pn = axis_p.negative()
+    if axis_side is not None:
+        axis_side = DraftVecUtils.scaleTo(axis_side, 1)
+        if axis_side.dot(axis_p) < 0 :
+            # axis_p in the other direction
+            axis_p = axis_pn
+        axis_pn = V0 # not using the negative direction, just one point
+
+   
+    # length (hypotenuse: distance from the circle center to the external point)
+    EC_d = EC.Length
+    if rad >= EC_d :
+        logger.error('The external point has to be out of the circle')
+        return 0
+
+    # calculation of the length of the other cathetus (ET)
+    ET_d = math.sqrt(EC_d*EC_d - rad*rad)
+    # calculation of the sine and cosine of alpha angle
+    cos_alpha = ET_d / EC_d
+    sin_alpha = rad / EC_d
+    # projection distance of the cathetus onto (axis_c: EC):
+    axis_c_ET_d = ET_d * cos_alpha
+    # projection vector
+    axis_c_ET = DraftVecUtils.scale(axis_c, axis_c_ET_d)
+
+    # projection distance of the cathetus onto (axis_p):
+    axis_p_ET_d = ET_d * sin_alpha
+    # projection vector along axis_p
+    axis_p_ET  = DraftVecUtils.scale(axis_p , axis_p_ET_d)
+
+    T_1 = E_pt + axis_c_ET + axis_p_ET
+    if axis_pn == V0:
+        return T_1
+    else:
+        tg_list = []
+        tg_list.append(T_1)
+        # projection vector along axis_pn
+        axis_pn_ET = DraftVecUtils.scale(axis_pn, axis_p_ET_d)
+        T_2 = E_pt + axis_c_ET + axis_pn_ET
+        tg_list.append(T_2)
+        return tg_list
+
+
+#T = get_tangent_point (ext_pt = V0,
+#                       center_pt = FreeCAD.Vector(5,0,0),
+#                       rad = 2,
+#                       axis_n = VZ)
+#                       #axis_p = VY)
+#cir = Part.makeCircle(2,FreeCAD.Vector(5,0,0))
+#Part.show(cir)
+#line_E_T1 = Part.LineSegment(V0, T[0]).toShape()
+#Part.show(line_E_T1)
+#line_E_T2 = Part.LineSegment(V0, T[1]).toShape()
+#Part.show(line_E_T2)
+
+
+# get_tangent_2circles
+
+def get_tangent_2circles (center1_pt,
+                          center2_pt,
+                          rad1,
+                          rad2,
+                          axis_n,
+                          axis_side = None):
+    """ Returns a list of lists (matrix) with the 2 tangent points for each
+        of the 2 tangent lines
+        If axis_side is given:
+        - Returns a list of lists (matrix)
+          Element [0][0] is the point tangent to circle 1 at side axis_side
+          Element [0][1] is the point tangent to circle 2 at side axis_side
+          Element [1][0] is the point tangent to circle 1 at opposite side of
+                         direction of axis_side
+          Element [1][1] is the point tangent to circle 2 at opposite side of
+                         direction of axis_side
+        If axis_side is not given, the order of the list of the lines is
+                          arbitrary
+        If there is an error it will return 0
+
+    (difficult to draw in using ASCII text)
+
+
+                        axis_p
+                           :
+                        T2 :         axis_side
+                        .  * r1        /  ------------
+                   .         .        /              :
+              .         .     .      /               :
+      T1  .        .           . r2-r1 (r_diff)      + r2*sin(beta)
+         *     .                .                    :
+       r1  . alpha          beta                     :
+          *----------------------*   ---- axis_c (axis going thru centers)
+        C1                 :      C2
+         ::                :     :
+         ::                :.....:
+         ::                  +   :
+         ::          r2*cos(beta):
+         ::                      :
+         ::......................:
+         ::          +
+         ::   C1_C2_d (hypotenuse)
+         ::
+         ::
+         r1*cos(beta)
+
+          alpha = atan(r_diff/C1_C2_d)
+          beta = 90 - alpha
+
+          tangent points along axis_c and axis_p
+
+          T2_c = C2_c - r2 * cos(beta) 
+          T2_p = C2_p - r2 * sin(beta) 
+
+          T1_c = C1_c - r1 * cos(beta) 
+          T1_p = C1_p - r1 * sin(beta) 
+
+
+    Parameters:
+    -----------
+    center1_pt : FreeCAD.Vector
+        center of the circle 1
+    center2_pt : FreeCAD.Vector
+        center of the circle 2
+    rad1 : float
+        radius of the circle 1
+    rad2 : float
+        radius of the circle 2
+    axis_n : FreeCAD.Vector
+        direction of the normal of the circle
+    axis_side : FreeCAD.Vector
+        direction to the side of the tangent line, if not given,
+        it will return the 2 points of both lines
+        The 2 tangent lines will be at each side of axis_c. The smaller than
+        90 degree angle between axis_side and the 2 possible axis_p
+        
+    Interesting variables:
+    -----------
+    axis_p : FreeCAD.Vecrtor
+        vector of the circle plane, perpendicular to axis_d. It can have
+        to possible directions. If paremeter axis_side is defined, it will
+        have the direction that has less than 90 degress related to axis_side
+      
+   
+    """
+    # normalize axis_n vector (just in case)
+    axis_n = DraftVecUtils.scaleTo(axis_n,1)
+
+    # choosing r1 the smaller radius, and r2 the larger
+    if rad1 < rad2:
+        C1_pt = center1_pt
+        C2_pt = center2_pt
+        r1 = rad1
+        r2 = rad2
+    else: #changing circle names
+        C1_pt = center2_pt
+        C2_pt = center1_pt
+        r1 = rad2
+        r2 = rad1
+    r_diff = r2 - r1
+
+    # vector from center1 to center2:
+    C1_C2 = C2_pt - C1_pt
+    # normalized vector:
+    axis_c = DraftVecUtils.scaleTo(C1_C2,1)
+
+    if fc_isperp(axis_c, axis_n) == 0:
+        logger.error('axis_n is not perpendicular to the line formed by the')
+        logger.error('external point and the circle center')
+        return 0
+
+    #calculation of axis_p vector, and its negative
+    axis_p = axis_n.cross(axis_c)
+    axis_pn = axis_p.negative()
+    if axis_side is not None:
+        if axis_side.dot(axis_p) < 0 :
+            # axis_p in the other direction
+            axis_p = axis_pn
+            axis_pn = axis_p.negative()
+    # if axis_side is not defined, the order is random
+
+   
+    # length (hypotenuse: distance from the circle center to the external point)
+    C1_C2_d = C1_C2.Length
+    if r_diff >= C1_C2_d :
+        logger.error('smaller circle is inside the larger')
+        return 0
+
+    # calculation of the length of the other cathetus (T1_T2)
+    T1_T2_d = math.sqrt(C1_C2_d * C1_C2_d - r_diff * r_diff)
+    # calculation of the sine and cosine of beta angle
+    cos_beta =  r_diff / C1_C2_d
+    sin_beta = T1_T2_d / C1_C2_d
+    # projection distance of the radius onto axis_d
+    axis_c_r1_d = r1 * cos_beta
+    axis_c_r2_d = r2 * cos_beta
+    # projection vector, negative, opposite direction to axis_c
+    axis_c_r1 = DraftVecUtils.scale(axis_c, -axis_c_r1_d)
+    axis_c_r2 = DraftVecUtils.scale(axis_c, -axis_c_r2_d)
+
+    # projection distance of the radius onto axis_p
+    axis_p_r1_d = r1 * sin_beta
+    axis_p_r2_d = r2 * sin_beta
+    # projection vector, negative, opposite direction to axis_c
+    axis_p_r1 = DraftVecUtils.scale(axis_p, axis_p_r1_d)
+    axis_p_r2 = DraftVecUtils.scale(axis_p, axis_p_r2_d)
+    axis_pn_r1 = DraftVecUtils.scale(axis_pn, axis_p_r1_d)
+    axis_pn_r2 = DraftVecUtils.scale(axis_pn, axis_p_r2_d)        
+
+    # tangent line on side axis_p
+    L1_T1 = C1_pt + axis_c_r1 + axis_p_r1
+    L1_T2 = C2_pt + axis_c_r2 + axis_p_r2
+    L2_T1 = C1_pt + axis_c_r1 + axis_pn_r1
+    L2_T2 = C2_pt + axis_c_r2 + axis_pn_r2
+    if rad1 < rad2:
+        L1 = [L1_T1, L1_T2]
+        L2 = [L2_T1, L2_T2]
+    else: # the order was changed
+        L1 = [L1_T2, L1_T1]
+        L2 = [L2_T2, L2_T1]
+
+    L = [L1, L2]
+    return L
+
+
+
+#L = get_tangent_2circles (
+#                          center1_pt = V0,
+#                          center2_pt = FreeCAD.Vector(20,0,0),
+#                          rad1 = 2,
+#                          rad2 = 10,
+#                          axis_n = VZ,
+#                          axis_side = VY)
+
+#cir1 = Part.makeCircle(2,FreeCAD.Vector(0,0,0))
+#cir2 = Part.makeCircle(10,FreeCAD.Vector(20,0,0))
+#Part.show(cir1)
+#Part.show(cir2)
+#line_1 = Part.LineSegment(L[0][0], L[0][1]).toShape()
+#Part.show(line_1)
+#line_2 = Part.LineSegment(L[1][0], L[1][1]).toShape()
+#Part.show(line_2)
+
+
+
+ 
+
+def fuseshplist (shp_list):
+
+    """ since multifuse methods needs to be done by a shape and a list,
+        and usually I have a list that I want to fuse, I make this function
+        to save the inconvenience of doing everytime what I will do here
+        Fuse multiFuse
+    """
+
+    if len(shp_list) > 0:
+        shp1 = shp_list.pop() #remove and get the first element
+        if len(shp_list) > 0:
+            shpfuse = shp1.multiFuse(shp_list)
+        else: #only one element, no fuse:
+            logger.debug('only one element to fuse')
+            shpfuse = shp1
+    else:
+        logger.debug('empty list to fuse')
+        return
+
+    return (shpfuse)
+        
+
 
 
 
@@ -1052,6 +1416,110 @@ def shp_face_lgrail (rail_w, rail_h, axis_l = 'x', axis_b = '-z'):
     return (shp_face_rail)
 
 
+def wire_lgrail (rail_w,  rail_h,
+                 axis_w = VX,  axis_h = VY,
+                 pos_w = 0,   pos_h = 0,
+                 pos = V0):
+    """
+    creates a wire of a linear guide rail, the dent is just
+    rough, to be able to see that it is a profile
+
+    Parameters:
+    -----------
+    rail_w : float
+        width of the rail
+    rail_h : float
+        height of the rail
+    axis_w : FreeCAD.Vector
+        the axis where the width of the rail is
+    axis_h : FreeCAD.Vector
+        the axis where the height of the rail is
+    pos_w : int
+        location of pos along axis_w
+        0 : center of symmetry
+        1 : end of the rail
+    pos_h : int
+        location of pos along axis_h
+        0 : bottom
+        1 : middle point (this is kind of non-sense)
+        2 : top point
+    pos: FreeCAD.Vector
+        Position, at the point defined by pos_w and pos_h
+
+                      axis_h
+                        :
+             ne ________2________ e
+               |                 |
+             nd|                 | d
+                \nc           c /   A little dent to see that it is a rail
+             nb /       1       \ b
+               |                 |
+               |                 |
+               |                 |
+             na|________o________|a ...... axis_w
+                        0        1
+
+
+                               rail_h/8
+                        :      : :
+             ne ________2______:_:....
+               |                 |   :+ rail_h/4
+             nd|                 |.................
+                \nc           c / ....  rail_h/8   + rail_h/4
+             nb /       1       \ ....  rail_h/8...:
+               |                 |    :
+               |                 |    + rail_h/2
+               |                 |    :
+             na|________o________|a ..:............ axis_w
+                        0        1
+
+
+
+    pos_o (origin) is at pos_w = 0, pos_h = 0
+
+    """
+
+    # normalize the axis
+    axis_w = DraftVecUtils.scaleTo(axis_w,1)
+    axis_h = DraftVecUtils.scaleTo(axis_h,1)
+
+    # distances from the origin (pos_o) to pos_h along axis_h
+    h_o = {}
+    h_o[0] = V0
+    h_o[1] = DraftVecUtils.scale(axis_h,rail_h/2.)
+    h_o[2] = DraftVecUtils.scale(axis_h,rail_h)
+
+    # distances from the origin (pos_o) to pos_w along axis_w
+    # this is symmetric
+    w_o = {}
+    w_o[0] = V0
+    w_o[1] = DraftVecUtils.scale(axis_w,rail_w/2.)
+    # usually not necessary, just change the direction of axis_w:
+    w_o[-1] = DraftVecUtils.scale(axis_w,-rail_w/2.) #not necessary, just change
+
+    # origin reference position:
+    pos_o = pos + h_o[pos_h].negative() + w_o[pos_w].negative()
+
+    pt_a  = pos_o  + w_o[1]
+    pt_na = pos_o  + w_o[-1]
+    pt_b  = pt_a   + h_o[1]
+    pt_nb = pt_na  + h_o[1]
+    pt_c  = (pt_b  + DraftVecUtils.scale(axis_h,  rail_h/8.)
+                   + DraftVecUtils.scale(axis_w, -rail_h/8.))
+    pt_nc = (pt_nb + DraftVecUtils.scale(axis_h,  rail_h/8.)
+                   + DraftVecUtils.scale(axis_w,  rail_h/8.))
+    pt_d  = pt_b   + DraftVecUtils.scale(axis_h,  rail_h/4.)
+    pt_nd = pt_nb  + DraftVecUtils.scale(axis_h,  rail_h/4.)
+    pt_e  =  pt_a  + h_o[2]
+    pt_ne =  pt_na + h_o[2]
+
+    wire_rail = Part.makePolygon([pt_a, pt_b, pt_c, pt_d, pt_e,
+                                      pt_ne, pt_nd, pt_nc, pt_nb, pt_na,
+                                      pt_a])
+
+    return wire_rail
+    
+
 # ------------------------ def shp_face_rail 
 # adds a shape of the profile (face) of a rail
 # Arguments:
@@ -1811,6 +2279,341 @@ def shp_cylhole_gen (r_out, r_in, h,
 #                       #pos = FreeCAD.Vector(1,2,3))
 #Part.show(cyl)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def shp_cylhole_arc (r_out, r_in, h,
+                     axis_h = VZ, axis_ra = None, axis_rb = None,
+                     end_angle = 360,
+                     pos_h = 0, pos_ra = 0, pos_rb = 0,
+                     xtr_top=0, xtr_bot=0,
+                     xtr_r_out=0, xtr_r_in=0,
+                     pos = V0):
+    """
+    This is similar to make shp_cylhole_gen but not for a whole, just an arc
+    I don't know how where makeCircle starts its startangle and end angle
+    That is why I use this way
+
+    Makes a hollow cylinder in any position and direction, with optional extra
+    heights, and inner and outer radius, and various locations in the cylinder
+
+    Returns: a TopoShape
+
+    Parameters:
+    -----------
+    r_out : float
+        radius of the outside cylinder
+    r_in : float
+        radius of the inner hole of the cylinder
+    h : float
+        height of the cylinder
+    axis_h : FreeCAD.Vector
+        vector along the cylinder height
+    axis_ra : FreeCAD.Vector
+        vector along the cylinder radius, a direction perpendicular to axis_h
+        it is not necessary if pos_ra == 0
+        It can be None, but if None, axis_rb has to be None
+        Defines the starting angle
+    axis_rb : FreeCAD.Vector
+        vector along the cylinder radius,
+        a direction perpendicular to axis_h and axis_ra
+        it is not necessary if pos_ra == 0
+        It can be None
+    end_angle : float (in degrees)
+        rotating from axis_ra in the direction determined by axis_h 
+    pos_h : int
+        location of pos along axis_h (0, 1)
+        0: the cylinder pos is centered along its height, not considering
+           xtr_top, xtr_bot
+        1: the cylinder pos is at its base (not considering xtr_h)
+    pos_ra : int
+        location of pos along axis_ra (0, 1)
+        0: pos is at the circunference center
+        1: pos is at the inner circunsference, on axis_ra, at r_in from the
+           circle center (not at r_in + xtr_r_in)
+        2: pos is at the outer circunsference, on axis_ra, at r_out from the
+           circle center (not at r_out + xtr_r_out)
+    pos_rb : int
+        location of pos along axis_ra (0, 1)
+        0: pos is at the circunference center
+        1: pos is at the inner circunsference, on axis_rb, at r_in from the
+           circle center (not at r_in + xtr_r_in)
+        2: pos is at the outer circunsference, on axis_rb, at r_out from the
+           circle center (not at r_out + xtr_r_out)
+    xtr_top : float
+        Extra height on top, it is not taken under consideration when
+        calculating the cylinder center along the height
+    xtr_bot : float
+        Extra height at the bottom, it is not taken under consideration when
+        calculating the cylinder center along the height or the position of
+        the base
+    xtr_r_in : float
+        Extra length of the inner radius (hollow cylinder),
+        it is not taken under consideration when calculating pos_ra or pos_rb.
+        It can be negative, so this inner radius would be smaller
+    xtr_r_out : float
+        Extra length of the outer radius
+        it is not taken under consideration when calculating pos_ra or pos_rb.
+        It can be negative, so this outer radius would be smaller
+    pos : FreeCAD.Vector
+        Position of the cylinder, taking into account where the center is
+
+
+    
+    pos_h = 1, pos_ra = 0, pos_rb = 0
+    pos at 1:
+            axis_rb
+              :
+              :
+             . .    
+           . . . .
+         ( (  0  ) ) ---- axis_ra
+           . . . .
+             . .    
+
+           axis_h
+              :
+              :
+          ...............
+         :____:____:....: xtr_top
+         | :     : |
+         | :     : |
+         | :     : |
+         | :  0  : |     0: pos would be at 0, if pos_h == 0
+         | :     : |
+         | :     : |
+         |_:__1__:_|....>axis_ra
+         :.:..o..:.:....: xtr_bot        This o will be pos_o (orig)
+         : :  :
+         : :..:
+         :  + :
+         :r_in:
+         :    :
+         :....:
+           +
+          r_out
+         
+
+    Values for pos_ra  (similar to pos_rb along it axis)
+
+
+           axis_h
+              :
+              :
+          ...............
+         :____:____:....: xtr_top
+         | :     : |
+         | :     : |
+         | :     : |
+         2 1  0  : |....>axis_ra    (if pos_h == 0)
+         | :     : |
+         | :     : |
+         |_:_____:_|.....
+         :.:..o..:.:....: xtr_bot        This o will be pos_o (orig)
+         : :  :
+         : :..:
+         :  + :
+         :r_in:
+         :    :
+         :....:
+           +
+          r_out
+
+   """
+   
+
+    # calculate pos_o, which is at the center of the circle and at the base
+    # counting xtr_bot it is is > 0
+    axis_h = DraftVecUtils.scaleTo(axis_h, 1)
+    
+    # vectors from o (orig) along axis_h, to the pos_h points
+    h_o = {}
+    h_o[0] =  DraftVecUtils.scale(axis_h, h/2. + xtr_bot)
+    h_o[1] =  DraftVecUtils.scale(axis_h, xtr_bot)
+
+    # vectors from o (orig) along axis_ra, to the pos_ra points
+    ra_o = {}
+    ra_o[0] = V0
+    if pos_ra != 0 or end_angle < 360:
+        if axis_ra is not None:
+            axis_ra = DraftVecUtils.scaleTo(axis_ra, 1)
+            ra_o[1] = DraftVecUtils.scale(axis_ra, - r_in)
+            ra_o[2] = DraftVecUtils.scale(axis_ra, - r_out)
+        else :
+            logger.warning('axis_ra not defined while pos_ra ==1')
+            logger.warning('getting any perpendicular')
+            axis_ra = get_fc_perpend1(axis_h)
+    # vectors from o (orig) along axis_rb, to the pos_rb points
+    rb_o = {}
+    rb_o[0] = V0
+    if pos_rb != 0:
+        if axis_rb is not None:
+            axis_rb = DraftVecUtils.scaleTo(axis_rb, 1)
+            rb_o[1] = DraftVecUtils.scale(axis_rb, - r_in)
+            rb_o[2] = DraftVecUtils.scale(axis_rb, - r_out)
+        else :
+            logger.error('axis_rb not defined while pos_rb ==1')
+
+    pos_o = pos + (h_o[pos_h] + ra_o[pos_ra] + rb_o[pos_rb]).negative()
+
+    shp_hollowcyl = shp_cylholedir (r_out = r_out + xtr_r_out,
+                                    r_in  = r_in + xtr_r_in,
+                                    h =  h+xtr_bot+xtr_top,
+                                    normal = axis_h,
+                                    pos = pos_o)
+
+    if end_angle < 360:
+        #
+        #   axis_h towards you
+        #
+        #
+        #    2quart(<180)        1quart (<90)
+        #                    ______ > axis_ra
+        #                    \
+        #    3quart(>180)     \  4quart(>270)
+        #                      \
+        #                   :
+        #                   v
+        #                 axis_d_neg
+        #
+        pos_o_cut = pos_o + DraftVecUtils.scale(axis_h, -1)
+        axis_d = DraftVecUtils.rotate(axis_ra, 0.5*math.pi, axis_h) # 90
+        axis_d_neg = DraftVecUtils.scale(axis_d, -1) # 270
+        axis_ra_neg = DraftVecUtils.scale(axis_ra, -1)
+        # to radians
+        rad_angle = end_angle * math.pi /180 
+        # Unit vector in the angle of the cut
+        pos_cut_dir = DraftVecUtils.rotate(axis_ra, rad_angle, axis_h)
+        # position at the cylinder to cut (extra to cut)
+        pos_cut = pos_o_cut + DraftVecUtils.scale(pos_cut_dir,
+                                          2* (r_out + xtr_r_out + 1))
+        cut_h = h+xtr_bot+xtr_top + 2
+        cut_r = r_out + xtr_r_out + 1
+        cut_l = []
+        if end_angle <= 180:
+            # take away the axis_d_neg part
+            shp_cuthalf = shp_box_dir (box_w = 2*cut_r,
+                                       box_d = cut_r,
+                                       box_h = cut_h,
+                                       fc_axis_w = axis_ra,
+                                       fc_axis_h = axis_h,
+                                       fc_axis_d = axis_d_neg,
+                                       cw =1, cd=0, ch=0, pos= pos_o_cut)
+            cut_l.append(shp_cuthalf)
+            if end_angle < 180:
+                if end_angle <= 90:
+                    # take away the axis_ra_neg part
+                    shp_cut2quart = shp_box_dir (
+                                       box_w = cut_r,
+                                       box_d = cut_r,
+                                       box_h = cut_h,
+                                       fc_axis_w = axis_ra_neg,
+                                       fc_axis_h = axis_h,
+                                       fc_axis_d = axis_d,
+                                       cw =0, cd=0, ch=0, pos= pos_o_cut)
+                    cut_l.append(shp_cut2quart)
+                    if end_angle < 90:
+                        pos_cut2 = pos_o_cut + DraftVecUtils.scale(axis_d,
+                                                2* cut_r)
+                        wire_cut = Part.makePolygon([pos_o_cut, pos_cut,
+                                                     pos_cut2, pos_o_cut])
+                        face_cut = Part.Face(wire_cut)
+                        dir_extrud = DraftVecUtils.scaleTo(axis_h, cut_h)
+                        shp_cutangle = face_cut.extrude(dir_extrud)
+                        cut_l.append(shp_cutangle)
+                else : # 90<angle<180
+                    pos_cut2 = pos_o_cut + DraftVecUtils.scale(axis_ra_neg,
+                                            2* cut_r)
+                    wire_cut = Part.makePolygon([pos_o_cut, pos_cut,
+                                                 pos_cut2, pos_o_cut])
+                    face_cut = Part.Face(wire_cut)
+                    dir_extrud = DraftVecUtils.scaleTo(axis_h, cut_h)
+                    shp_cutangle = face_cut.extrude(dir_extrud)
+                    cut_l.append(shp_cutangle)
+
+        else :  # > 180
+            if end_angle <= 270: 
+                shp_cut3quart = shp_box_dir (
+                                       box_w = r_out + xtr_r_out + 1,
+                                       box_d = r_out + xtr_r_out + 1,
+                                       box_h =  h+xtr_bot+xtr_top + 2,
+                                       fc_axis_w = axis_ra,
+                                       fc_axis_h = axis_h,
+                                       fc_axis_d = axis_d_neg,
+                                       cw =0, cd=0, ch=0, pos=pos_o_cut)
+                cut_l.append(shp_cut3quart)
+                if end_angle < 270:
+                    pos_cut2 = pos_o_cut + DraftVecUtils.scale(axis_d_neg,
+                                                2* cut_r)
+                    wire_cut = Part.makePolygon([pos_o_cut, pos_cut,
+                                                 pos_cut2, pos_o_cut])
+                    face_cut = Part.Face(wire_cut)
+                    dir_extrud = DraftVecUtils.scaleTo(axis_h, cut_h)
+                    shp_cutangle = face_cut.extrude(dir_extrud)
+                    cut_l.append(shp_cutangle)
+            else : #>270
+                pos_cut2 = pos_o_cut + DraftVecUtils.scale(axis_ra,
+                                            2* cut_r)
+                wire_cut = Part.makePolygon([pos_o_cut, pos_cut,
+                                             pos_cut2, pos_o_cut])
+                face_cut = Part.Face(wire_cut)
+                dir_extrud = DraftVecUtils.scaleTo(axis_h, cut_h)
+                shp_cutangle = face_cut.extrude(dir_extrud)
+                cut_l.append(shp_cutangle)
+
+        shp_cutangle = fuseshplist(cut_l)
+        shp_hollowcyl = shp_hollowcyl.cut(shp_cutangle)
+
+
+    return shp_hollowcyl
+
+#cyl = shp_cylhole_arc (r_in=2, r_out=5, h=4,
+#                       #axis_h = FreeCAD.Vector(1,1,0), 
+#                       axis_h = VZ,
+#                       axis_ra = VX, axis_rb = VYN,
+#                       end_angle = 60,
+#                       pos_h = 0,  pos_ra = 1, pos_rb = 2,
+#                       xtr_top=0, xtr_bot=1,
+#                       xtr_r_in=0, xtr_r_out=-1,
+#                       pos = V0)
+                       #pos = FreeCAD.Vector(1,2,3))
+#Part.show(cyl)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def add2CylsHole (r1, h1, r2, h2, thick,
                   normal = VZ, pos = V0):
 
@@ -2463,7 +3266,7 @@ def shp_belt_wire_dir (center_sep, rad1, rad2, fc_axis_l = VX,
                        pos=V0):
 
     """
-    Makes a shape of a wire with to circles and exterior tangent lines
+    Makes a shape of a wire with 2 circles and exterior tangent lines
     check: https://en.wikipedia.org/wiki/Tangent_lines_to_circles
     It is not easy to draw it well
     rad1 and rad2 can be exchanged, rad1 doesnt have to be larger
@@ -3481,6 +4284,379 @@ def shp_cableturn (d, w, thick_d, corner_r,
 
 
 
+
+
+
+
+# ------------------- def wire_beltclamp
+
+def wire_beltclamp (d, w, corner_r,
+                        conn_d, conn_sep,
+                        xtr_conn_d = 0,
+                        closed = 0,
+                        axis_d = VY,
+                        axis_w = VX,
+                        pos_d = 0,
+                        pos_w = 0,
+                        pos=V0):
+
+    """
+    Creates a wire following 2 pulleys and ending in a belt clamp
+    But it is a wire in FreeCAD, has no volumen
+
+      axis_w
+        :
+        :
+     pulley1                   pulley2
+          
+        -----------------------------------
+      (   )                             (   )--------> axis_d
+        ---------===  ( )  ( )  ===--------
+               clamp1          clamp2
+
+      1 0        2 3   45  67   8 9      10 11   pos_d
+        :          :            :         :
+        :          :            :         :
+        :          :............:         :
+        :                +                :
+        :             clamp_sep           :
+        :                                 :
+        :.................................:
+                       +
+                     pull_sep_d
+
+      pos_w points:
+
+      axis_w
+        :                                    pull2
+        :      clamp1                 clamp2
+       2_                                     3-
+                                             ( 1 )   - - pull_sep_w (positive)
+     (  0  )   - - - - - - - - - - - - - - -  5-     - -
+              6 ___ ...................___.............:+ clamp_pull1_w (neg)
+       4-     7       < )        ( >                   :+ clamp_w
+              8 ___ ...................___.............:
+
+
+
+      axis_w
+        :                                    pull2
+        :      clamp1                 clamp2
+        _                                      -
+                                             (   )   - - pull_sep_w (positive)
+     (     )   - - - - - - - - - - - - - - -   -     - -
+                ___ ...................___.............:+ clamp_pull1_w (neg)
+        -             < )        ( >                   :+ clamp_w
+                ___ ...................___.............:
+        :      :   :   ::         :   :   :       :
+        :      :   :   :cyl_r     :   :   :       :
+        :      :   :...:          :...:   :.......:
+        :      :   :  +            +  :   :   +
+        :      :   :  clamp_cyl_sep   :   :   +
+        :      :   :                  :   :  clamp_pull2_d
+        :      :   :                  :...:
+        :      :   :                  :  +
+        :      :   :..................: clamp_d
+        :      :   :        +
+        :      :   :       clamp_sep
+        :      :...:   
+        :      : +
+        :      : clamp_d
+        :      :
+        :......:
+           +
+         clamp_pull1_d
+         
+
+    Parameters:
+    -----------
+    pull1_d : float
+        diameter of pulley 1
+    pull2_d : float
+        diameter of pulley 2
+    pull_sep_d : float
+        separation between the 2 pulleys centers along axis_d
+        if positive, pulley 2 is further away in the direction of axis_d
+        if negative, pulley 2 is further away opposite to the direction of
+           axis_d
+    pull_sep_w : float
+        separation between the 2 pulleys centers along axis_w
+        if positive, pulley 2 is further away in the direction of axis_w
+        if negative, pulley 2 is further away opposite to the direction of
+           axis_w
+    clamp_pull1_d : float
+        separation between the clamp (side closer to the center) and the center
+        of the pulley1
+    clamp_pull1_w : float
+        separation between the center of the clamp and the center of the
+        pulley1
+        if positive, the clamp is further away in the direction of axis_w
+        if negative, the clamp is further away opposite to the direction of
+           axis_w
+    clamp_d : float
+        length of the clamp (same for each clamp)
+    clamp_w : float
+        width of inner space (same for each clamp)
+    clamp_sep : float
+        separation between clamps, the closest ends
+    clamp_cyl_sep : float
+        separation between clamp and the center of the cylinder (or the center)
+        of the larger cylinder (when is a belt shape)
+    cyl_r : float
+        Radius of the cylinder for the belt, if it is not a cylinder but a
+        shape of 2 cylinders: < ) , then the raidius of the larger one
+
+    axis_d :  FreeCAD.Vector
+        Coordinate System Vector along the depth
+    axis_w :  FreeCAD.Vector
+        Coordinate System Vector along the width
+    pos_d : int
+        location of pos along the axis_d, see drawing
+        0: center of the pulley 1
+        1: end of pulley 1
+        2: end of clamp 1, closest end to pulley 1
+        3: other end of clamp 1, closest to cylinder
+        4: center of cylinder (or shape < ) 1
+        5: external radius of cylinder 1
+        6: external radius of cylinder 2
+        7: center of cylinder (or shape ( > 2
+        8: end of clamp 2, closest to cylinder
+        9: other end of clamp 2, closest end to pulley 2
+        10: center of pulley 2
+        11: end of pulley 2
+    pos_w : int
+        location of pos along the axis_w, see drawing
+        0: center of pulley 1
+        1: center of pulley 2
+        2: end (radius) of pulley 1 along axis_w
+        3: end (radius) of pulley 2 along axis_w
+        4: other end (radius) of pulley 1 opposite to axis_w
+        5: other end (radius) of pulley 2 opposite to axis_w
+        6: clamp space, closest to the pulley
+        7: center of clamp space
+        8: clamp space, far away from the pulley
+    pos: FreeCAD vector of the position of the reference
+
+
+    returns the shape of the wire
+    """
+    """
+
+    # normalize the axis
+    axis_d = DraftVecUtils.scaleTo(axis_d,1)
+    axis_w = DraftVecUtils.scaleTo(axis_w,1)
+
+    d_o = {}
+    # distances from the pos_o to pos_d 
+    d_o[0] = V0
+    d_o[1] = DraftVecUtils.scale(axis_d, -conn_d)
+    d_o[2] = DraftVecUtils.scale(axis_d, d/2.)
+    d_o[3] = DraftVecUtils.scale(axis_d, d)
+
+    xtr_conn_d_vec = DraftVecUtils.scale(axis_d, -xtr_conn_d)
+
+    w_o = {}
+    # distances from the pos_o to pos_w 
+    w_o[0] = V0
+    w_o[1] = DraftVecUtils.scale(axis_w, -w/2.)
+
+    # reference position
+    pos_o = pos + d_o[pos_d].negative() + w_o[pos_w].negative()
+
+    if (2 * corner_r + conn_sep >= w ) or (2 * corner_r >= d):
+        corner_r = min(d/2.1,(w-conn_sep)/4.1)
+        logger.warning('radius too large, taking:' + str(corner_r))
+
+    
+
+    #           w_t
+    #       ____________  ..... ..                   3
+    #      /B          C\      :..corner_r
+    #      |            |      :
+    #      |            |      :
+    # w_l  |            | w_r  + d                   2
+    #      |            |      :
+    #      |            |      :
+    #      | A         D|      :
+    #       \___   ____/ ......:                     1
+    #           \ /            :
+    #           | |            + conn_d
+    #           | |            : 
+    #           \_/............:...........axis_w    0
+    #
+    # Define the 4 corners 0, 1, 2, 3, that are at the center of the radius
+    # of the corners
+
+    # vector with length of the radius along axis_w 
+    d_rad =  DraftVecUtils.scale(axis_d, corner_r)
+    d_rad_n = d_rad.negative()
+    w_rad =  DraftVecUtils.scale(axis_w, corner_r)
+    w_rad_n = w_rad.negative()
+    # vector with half the length of the separation of connectors along axis_w 
+    w_hsep =  DraftVecUtils.scale(axis_w, conn_sep/2.)
+    w_hsep_n = w_hsep.negative()
+
+    pt_A = pos_o + d_o[1] + w_o[1] + d_rad + w_rad
+    pt_B = pos_o + d_o[3] + w_o[1] + d_rad_n + w_rad
+    pt_C = pos_o + d_o[3] + w_o[1].negative() + d_rad_n + w_rad_n
+    pt_D = pos_o + d_o[1] + w_o[1].negative() + d_rad + w_rad_n
+
+    if corner_r > 0 :
+        corner_r45 = corner_r/math.sqrt(2)
+        d_rad45 =  DraftVecUtils.scale(axis_d, corner_r45)
+        d_rad45_n = d_rad45.negative()
+        w_rad45 =  DraftVecUtils.scale(axis_w, corner_r45)
+        w_rad45_n = w_rad45.negative()
+
+        pt_A1 = pt_A + d_rad_n
+        pt_A2 = pt_A + d_rad45_n + w_rad45_n
+        pt_A3 = pt_A + w_rad_n
+        corner_A = Part.Arc(pt_A1, pt_A2, pt_A3).toShape()
+
+        pt_B1 = pt_B + w_rad_n
+        pt_B2 = pt_B + d_rad45 + w_rad45_n
+        pt_B3 = pt_B + d_rad
+        corner_B = Part.Arc(pt_B1, pt_B2, pt_B3).toShape()
+
+        pt_C1 = pt_C + d_rad
+        pt_C2 = pt_C + d_rad45 + w_rad45
+        pt_C3 = pt_C + w_rad
+        corner_C = Part.Arc(pt_C1, pt_C2, pt_C3).toShape()
+
+        pt_D1 = pt_D + w_rad
+        pt_D2 = pt_D + d_rad45_n + w_rad45
+        pt_D3 = pt_D + d_rad_n
+        corner_D = Part.Arc(pt_D1, pt_D2, pt_D3).toShape()
+
+        # In Freecad 0.17 Line is an infinite Line, change to LineSegment
+        line_AB = Part.LineSegment(pt_A3, pt_B1).toShape()
+        line_BC = Part.LineSegment(pt_B3, pt_C1).toShape()
+        line_CD = Part.LineSegment(pt_C3, pt_D1).toShape()
+
+        top_wire = Part.Wire([corner_A, line_AB,
+                              corner_B, line_BC,
+                              corner_C, line_CD,
+                              corner_D])
+        top_wire_firstpt = pt_A1
+        top_wire_lastpt = pt_D3
+        if conn_d == 0:
+            # the turn ends here:
+            if closed == 1:
+                line_bot = Part.LineSegment(pt_D3, pt_A1).toShape()
+                cable_wire = Part.Wire([line_bot,top_wire,])
+            else:
+                #
+                #      | A         D|
+                #       \___E   F___/
+                #      
+                pt_E =  pos_o + w_hsep_n
+                pt_F =  pos_o + w_hsep
+                line_EA = Part.LineSegment(pt_E, pt_A1).toShape()
+                line_DF = Part.LineSegment(pt_D3, pt_F).toShape()
+                cable_wire = Part.Wire([line_EA,top_wire, line_DF])
+        else :
+            if conn_d < corner_r :
+                conn_d = corner_r * 1.1
+                logger.warning('radius larger than connector length')
+                logger.warning('making it: ' + str(conn_d))
+                logger.warning('Distances mabe be WRONG')
+            # Points E1, E2, E3, F1, F2, F3:
+            pt_E = pos_o + w_hsep_n + d_rad_n + w_rad_n # radius center
+            pt_F = pos_o + w_hsep + d_rad_n + w_rad # radius center
+            # E3 is the closest to A
+            pt_E3 = pt_E + d_rad
+            pt_E2 = pt_E + d_rad45 + w_rad45
+            pt_E1 = pt_E + w_rad
+
+            # F1 is the closest to D
+            pt_F3 = pt_F + w_rad_n
+            pt_F2 = pt_F + d_rad45 + w_rad45_n
+            pt_F1 = pt_F + d_rad
+            
+            corner_E = Part.Arc(pt_E1, pt_E2, pt_E3).toShape()
+            corner_F = Part.Arc(pt_F1, pt_F2, pt_F3).toShape()
+            line_EA = Part.LineSegment(pt_E3, pt_A1).toShape()
+            line_DF = Part.LineSegment(pt_D3, pt_F1).toShape()
+
+            pt_G =  pos_o + w_hsep_n + d_o[0] + xtr_conn_d_vec
+            pt_H =  pos_o + w_hsep + d_o[0] + xtr_conn_d_vec
+            line_GE = Part.LineSegment(pt_G, pt_E1).toShape()
+            line_FH = Part.LineSegment(pt_F3, pt_H).toShape()
+
+
+            cable_wire = Part.Wire([line_GE, corner_E, line_EA,top_wire,
+                                    line_DF, corner_F, line_FH])
+            if closed == 1:
+                line_HG = Part.LineSegment(pt_H, pt_G).toShape()
+                cable_wire = Part.Wire([cable_wire, line_HG])
+        
+        
+    else : # no corners
+        line_AB = Part.LineSegment(pt_A, pt_B).toShape()
+        line_BC = Part.LineSegment(pt_B, pt_C).toShape()
+        line_CD = Part.LineSegment(pt_C, pt_D).toShape()
+        top_wire = Part.Wire([line_AB, line_BC,line_CD])
+        top_wire_firstpt = pt_A
+        top_wire_lastpt = pt_D
+        # points E - F
+        #      |            |
+        #      |____E   F___|
+        #      
+        if conn_d == 0:
+            # the turn ends here:
+            if closed == 1:
+                line_bot = Part.LineSegment(pt_D, pt_A).toShape()
+                cable_wire = Part.Wire([line_bot,top_wire,])
+            else :
+                pt_E =  pos_o + w_hsep_n
+                pt_F =  pos_o + w_hsep
+                line_EA = Part.LineSegment(pt_E, pt_A).toShape()
+                line_DF = Part.LineSegment(pt_D, pt_F).toShape()
+                cable_wire = Part.Wire([line_EA,top_wire, line_DF])
+        else:
+            pt_E =  pos_o + w_hsep_n
+            pt_F =  pos_o + w_hsep
+            line_EA = Part.LineSegment(pt_E, pt_A).toShape()
+            line_DF = Part.LineSegment(pt_D, pt_F).toShape()
+            # points E - F
+            #      |            |
+            #      |____E   F___|
+            #           |   |
+            #           |   |
+            #           G   H
+            pt_G =  pt_E + d_o[0] + xtr_conn_d_vec
+            pt_H =  pt_F + d_o[0] + xtr_conn_d_vec
+            line_GE = Part.LineSegment(pt_G, pt_E).toShape()
+            line_FH = Part.LineSegment(pt_F, pt_H).toShape()
+            cable_wire = Part.Wire([line_GE, line_EA,top_wire,
+                                    line_DF, line_FH])
+            if closed == 1 :
+                line_HG = Part.LineSegment(pt_H, pt_G).toShape()
+                cable_wire = Part.Wire([cable_wire, line_HG])
+
+
+    #Part.show(cable_wire)
+    return (cable_wire)
+
+
+
+    """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def regpolygon_vecl (n_sides, radius, x_angle=0):
 
     """
@@ -3757,6 +4933,247 @@ def shp_regprism_dirxtr (n_sides, radius, length,
     shp_rprism = shp_extrud_face(shp_rpolygon_face,
                                  totlen, nnorm,centered)
     return shp_rprism
+
+
+
+
+def shp_cylhole_bolthole (r_out, r_in, h,
+                     n_bolt = 4, d_bolt = 0, r_bolt2cen = 0,
+                     axis_h = VZ, axis_ra = VY, axis_rb = None,
+                     bolt_axis_ra = 1,
+                     pos_h = 0, pos_ra = 0, pos_rb = 0,
+                     xtr_top=0, xtr_bot=0,
+                     xtr_r_out=0, xtr_r_in=0,
+                     pos = V0):
+    """
+    This is a generalization of shp_cylholedir and shp_cylhole
+    Makes a hollow cylinder in any position and direction, with optional extra
+    heights, and inner and outer radius, and various locations in the cylinder
+
+    Also has a number of nbolt holes along a radius r_bolt2cen
+    the bolts a equi spaced depending on the number
+
+    Returns: a TopoShape
+
+    Parameters:
+    -----------
+    r_out : float
+        radius of the outside cylinder
+    r_in : float
+        radius of the inner hole of the cylinder
+    h : float
+        height of the cylinder
+    n_bolt : int
+        number of bolt holes, if zero no bolt holes
+    d_bolt : float
+        diameter of the bolt holes
+    r_bolt2cen : float
+        distance (radius) from the cylinder center to the bolt hole centers
+    bolt_axis_ra : int
+        1: the first bolt will be on axis ra
+        0: the first bolt will be rotated half of the angle between to bolt
+           holes -> centered on the side
+    axis_h : FreeCAD.Vector
+        vector along the cylinder height
+    axis_ra : FreeCAD.Vector
+        vector along the cylinder radius, a direction perpendicular to axis_h
+        it is not necessary if pos_ra == 0
+        It can be None, but if None, axis_rb has to be None
+    axis_rb : FreeCAD.Vector
+        vector along the cylinder radius,
+        a direction perpendicular to axis_h and axis_ra
+        it is not necessary if pos_ra == 0
+        It can be None
+    pos_h : int
+        location of pos along axis_h (0, 1)
+        0: the cylinder pos is centered along its height, not considering
+           xtr_top, xtr_bot
+        1: the cylinder pos is at its base (not considering xtr_h)
+    pos_ra : int
+        location of pos along axis_ra (0, 1)
+        0: pos is at the circunference center
+        1: pos is at the inner circunsference, on axis_ra, at r_in from the
+           circle center (not at r_in + xtr_r_in)
+        2: pos is at the center of the bolt hole (one of them)
+        3: pos is at the outer circunsference, on axis_ra, at r_out from the
+           circle center (not at r_out + xtr_r_out)
+    pos_rb : int
+        location of pos along axis_ra (0, 1)
+        0: pos is at the circunference center
+        1: pos is at the inner circunsference, on axis_rb, at r_in from the
+           circle center (not at r_in + xtr_r_in)
+        2: pos is at the center of the bolt hole (one of them)
+        3: pos is at the outer circunsference, on axis_rb, at r_out from the
+           circle center (not at r_out + xtr_r_out)
+    xtr_top : float
+        Extra height on top, it is not taken under consideration when
+        calculating the cylinder center along the height
+    xtr_bot : float
+        Extra height at the bottom, it is not taken under consideration when
+        calculating the cylinder center along the height or the position of
+        the base
+    xtr_r_in : float
+        Extra length of the inner radius (hollow cylinder),
+        it is not taken under consideration when calculating pos_ra or pos_rb.
+        It can be negative, so this inner radius would be smaller
+    xtr_r_out : float
+        Extra length of the outer radius
+        it is not taken under consideration when calculating pos_ra or pos_rb.
+        It can be negative, so this outer radius would be smaller
+    pos : FreeCAD.Vector
+        Position of the cylinder, taking into account where the center is
+
+
+    
+    pos_h = 1, pos_ra = 0, pos_rb = 0
+    pos at 1:
+            axis_rb
+              :
+              :
+             . .     o: are n_bolt(4) holes
+           .o. .o.
+         ( (  0  ) ) ---- axis_ra
+           .o. .o.
+             . .    
+
+           axis_h
+              :
+              :
+          ...............
+         :____:____:....: xtr_top
+         | :     : |
+         | :     : |
+         | :     : |
+         | :  0  : |     0: pos would be at 0, if pos_h == 0
+         | :     : |
+         | :     : |
+         |_:__1__:_|....>axis_ra
+         :.:..o..:.:....: xtr_bot        This o will be pos_o (orig)
+         : :  :
+         : :..:
+         :  + :
+         :r_in:
+         :    :
+         :....:
+           +
+          r_out
+         
+
+    Values for pos_ra  (similar to pos_rb along it axis)
+
+
+             axis_h
+                :
+        d_bolt  :
+          :.:............
+         :_:_:__:__:_:....: xtr_top
+         | : :     : : |
+         | : :     : : |
+         | : :     : : |
+         3 2 1  0  : : |....>axis_ra    (if pos_h == 0)
+         | : :     : : |
+         | : :     : : |
+         |_:_:_____:_:_|.....
+         :.: :..o..:.:....: xtr_bot        This o will be pos_o (orig)
+         : : :  :
+         : : :..:
+         : :  + :
+         : :  r_in
+         : :....:
+         :   + 
+         :  r_bolt2cen:
+         :    :
+         :....:
+           +
+          r_out
+
+   """
+   
+
+    # calculate pos_o, which is at the center of the circle and at the base
+    # counting xtr_bot it is is > 0
+    axis_h = DraftVecUtils.scaleTo(axis_h, 1)
+    
+    # vectors from o (orig) along axis_h, to the pos_h points
+    h_o = {}
+    h_o[0] =  DraftVecUtils.scale(axis_h, h/2. + xtr_bot)
+    h_o[1] =  DraftVecUtils.scale(axis_h, xtr_bot)
+
+    # vectors from o (orig) along axis_ra, to the pos_ra points
+    ra_o = {}
+    ra_o[0] = V0
+    if pos_ra != 0:
+        if axis_ra is not None:
+            axis_ra = DraftVecUtils.scaleTo(axis_ra, 1)
+            ra_o[1] = DraftVecUtils.scale(axis_ra, - r_in)
+            ra_o[2] = DraftVecUtils.scale(axis_ra, - r_bolt2cen)
+            ra_o[3] = DraftVecUtils.scale(axis_ra, - r_out)
+        else :
+            logger.error('axis_ra not defined while pos_ra ==1')
+    
+    # vectors from o (orig) along axis_rb, to the pos_rb points
+    rb_o = {}
+    rb_o[0] = V0
+    if pos_rb != 0:
+        if axis_rb is not None:
+            axis_rb = DraftVecUtils.scaleTo(axis_rb, 1)
+            rb_o[1] = DraftVecUtils.scale(axis_rb, - r_in)
+            rb_o[2] = DraftVecUtils.scale(axis_rb, - r_bolt2cen)
+            rb_o[3] = DraftVecUtils.scale(axis_rb, - r_out)
+        else :
+            logger.error('axis_rb not defined while pos_rb ==1')
+
+    pos_o = pos + (h_o[pos_h] + ra_o[pos_ra] + rb_o[pos_rb]).negative()
+
+    if r_in > 0:
+        shp_holecyl = shp_cylholedir (r_out = r_out + xtr_r_out,
+                                        r_in  = r_in + xtr_r_in,
+                                        h =  h+xtr_bot+xtr_top,
+                                        normal = axis_h,
+                                        pos = pos_o)
+    else: # without central hole
+        shp_holecyl = shp_cyl (r= r_out + xtr_r_out,
+                                 h =  h+xtr_bot+xtr_top,
+                                 normal = axis_h,
+                                 pos = pos_o)
+
+    # bolt holes:
+    if  (n_bolt > 0 and d_bolt > 0 and r_bolt2cen > 0) :
+       if bolt_axis_ra == 0:
+           axis_x = DraftVecUtils.rotate(axis_ra, math.pi/n_bolt, axis_h)
+       else:
+           axis_x = axis_ra
+       boltcen_l = regpolygon_dir_vecl (n_bolt, r_bolt2cen,
+                                       fc_normal= axis_h,
+                                       fc_verx1 =axis_x,
+                                       pos = pos_o)
+       bolt_cyl_l = []
+       
+       for boltcen in boltcen_l:
+          shp_bolt_cyl = shp_cylcenxtr (r = d_bolt/2., h = h,
+                                        normal = axis_h,
+                                        ch = 0, xtr_top=1, xtr_bot=1,
+                                        pos = boltcen)
+          bolt_cyl_l.append(shp_bolt_cyl)
+       boltfuse_shp = fuseshplist(bolt_cyl_l)
+       shp_holecyl = shp_holecyl.cut(boltfuse_shp)
+
+
+    return shp_holecyl
+
+
+#shp_holecyl = shp_cylhole_bolthole (r_out = 20. , r_in = 0, h=10.,
+#                     n_bolt = 4, d_bolt = 5+0.5, r_bolt2cen = 31.5/2.,
+#                     axis_h = VXN, axis_ra = VZ, axis_rb = None,
+#                     bolt_axis_ra = 0,
+#                     pos_h = 1, pos_ra = 3, pos_rb = 0,
+#                     xtr_top=0, xtr_bot=0,
+#                     xtr_r_out=0, xtr_r_in=0,
+#                     pos = V0)
+
+
+
+
 
 
 # ------------------ shp_extrud_face
@@ -4123,8 +5540,6 @@ def shp_bolt (r_shank, l_bolt, r_head, l_head,
     shp_bolt = shp_head.multiFuse(elements)
     shp_bolt = shp_bolt.removeSplitter()
     return shp_bolt
-
-
 
 
 def shp_bolt_dir (r_shank, l_bolt, r_head, l_head,
@@ -6356,26 +7771,6 @@ def get_positive_vecname (vecname):
 
 
 
-      
+     
 
-def fuseshplist (shp_list):
 
-    """ since multifuse methods needs to be done by a shape and a list,
-        and usually I have a list that I want to fuse, I make this function
-        to save the inconvenience of doing everytime what I will do here
-        Fuse multiFuse
-    """
-
-    if len(shp_list) > 0:
-        shp1 = shp_list.pop() #remove and get the first element
-        if len(shp_list) > 0:
-            shpfuse = shp1.multiFuse(shp_list)
-        else: #only one element, no fuse:
-            logger.debug('only one element to fuse')
-            shpfuse = shp1
-    else:
-        logger.debug('empty list to fuse')
-        return
-
-    return (shpfuse)
-        

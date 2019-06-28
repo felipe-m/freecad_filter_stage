@@ -19,11 +19,41 @@ STOL = TOL / 2.0       # smaller tolerance
 LAYER3D_H = 0.3  
 
 # ---------------------- linear Bearings
-LMEUU_L = { 8: 25., 10: 29.0, 12: 32.0 }; #the length of the bearing
-LMEUU_D = { 8: 16., 10: 19.0, 12: 22.0 }; #diamenter of the bearing 
+LMUU_D = { 6: 12., 8: 15., 10: 19.0, 12: 21.0 }; #diamenter of the bearing 
+LMUU_L = { 6: 19., 8: 24., 10: 29.0, 12: 30.0 }; #the length of the bearing
+
+LMEUU_D = {        8: 16., 10: 19.0, 12: 22.0 }; #diamenter of the bearing 
+LMEUU_L = {        8: 25., 10: 29.0, 12: 32.0 }; #the length of the bearing
 # Large:
 LMELUU_L = {                   12: 57.0 }; #the length of the bearing
 LMELUU_D = { 8: 16., 10: 19.0, 12: 22.0 }; #diamenter of the bearing 
+
+
+LM6UU = {
+         'Di' : 6,  # interior diameter
+         'De' : LMUU_D[6], # exterior diameter
+         'L' : LMUU_L[6] # length
+           }
+
+LM8UU = {
+         'Di' : 8,  # interior diameter
+         'De' : LMUU_D[8], # exterior diameter
+         'L' : LMUU_L[8] # length
+           }
+
+LM10UU = {
+         'Di' : 10,  # interior diameter
+         'De' : LMUU_D[10], # exterior diameter
+         'L' : LMUU_L[10] # length
+           }
+
+
+LM12UU = {
+         'Di' : 12,  # interior diameter
+         'De' : LMUU_D[12], # exterior diameter
+         'L' : LMUU_L[12] # length
+           }
+
 
 LME8UU = {
          'Di' : 8,  # interior diameter
@@ -49,6 +79,14 @@ LME12LUU = {
          'De' : LMELUU_D[12], # exterior diameter
          'L' : LMELUU_L[12] # length
            }
+
+
+LMUU = {
+          6 : LM6UU,
+          8 : LM8UU,
+         10 : LM10UU,  # same as LMEUU
+         12 : LM12UU
+        }
 
 
 LMEUU = {
@@ -98,31 +136,75 @@ D912_HEAD_L =  {2: 2.,  2.5: 2.5,
                 3: 3.0, 4: 4.0,  5: 5.0,
                 6: 6.0, 8:8.0,  10:10.0} 
 
+# 2 x apotheme of the hex socket
+D912_2AP =  {2: 1.5,  2.5: 2.,
+             3: 2.5,    4: 3.,  5: 4.,
+             6: 5.,     8: 6., 10: 8.} 
+
+
+# max threaded part of the shank, if shank length is smaller, it will be
+# all threated
+D912_THREAD = {2: 16., 2.5: 17.,
+               3: 18.,   4: 20.,  5: 22.,
+               6: 24.,   8: 28., 10: 32.}
+
 M3_HEAD_R = D912_HEAD_D[3] / 2.0
 M3_HEAD_L = D912_HEAD_L[3]
 M3_HEAD_L_TOL = D912_HEAD_L[3] + TOL
 M3_HEAD_R_TOL = M3_HEAD_R + TOL/2.0 # smaller TOL, because it's small
 M3_SHANK_R_TOL = 3 / 2.0 + TOL/2.0
+M3_2AP = D912_2AP[3]  # 2xapotheme of the hex socket
+
+# typical length of DIN912 bolts
+D912_M3_L = [6,   8, 10, 12, 14, 16, 20,
+             25, 30, 35, 40]
+D912_M4_L = [6,   8, 10, 12, 14, 16, 20,
+             25, 30, 35, 40, 45, 50, 55,
+             60, 65, 70, 100]
+D912_M5_L = [6,     8,  10,  12,  14,  16,  18,  20,  22,
+             25,   30,  35,  40,  45,  50,  55,
+             60,   65,  70,  80,  90,
+             100, 110, 120, 130 ]
+D912_M6_L = [6,     8,  10,  12,  14,  16,  20,  22,
+             25,   30,  35,  40,  45,  50,  55,
+             60,   65,  70,  80,  90,
+             100, 110, 120, 150 ]
+D912_M8_L = [                12,  14,  16,  20,  22,
+             25,   30,  35,  40,  45,  50,  55,
+             60,   65,  70,  75,  80,  90,
+             100, 110, 120, 130, 140, 150, 160, 170, 200 ]
+
+D912_L = {  3: D912_M3_L,
+            4: D912_M4_L,
+            5: D912_M5_L,
+            6: D912_M6_L,
+            8: D912_M8_L
+          }
 
 M4_HEAD_R = D912_HEAD_D[4] / 2.0
 M4_HEAD_L = D912_HEAD_L[4]
 M4_HEAD_L_TOL = D912_HEAD_L[4] + TOL
 M4_HEAD_R_TOL = M4_HEAD_R + TOL/2.0 # smaller TOL, because it's small
 M4_SHANK_R_TOL = 4 / 2.0 + TOL/2.0
+M4_2AP = D912_2AP[4]  # 2xapotheme of the hex socket
 
 M6_HEAD_R = D912_HEAD_D[6] / 2.0
 M6_HEAD_L = D912_HEAD_L[6]
 M6_HEAD_L_TOL = D912_HEAD_L[6] + TOL
 M6_HEAD_R_TOL = M6_HEAD_R + TOL/2.0 # smaller TOL, because it's small
 M6_SHANK_R_TOL = 6 / 2.0 + TOL/2.0
+M6_2AP = D912_2AP[6]  # 2 x apotheme of the hex socket
 
 D912_M3 = {
             'd': 3.,  # diameter of the shank
-            'shank_r_tol' :  3 / 2. + TOL/2.,
-            'head_r' :  M3_HEAD_R,
-            'head_r_tol' :  M3_HEAD_R_TOL,
-            'head_l' :  M3_HEAD_L,
-            'head_l_tol' :  M3_HEAD_L_TOL
+            'shank_r_tol'  :  3 / 2. + TOL/2.,
+            'head_r'       :  M3_HEAD_R,
+            'head_r_tol'   :  M3_HEAD_R_TOL,
+            'head_l'       :  M3_HEAD_L,
+            'head_l_tol'   :  M3_HEAD_L_TOL,
+            'thread'       :  D912_THREAD[3],
+            'shank_l_list' :  D912_L[3], # list of possible shank lengths
+            'ap2' :  M3_2AP, # s: 2 x apotheme of the socket
            }
 
 D912_M4 = {
@@ -131,25 +213,34 @@ D912_M4 = {
             'head_r' :  M4_HEAD_R,
             'head_r_tol' :  M4_HEAD_R_TOL,
             'head_l' :  M4_HEAD_L,
-            'head_l_tol' :  M4_HEAD_L_TOL
+            'head_l_tol' :  M4_HEAD_L_TOL,
+            'thread'     :  D912_THREAD[4],
+            'shank_l_list' :  D912_L[4], # list of possible shank lengths
+            'ap2' :  M4_2AP, # s: 2 x apotheme of the socket
            }
 
 D912_M5 = {
             'd': 5.,  # diameter of the shank
-            'shank_r_tol' :  5 / 2. + TOL/2.,
-            'head_r' :      D912_HEAD_D[5]/2.,
-            'head_r_tol' :  D912_HEAD_D[5]/2. + TOL/2.,
-            'head_l' :      D912_HEAD_L[5],
-            'head_l_tol' :  D912_HEAD_L[5] + TOL
+            'shank_r_tol'  :  5 / 2. + TOL/2.,
+            'head_r'       :  D912_HEAD_D[5]/2.,
+            'head_r_tol'   :  D912_HEAD_D[5]/2. + TOL/2.,
+            'head_l'       :  D912_HEAD_L[5],
+            'head_l_tol'   :  D912_HEAD_L[5] + TOL,
+            'thread'       :  D912_THREAD[5],
+            'shank_l_list' :  D912_L[5], # list of possible shank lengths
+            'ap2'          :  D912_2AP[5], # s: 2 x apotheme of the socket
            }
 
 D912_M6 = {
             'd': 6.,  # diameter of the shank
-            'shank_r_tol' :  6 / 2. + TOL/2.,
-            'head_r'      :  M6_HEAD_R,
-            'head_r_tol'  :  M6_HEAD_R_TOL,
-            'head_l'      :  M6_HEAD_L,
-            'head_l_tol'  :  M6_HEAD_L_TOL
+            'shank_r_tol'  :  6 / 2. + TOL/2.,
+            'head_r'       :  M6_HEAD_R,
+            'head_r_tol'   :  M6_HEAD_R_TOL,
+            'head_l'       :  M6_HEAD_L,
+            'head_l_tol'   :  M6_HEAD_L_TOL,
+            'thread'       :  D912_THREAD[6],
+            'shank_l_list' :  D912_L[6], # list of possible shank lengths
+            'ap2'          :  M6_2AP, # s: 2 x apotheme of the socket
            }
 
 
@@ -169,11 +260,11 @@ D912 = { 3: D912_M3,
 """
 
 # the circumdiameter, min value
-NUT_D934_D =  {2.5: 5.45, 3: 6.01, 4: 7.66, 5: 8.79}
+NUT_D934_D =  {2.5: 5.45, 3: 6.01, 4: 7.66, 5: 8.79, 6:11.05}
 # double the apotheme, max value
-NUT_D934_2A = {2.5: 5.,   3: 5.5,  4: 7.0,  5: 8.0}
+NUT_D934_2A = {2.5: 5.,   3: 5.5,  4: 7.0,  5: 8.0, 6:10.0}
 # the heigth, max value
-NUT_D934_L  = {2.5: 2.,   3: 2.4,  4: 3.2,  5: 4.0}
+NUT_D934_L  = {2.5: 2.,   3: 2.4,  4: 3.2,  5: 4.0, 6:5.0}
 
 M3_NUT_R = NUT_D934_D[3] / 2.0
 M3_NUT_L = NUT_D934_L[3] + TOL
@@ -216,8 +307,31 @@ D934_M4 = {
             'l_tol' :  NUT_D934_L[4] + TOL #height with tolerance
            }
 
+D934_M5 = {
+            'in_d': 5.,  # inner diameter of the shank
+            'circ_d' : NUT_D934_D[5], #circumdiameter, min value
+            'circ_r' : NUT_D934_D[5]/2, #circumradius, min value
+            'circ_r_tol' : NUT_D934_D[5]/2 +  1.5*TOL , #circumradius + tol
+            'a2' :  NUT_D934_2A[5], #double of apotheme, max value
+            'l' :  NUT_D934_L[5], # height, max value
+            'l_tol' :  NUT_D934_L[5] + TOL #height with tolerance
+           }
+
+D934_M6 = {
+            'in_d': 6.,  # inner diameter of the shank
+            'circ_d' : NUT_D934_D[6], #circumdiameter, min value
+            'circ_r' : NUT_D934_D[6]/2, #circumradius, min value
+            'circ_r_tol' : NUT_D934_D[6]/2 +  1.5*TOL , #circumradius + tol
+            'a2' :  NUT_D934_2A[6], #double of apotheme, max value
+            'l' :  NUT_D934_L[6], # height, max value
+            'l_tol' :  NUT_D934_L[6] + TOL #height with tolerance
+           }
+           
+           
 D934 = { 3: D934_M3,
-         4: D934_M4}
+         4: D934_M4,
+         5: D934_M5,
+         6: D934_M6 }
 
 
 # tightening bolt with added tolerances:
@@ -708,6 +822,16 @@ NEMA_BOLT_D  = {
 # mbolt: is the metric of the mounting bolt
 # tbolt: is the metric of the tightening bolt
 
+SK6 =  { 'd':6.0,  'H':32.8, 'W':42.0, 'L':14.0, 'B':32.0, 'S':5.5,
+         'h':20.0,
+         #'A':21.0,
+         #'b': 5.0,
+         'g':6.0,
+         'I':18.0,
+         'mbolt': 5,
+         'tbolt': 4} 
+
+
 SK8 =  { 'd':8.0,  'H':32.8, 'W':42.0, 'L':14.0, 'B':32.0, 'S':5.5,
          'h':20.0,
          #'A':21.0,
@@ -716,6 +840,18 @@ SK8 =  { 'd':8.0,  'H':32.8, 'W':42.0, 'L':14.0, 'B':32.0, 'S':5.5,
          'I':18.0,
          'mbolt': 5,
          'tbolt': 4} 
+
+# to make with the same height of a pillow block
+# H: just 6.8 less
+PILLOW_SK8 =  { 'd':8.0,  'H':26., 'W':42.0, 'L':14.0, 'B':32.0, 'S':5.5,
+         'h':15.0,
+         #'A':21.0,
+         #'b': 5.0,
+         'g':6.0,
+         'I':18.0,
+         'mbolt': 5,
+         'tbolt': 4} 
+
 
 SK10 = { 'd':10.0, 'H':32.8, 'W':42.0, 'L':14.0, 'B':32.0, 'S':5.5,
          'h':20.0,
@@ -736,9 +872,16 @@ SK12 = { 'd':12.0, 'H':37.5, 'W':42.0, 'L':14.0, 'B':32.0, 'S':5.5,
          'tbolt': 4} 
 
 
-SK = {    8: SK8,
+SK = {
+          6: SK6,
+          8: SK8,
          10: SK10,
          12: SK12 }
+
+PILLOW_SK = {
+          8: PILLOW_SK8
+            }
+
 
 # ------------------------- T8 Nut for leadscrew ---------------------
 #   
@@ -950,6 +1093,12 @@ FLEXSC_RB_L = {
 # insquare: insq: the width of the inner square
 # indiam:   ind :the diameter of the inner hole
 
+ALU_MOTEDIS_40I8 = {'w'    : 40.,
+                    't'    : 4.5, # aprox, depending
+                    'slot' : 8., 
+                    'insq' : 15.5,
+                    'indiam' : 6.8 } # aprox?
+
 ALU_MOTEDIS_30B8 = {'w'    : 30.,
                     't'    : 2.5, # aprox
                     'slot' : 8., 
@@ -993,7 +1142,9 @@ ALU_PROF = {
              10: ALU_MAKERBEAM_10,
              15: ALU_MAKERBEAM_15,
              20: ALU_MOTEDIS_20I5,
-             30: ALU_MOTEDIS_30B8 }
+             30: ALU_MOTEDIS_30B8,
+             40: ALU_MOTEDIS_40I8
+          }
 
 # ------------------------ Linear Guides 
 
@@ -1013,13 +1164,17 @@ ALU_PROF = {
 SEBWM16_R = { 'rw'     : 42., 'rh': 9.5,
               'boltlsep': 40., 'boltwsep' : 23.,
               'boltd'   : 4.5, 'bolthd'   : 8. , 'bolthh': 4.5,
-              'boltend_sep' : 15.   }
+              'boltend_sep' : 15.,
+              'name' : 'Misumi_SEBWM16'
+            }
 
 # ------------------ NB SEBS15A
 SEB15A_R = { 'rw'     : 15., 'rh': 9.5,
               'boltlsep': 40., 'boltwsep' : 0,
               'boltd'   : 3.5, 'bolthd'   : 6. , 'bolthh': 4.5,
-              'boltend_sep' : 15.   }
+              'boltend_sep' : 15.,
+              'name' : 'NB_SEB15A'
+           }
 
 # ------------------ Misumi SEB8
 SEB8_R = { 'rw': 7.,  # W1
@@ -1029,7 +1184,8 @@ SEB8_R = { 'rw': 7.,  # W1
            'boltd'    : 2.4, # d1
            'bolthd'   : 4.2, # d2
            'bolthh'   : 2.3, # h
-           'boltend_sep': 5. #G
+           'boltend_sep': 5., #G
+           'name' : 'Misumi_SEB8'
          }
 
 # ------------------ Misumi SEB10
@@ -1040,7 +1196,8 @@ SEB10_R = {'rw': 5.,  # W1
            'boltd'    : 3.5, # d1
            'bolthd'   : 6.0, # d2
            'bolthh'   : 3.5, # h
-           'boltend_sep': 7.5 #G
+           'boltend_sep': 7.5, #G
+           'name'     : 'Misumi_SEB10'
          }
 
 
@@ -1067,7 +1224,8 @@ SEBWM16_B = { 'bl'  : 55.,
               'boltlsep' : 20.,  # Bolt separation on the length dimension
               'boltwsep' : 65.,  # Bolt separation on the width dimension
               'boltd'  : 5.,  # Bolt diameter M5
-              'boltl'  : 0  # Thru-hole
+              'boltl'  : 0,  # Thru-hole
+              'name' : 'Misumi_SEBWM16'
             }
 
 # ------------------ NB SEBS15A
@@ -1080,7 +1238,8 @@ SEB15A_B = {  'bl'  : 42.,
               'boltlsep' : 20.,  # Bolt separation on the length dimension
               'boltwsep' : 25.,  # Bolt separation on the width dimension
               'boltd'  : 3.,  # Bolt diameter M3
-              'boltl'  : 4.  # 
+              'boltl'  : 4.,  # 
+              'name' : 'NB_SEB15A'
             }
 
 # ------------------ Misumi SEB8 
@@ -1093,7 +1252,8 @@ SEB8_B = { 'bl'  : 23.6,    # L1
            'boltlsep' : 8.,  # C: Bolt separation on the length dimension
            'boltwsep' : 12.,  # B: Bolt separation on the width dimension
            'boltd'  : 2.,  # S: Bolt diameter M2
-           'boltl'  : 2.5  # l 
+           'boltl'  : 2.5,  # l 
+           'name' : 'Misumi_SEB8'
             }
 
 # ------------------ Misumi SEB10 
@@ -1106,7 +1266,8 @@ SEB10_B = { 'bl'  : 30.,  # L1
             'boltlsep' : 10.,  # C: Bolt separation on the length dimension
             'boltwsep' : 15.,  # B: Bolt separation on the width dimension
             'boltd'  : 3.,  # S: Bolt diameter M2
-            'boltl'  : 3.   # l 
+            'boltl'  : 3.,   # l 
+            'name' : 'Misumi_SEB10'
             }
 
 
@@ -1118,6 +1279,9 @@ SEB15A = { 'rail'  : SEB15A_R,
 
 SEB8 = { 'rail'  : SEB8_R,
          'block' : SEB8_B}
+
+SEB10 = { 'rail'  : SEB10_R,
+          'block' : SEB10_B}
 
 # mechanical end stop dimensions
 #
@@ -1155,6 +1319,39 @@ ENDSTOP_B = { 'L': 12.7,
             'BOLT_SEP' : 6.5,
             'BOLT_H' : 1.5,
             'BOLT_D' : 1.8 }
+
+# d3v-162-1c25
+# the bolt holes are not aligned
+# mechanical end stop dimensions
+#
+#                   /
+#                /
+#             /         ____ ..................
+#          /               /                   + D: 6.9 
+#      _/_________________/ .............................
+#     |               O   |...BOLT_TOP_H     :          :
+#     |                   |                  + H: 10    :
+#     |    O              | ....BOLT_H: 2.5  :          + HT
+#     |___________________| ..................          :
+#        |      |      |                     + 4        :
+#        |      |      |    .............................
+#     :      :     :      :
+#     :      :     :      :
+#     :      : 9.5 :      :
+#     :     BOLT_SEP      :
+#     :                   :
+#     :......L:19.6.......:
+
+
+ENDSTOP_D3V = { 'L': 37.8,
+              'H': 15.9,
+              'D': 10.3,
+              'HT': 18.8,
+              'BOLT_SEP' : 22.2,
+              'BOLT_H' : 15.9- 2.8 - 10.3,  # lower one
+              'BOLT_TOP_H' : 2.8, # the second bolt
+              'BOLT_D' : 3 }
+
 
 # GT2 Belt dimensions
 #

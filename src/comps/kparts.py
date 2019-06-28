@@ -40,7 +40,9 @@ ROD_SPACE_MIN = 1.
 #TOL_BEARING_L = 2.0 # printed in black and was too loose
 TOL_BEARING_L = 1.0 # reduced, good
 
-MTOL = kcomp.TOL - 0.1 # reducing the tolrances, it was too tolerant :)
+#MTOL = kcomp.TOL - 0.1 # reducing the tolrances, it was too tolerant
+#MLTOL = kcomp.TOL - 0.05 # reducing the tolrances, it was too tolerant :)
+MTOL = kcomp.TOL # too tight for reducing the tolrances, it was too tolerant
 MLTOL = kcomp.TOL - 0.05 # reducing the tolrances, it was too tolerant :)
 
 # default values for exporting to STL

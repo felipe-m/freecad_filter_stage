@@ -363,19 +363,25 @@ class Sk_dir (object):
                  ref_hr = 1,
                  ref_wc = 1,
                  ref_dc = 1,
+                 pillow = 0, #make it the same height of a pillow block
                  pos = V0,
                  wfco = 1,
+                 tol = 0.3,
                  name= "shaft_holder"):
         self.size = size
         self.wfco = wfco
         self.name = name
         self.pos = pos
+        self.tol = tol
         self.ref_hr = ref_hr
         self.ref_wc = ref_wc
         self.ref_dc = ref_dc
 
         doc = FreeCAD.ActiveDocument
-        skdict = kcomp.SK.get(size)
+        if pillow == 0:
+            skdict = kcomp.SK.get(size)
+        else:
+            skdict = kcomp.PILLOW_SK.get(size)
         if skdict == None:
             logger.error("Sk size %d not supported", size)
 
@@ -470,7 +476,7 @@ class Sk_dir (object):
 
         # Shaft hole, 
         rodcen_pos = pos + ref2rod_h + ref2cen_w + ref2cen_d
-        rod_hole = fcfun.shp_cylcenxtr(r= size/2.,
+        rod_hole = fcfun.shp_cylcenxtr(r= size/2. +self.tol,
                                          h = sk_d,
                                          normal = axis_d,
                                          ch = 1,
@@ -557,16 +563,18 @@ class Sk_dir (object):
             logger.debug("Object with no fco")
 
 #doc =FreeCAD.newDocument()
-#h_sk = Sk_dir (size = 12,
-#                 fc_axis_h = VZ,
-#                 fc_axis_d = VX,
+#h_sk = Sk_dir (size = 8,
+#                 fc_axis_h = VX,
+#                 fc_axis_d = VZ,
 #                 fc_axis_w = V0,
 #                 ref_hr = 0,
 #                 ref_wc = 0,
 #                 ref_dc = 0,
+#                 pillow = 0,
 #                 pos = V0,
+#                 tol = 0.3,
 #                 wfco = 1,
-#                 name= "shaft_holder")
+#                 name= "sk8_tol03")
 
 
 # --------------------------------------------------------------------
@@ -1212,24 +1220,22 @@ class AluProf_dir (object):
         if wfco == 1:
             fco_aluprof = doc.addObject("Part::Feature", name)
             fco_aluprof.Shape = shp_aluprof
-        
-        self.fco = fco_aluprof
-
-        self.defaluline()
+            self.fco = fco_aluprof
+            self.defaluline()
 
     def color (self, color = (1,1,1)):
         self.fco.ViewObject.ShapeColor = color
         linecol = []
         for col_i in color:
-            print (str(col_i))
+            #print (str(col_i))
             if col_i < 0.2:
                 linecol.append(0.)
             else:
                 linecol.append(col_i - 0.2)
-        print (str(linecol))       
+        #print (str(linecol))       
         self.fco.ViewObject.LineColor = tuple(linecol)
-        print(str(color) + ' -  '  + str(self.fco.ViewObject.LineColor))
-        print(str(linecol))
+        #print(str(color) + ' -  '  + str(self.fco.ViewObject.LineColor))
+        #print(str(linecol))
 
     def linecolor (self, color = (1,1,1)):
         self.fco.ViewObject.LineColor = color
@@ -1324,6 +1330,329 @@ def getaluprof_dir ( aludict, length,
 #                         axis = 'x',
 #                 cx=True, cy=True, cz=True)
 #
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ----------- class ShpAluProf ---------------------------------------------
+
+
+class ShpAluProf (shp_clss.Obj3D):
+
+    """
+    Creates a shape of a generic aluminum profile in any direction
+
+         :----- width ----:
+         :       slot     :
+         :      :--:      :
+         :______:  :______:
+         |    __|  |__    |
+         | |\ \      / /| |
+         |_| \ \____/ / |_| ...........
+             |        | ......        insquare
+             |  (  )  | ......indiam  :
+          _  |  ____  | ..............:
+         | | / /    \ \ | |
+         | |/ /_    _\ \| | .... 
+         |______|  |______| ....thick
+   
+    Parameters:
+    -----------
+    width: float
+        Width of the profile, it is squared
+    depth: float
+        (depth) length of the bar, the extrusion 
+    thick: float
+        thickness of the side
+    slot: float
+        width of the rail slot
+    insquare: float
+        width of the inner square
+    indiam: float
+        diameter of the inner hole. If 0, there is no hole
+    xtr_d: float
+        if >0 it will be that extra depth (length) on the direction of axis_d
+    xtr_nd: float
+        if >0 it will be that extra depth (length) on the opositve direction of
+        axis_d
+       can be V0 if pos_h = 0
+    axis_d : FreeCAD.Vector
+        axis along the length (depth) direction
+    axis_w : FreeCAD.Vector
+        axis along the width direction
+    axis_h = axis on the other width direction (perpendicular)
+        axis along the width direction
+    pos_d: int
+        location of pos along axis_d (see drawing)
+        0: start point, counting xtr_nd,
+           if xtr_nd == 0 -> pos_d 0 and 1 will be the same
+        1: start point, not counting xtr_nd
+        2: middle point not conunting xtr_nd and xtr_d
+        3: middle point conunting xtr_nd and xtr_d
+        4: end point, not counting xtr_d
+        5: end point considering xtr_d
+    pos_w: int
+        location of pos along axis_w (see drawing). Symmetric, negative indexes
+        means the other side
+        0: at the center of symmetry
+        1: at the inner square
+        2: at the interior side of the outer part of the rail (thickness of the4           side
+        3: at the end of the profile along axis_w 
+    pos_h: int
+        Same as pos_w 
+    pos : FreeCAD.Vector
+        position of point defined by pos_d, pos_w, pos_h
+   
+    Attributes:
+    -----------
+    pos_o: FreeCAD.Vector
+        origin, at pos_d=pos_w=pos_h = 0
+        Shown in the drawing with a o
+
+
+            axis_h
+            :               xtr_nd       depth       xtr_d
+            :                   .+..........+.........+..
+            :                   :  :                :   :
+         _  :  _                :__:________________:___:
+        |_|_:_|_|               |_______________________|
+          | o.|........ axis_w  o                       |....... axis_d
+         _|___|_                |_______________________| 
+        |_|   |_|               |_______________________|
+            0 123               0  1        23      4   5 
+              |||               :  :        ::      :   end
+              || end            :  :        ::     end not counting xtr_d
+              ||                :  :        : 
+              ||                :  :        : middle point considering total
+              | thickness       :  :        :  length (xtr_nd + depth + xtr_d)
+              |                 :  :        :
+               inner square     :  :         middle poit considering depth only
+                                :  :
+                                :   start point, not counting xtr_nd
+                                :
+                                 start point, counting xtr_nd
+
+
+         :______:  :______:
+         |    __|  |__    |
+         | |\ \      / /| |
+         |_| \ \____/ / |_| ...........
+             |        | ......        insquare
+             |  (  )  | ......indiam  :
+          _  |  ____  | ..............:
+         | | / /    \ \ | |
+         | |/ /_    _\ \| | .... 
+         |______|  |______| ....thick
+                  0   1 2 3   pos_w = pos_h
+   
+   
+    """
+
+    def __init__ (self, width, depth, thick, slot,
+                  insquare, indiam,
+                  xtr_d=0, xtr_nd=0,
+                  axis_d = VX, axis_w = VY, axis_h = V0,
+                  pos_d = 0, pos_w = 0, pos_h = 0,
+                  pos = V0):
+
+
+        # either axis_w or axis_h can be V0, but not both
+        if (axis_w is None) or (axis_w == V0):
+            if (axis_h is None) or (axis_h == V0):
+                logger.error('Either axis_w or axis_h must be defined')
+                logger.warning('getting a random perpendicular verctor')
+                axis_w = fcfun.get_fc_perpend1(axis_d)
+            else:
+                axis_w = axis_h.cross(axis_d)
+
+        if (axis_h is None) or (axis_h == V0):
+            axis_h = axis_d.cross(axis_w)
+
+        shp_clss.Obj3D.__init__(self, axis_d, axis_w, axis_h)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i):
+                setattr(self, i, values[i])
+
+        self.d0_cen = 0
+        self.w0_cen = 1 # symmetric
+        self.h0_cen = 1 # symmetric
+
+        # total length (depth)
+        self.tot_d = xtr_nd + depth + xtr_d
+
+        # vectors from the origin to the points along axis_d:
+        self.d_o[0] = V0 # origin
+        self.d_o[1] = self.vec_d(xtr_nd) #if xtr_nd= 0: same as d_o[0]
+        # middle point, not considering xtr_nd and xtr_d
+        self.d_o[2] = self.vec_d(xtr_nd + depth/2.)
+        # middle point considering xtr_nd and xtr_d
+        self.d_o[3] = self.vec_d(self.tot_d /2.)
+        self.d_o[4] = self.vec_d(xtr_nd + depth)
+        self.d_o[5] = self.vec_d(self.tot_d)
+
+        # vectors from the origin to the points along axis_w:
+        # symmetric: negative
+        self.w_o[0] = V0 # center: origin
+        self.w_o[1] = self.vec_w(-insquare/2.)
+        self.w_o[2] = self.vec_w(-(width/2. - thick))
+        self.w_o[3] = self.vec_w(-width/2.)
+
+        # vectors from the origin to the points along axis_h:
+        # symmetric: negative
+        self.h_o[0] = V0 # center: origin
+        self.h_o[1] = self.vec_h(-insquare/2.)
+        self.h_o[2] = self.vec_h(-(width/2. - thick))
+        self.h_o[3] = self.vec_h(-width/2.)
+
+        # calculates the position of the origin, and keeps it in attribute pos_o
+        self.set_pos_o()
+
+        shp_alu_wire = fcfun.shp_aluwire_dir (width, thick, slot, insquare,
+                                              fc_axis_x = self.axis_w,
+                                              fc_axis_y = self.axis_h,
+                                              ref_x = 1, # pos_o is centered
+                                              ref_y = 1, # pos_o is centered
+                                              pos = self.pos_o)
+
+
+        # make a face of the wire
+        shp_alu_face = Part.Face (shp_alu_wire)
+        # inner hole
+        if indiam > 0 :
+            hole =  Part.makeCircle (indiam/2.,   # Radius
+                                     self.pos_o,  # Position
+                                     self.axis_d)  # direction
+            wire_hole = Part.Wire(hole)
+            face_hole = Part.Face(wire_hole)
+            shp_alu_face = shp_alu_face.cut(face_hole)
+
+        # extrude it
+        dir_extrud = DraftVecUtils.scaleTo(self.axis_d, self.tot_d)
+        shp_aluprof = shp_alu_face.extrude(dir_extrud)
+
+        self.shp = shp_aluprof
+
+class PartAluProf (fc_clss.SinglePart, ShpAluProf):
+    """ Integration of a ShpAluProf object into a PartAluProf
+    object, so it is a FreeCAD object that can be visualized in FreeCAD
+    Instead of using all the arguments of ShpAluProf, it will use
+    a dictionary
+
+    depth : float
+        (depth) length of the bar, the extrusion 
+    aluprof_dict : dictionary
+        dictionary with all the information about the profile
+        in kcomp.py there are some dictionaries that can be used, they are
+        not exact
+    -- same as ShpAluProf:
+    xtr_d: float
+        if >0 it will be that extra depth (length) on the direction of axis_d
+    xtr_nd: float
+        if >0 it will be that extra depth (length) on the opositve direction of
+        axis_d
+       can be V0 if pos_h = 0
+    axis_d : FreeCAD.Vector
+        axis along the length (depth) direction
+    axis_w : FreeCAD.Vector
+        axis along the width direction
+    axis_h = axis on the other width direction (perpendicular)
+        axis along the width direction
+    pos_d: int
+        location of pos along axis_d (see drawing)
+        0: start point, counting xtr_nd,
+           if xtr_nd == 0 -> pos_d 0 and 1 will be the same
+        1: start point, not counting xtr_nd
+        2: middle point not conunting xtr_nd and xtr_d
+        3: middle point conunting xtr_nd and xtr_d
+        4: end point, not counting xtr_d
+        5: end point considering xtr_d
+    pos_w: int
+        location of pos along axis_w (see drawing). Symmetric, negative indexes
+        means the other side
+        0: at the center of symmetry
+        1: at the inner square
+        2: at the interior side of the outer part of the rail (thickness of the4           side
+        3: at the end of the profile along axis_w 
+    pos_h: int
+        Same as pos_w 
+    pos : FreeCAD.Vector
+        position of point defined by pos_d, pos_w, pos_h
+    model_type : int
+        kind of model
+        1: dimensional model: it can be printed to assemble a model,but the part
+           will not work as defined. For example, if printed this aluminum
+           profile will not work as defined, and also, it is not exact
+    name : string
+        name of the object
+
+    """
+
+
+    def __init__( self, depth,
+                  aluprof_dict,
+                  xtr_d=0, xtr_nd=0,
+                  axis_d = VX, axis_w = VY, axis_h = V0,
+                  pos_d = 0, pos_w = 0, pos_h = 0,
+                  pos = V0,
+                  model_type = 1, # dimensional model
+                  name = ''):
+
+        default_name = ( 'aluprof_w' + str(int(aluprof_dict['w']))
+                         + 'l_' + str(int(xtr_nd + depth + xtr_d)))
+        self.set_name (name, default_name, change=0)
+
+        ShpAluProf.__init__(self,
+                            width  = aluprof_dict['w'],
+                            depth  = depth,
+                            thick  = aluprof_dict['t'],
+                            slot   = aluprof_dict['slot'],
+                            insquare = aluprof_dict['insq'],
+                            indiam   = aluprof_dict['indiam'],
+                            xtr_d    = xtr_d,
+                            xtr_nd   = xtr_nd,
+                            axis_d   = axis_d,
+                            axis_w   = axis_w,
+                            axis_h   = axis_h,
+                            pos_d    = pos_d, pos_w = pos_w, pos_h = pos_h,
+                            pos      = pos) 
+
+        # creation of the part
+        fc_clss.SinglePart.__init__(self)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): 
+                setattr(self, i, values[i])
+
+
+        self.set_line_width(1.)
+        self.set_point_size(1.)
+        self.set_line_color((.2, .2, .2))
+
+
+#AluProf = PartAluProf(depth = 200,
+#                      #aluprof_dict = kcomp.ALU_MOTEDIS_30B8,
+#                      aluprof_dict = kcomp.ALU_MAKERBEAM_15,
+#                      #xtr_d=10, xtr_nd=20,
+#                      axis_d = VX, axis_w = VY, axis_h = V0,
+#                      #pos_d = 3, pos_w = 1, pos_h = -2,
+#                      pos = V0)
+
 
             
 # ----------- NEMA MOTOR
@@ -1643,25 +1972,25 @@ class ShpNemaMotor (shp_clss.Obj3D):
                axis_h
                   :
                   :
-                  5 ............................
+                  2 ............................
                  | |                           :
                  | |                           + shaft_l
-              ___|4|___.............           :
-        _____|____3____|_____......:..circle_h.:
-       | ::       2       :: |     : .. h=2 bolt_depth
+              ___|1|___.............           :
+        _____|____0____|_____......:..circle_h.:
+       | ::       3       :: |     : .. h=3 bolt_depth
        |                     |     :
        |                     |     :
        |                     |     + base_l
        |                     |     :
        |                     |     :
        |                     |     :
-       |__________1__________|.....:
+       |__________4__________|.....:
                  : :               :
                  : :               :
                  : :               :+ rear_shaft_l (optional)
                  : :               :
                  :01...2..3..4.....:...........axis_d (same as axis_w)
-
+           axis_h:5 
 
 
                 axis_w
@@ -1683,7 +2012,7 @@ class ShpNemaMotor (shp_clss.Obj3D):
                motor_w (same as d): Nema size in inches /10
 
 
-    pos_o (origin) is at pos_h=1, pos_d=pos_w=0
+    pos_o (origin) is at pos_h=0, pos_d=pos_w=0
 
     Parameters:
     -----------
@@ -1733,14 +2062,14 @@ class ShpNemaMotor (shp_clss.Obj3D):
         same as pos_d
     pos_h : int
         location of pos along the axis_h (0,1,2,3,4,5), see drawing
-        0: at the end of the rear shaft, if no rear shaft, it will be
-           the same as pos_h = 1
-        1: at the end of the bolt holes
-        2: at the base
-        3: at the other end of the base (not including the circle at the base
+        0: at the base of the shaft (not including the circle at the base
            of the shaft)
-        4: at the end of the circle at the base of the shaft
-        5: at the end of the shaft
+        1: at the end of the circle at the base of the shaft
+        2: at the end of the shaft
+        3: at the end of the bolt holes
+        4: at the bottom base
+        5: at the end of the rear shaft, if no rear shaft, it will be
+           the same as pos_h = 4
     pos : FreeCAD.Vector
         Position of the motor, at the point defined by pos_d, pos_w, pos_h
 
@@ -1751,7 +2080,7 @@ class ShpNemaMotor (shp_clss.Obj3D):
     def __init__ (self,
                   nema_size = 17,
                   base_l = 32.,
-                  shaft_l = 20.,
+                  shaft_l = 24.,
                   shaft_r = 0,
                   circle_r = 11.,
                   circle_h = 2.,
@@ -1806,12 +2135,12 @@ class ShpNemaMotor (shp_clss.Obj3D):
         self.w0_cen = 1 # symmetrical
 
         # vectors from the origin to the points along axis_h:
-        self.h_o[0] = self.vec_h(-self.rear_shaft_l)
-        self.h_o[1] = V0
-        self.h_o[2] = self.vec_h(self.base_l-bolt_depth)
-        self.h_o[3] = self.vec_h(self.base_l)
-        self.h_o[4] = self.vec_h(self.base_l + self.circle_h)
-        self.h_o[5] = self.vec_h(self.base_l + self.shaft_l)
+        self.h_o[0] = V0 # base of the shaft: origin
+        self.h_o[1] = self.vec_h(self.circle_h)
+        self.h_o[2] = self.vec_h(self.shaft_l) #includes circle_h
+        self.h_o[3] = self.vec_h(-bolt_depth)
+        self.h_o[4] = self.vec_h(-self.base_l)
+        self.h_o[5] = self.vec_h(-self.base_l -self.rear_shaft_l)
 
         # vectors from the origin to the points along axis_d:
         # these are negative because actually the pos_d indicates a negative
@@ -1845,7 +2174,7 @@ class ShpNemaMotor (shp_clss.Obj3D):
                                      fc_axis_d = self.axis_d,
                                      fc_axis_h = self.axis_h,
                                      cw = 1, cd = 1, ch = 0,
-                                     pos = self.pos_o)
+                                     pos = self.get_pos_h(4))
 
         shp_base = fcfun.shp_filletchamfer_dir (shp_base, self.axis_h,
                                                 fillet = 0, radius = chmf_r)
@@ -1858,8 +2187,8 @@ class ShpNemaMotor (shp_clss.Obj3D):
         for pt_d in (-3,3):
             for pt_w in (-3,3):
                 if cut_extra == 0: # there will be holes for the bolts
-                    # pos_h=2 is at the end of the hole for the bolts
-                    bolt_pos = self.get_pos_dwh(pt_d,pt_w,2)
+                    # pos_h=3 is at the end of the hole for the bolts
+                    bolt_pos = self.get_pos_dwh(pt_d,pt_w,3)
                     shp_hole = fcfun.shp_cylcenxtr (r = self.nemabolt_r,
                                                     h = bolt_depth,
                                                     normal = self.axis_h,
@@ -1869,8 +2198,8 @@ class ShpNemaMotor (shp_clss.Obj3D):
                                                     pos = bolt_pos)
                     holes_list.append(shp_hole)
                 else: # the bolts will protude to make holes in the shape to cut
-                    # pos_h=3 is at the end of the base
-                    bolt_pos = self.get_pos_dwh(pt_d,pt_w,3)
+                    # pos_h=0 is at the the base of the shaft
+                    bolt_pos = self.get_pos_dwh(pt_d,pt_w,0)
                     shp_hole = fcfun.shp_cylcenxtr (r = self.nemabolt_r,
                                                     h = bolt_out,
                                                     normal = self.axis_h,
@@ -1896,7 +2225,7 @@ class ShpNemaMotor (shp_clss.Obj3D):
                                              ch = 0, # not centered
                                              xtr_top = 0, # no extra at top
                                              xtr_bot = 1, # extra to fuse
-                                             pos = self.get_pos_h(3))
+                                             pos = self.pos_o)
             fuse_list.append(shp_circle)
 
         # ------- Shaft
@@ -1908,7 +2237,7 @@ class ShpNemaMotor (shp_clss.Obj3D):
                                         xtr_bot = 1, # extra to fuse
                                         # shaft length stats from the base
                                         # not from the circle
-                                        pos = self.get_pos_h(3))
+                                        pos = self.pos_o)
         fuse_list.append(shp_shaft)
 
         if rear_shaft_l > 0:
@@ -1918,7 +2247,7 @@ class ShpNemaMotor (shp_clss.Obj3D):
                                         ch = 0, # not centered
                                         xtr_top = 1, # to fuse
                                         xtr_bot = 0, # no extra at bottom
-                                        pos = self.get_pos_h(0))
+                                        pos = self.get_pos_h(5))
 
             fuse_list.append(shp_rearshaft)
         
@@ -1958,7 +2287,7 @@ class PartNemaMotor (fc_clss.SinglePart, ShpNemaMotor):
                   axis_h = VZ,
                   pos_d = 0,
                   pos_w = 0,
-                  pos_h = 1,
+                  pos_h = 0,
                   pos = V0,
                   name = ''):
 
@@ -2954,6 +3283,363 @@ def f_linguiderail_bh (rail_l, d_rail, axis_l, axis_b, boltend_sep = 0,
 #                         bolthole_nuth = 2 * kcomp.M3_NUT_L,
 #                         name = 'linguiderail' )
 
+
+
+
+
+
+
+
+
+
+# ---------------------- ShpLinGuideRail -------------------------------
+
+class ShpLinGuideRail (shp_clss.Obj3D):
+    """ Creates a shape of a linear guide rail
+    The linear guide rail has a dent, but it is just to show the shape, 
+    the dimensions are not exact
+
+                      axis_h
+                        :
+                        :
+                        :
+                        :bolth_d
+                    ....:.+...
+                   :    :    :
+                ___:____3____:___...................
+               |   :         :   |    :bolth_h     :
+               |   :....2....:   |....:            :
+                \     :   :     /   A little dent to see that it is a rail
+                /     : 1 :     \ .....            :
+               |      :   :      |     :           :+ rail_h
+               |      :   :      |     + rail_h/2. :
+               |      :   :      |     :           :
+               |______:_o_:______|.....:...........:...... axis_w
+               :      : 0 : 1    2
+               :      :   :      :
+               :      :...:      :
+               :      bolt_d     :
+               :                 :
+               :.................:
+                        +
+                     rail_w
+
+
+                     bolt_wsep: if 0, only one hole (common)
+                     ...+...
+                    :       :
+               _________o_________.....................
+               |:               :|    :                :
+               |:               :|    :+ boltend_sep   :
+               |:  ( )  1  ( )  :|----                 :
+               |:               :|    :                :
+               |:               :|    :+ bolt_lsep     :
+               |:               :|    :                :
+               |:               :|    :                :+ rail_d
+               |:      ( )      :|----                 :
+               |:       2       :|     only one bolt (either case, not like this
+               |:               :|                     :
+               |:               :|                     :
+               |:               :|                     :
+               |:      (3)      :|                     :
+               |:               :|                     :
+               |:               :|                     :
+               |:_______4_______:|.....................:...axis_w
+                        :
+                        :
+                        :
+                        :
+                        v
+                      axis_d
+
+
+    Parameters:
+    -----------
+    rail_d : float
+        length (depth) of the rail
+    rail_w : float
+        width of the rail
+    rail_h : float
+        height of the rail
+    bolt_lsep : float
+        separation between bolts on the depth (length) dimension
+    bolt_wsep : float
+        separation between bolts on the width dimension,
+        0: there is only one bolt
+    bolt_d : float
+        diameter of the hole for the bolt
+    bolth_d : float
+        diameter of the hole for the head of the bolt
+    bolth_h : float
+        heigth of the hole for the head of the bolt
+    boltend_sep : float
+        separation on one end, from the bolt to the end
+        0: evenly distributed
+    axis_d : FreeCAD.Vector
+        the axis along the depth (lenght) of the rail 
+    axis_w : FreeCAD.Vector
+        the axis along the width of the rail
+    axis_h : FreeCAD.Vector
+        the axis along the height of the rail, pointing up
+    pos_d : int
+        location of pos along axis_d (see drawing)
+        0: at the beginning of the rail
+        1: at the first bolt hole
+        2: at the middle of the rail (not necessary at a bolt hole)
+        3: at the last bolt hole
+        4: at the end of the rail
+    pos_w : int
+        location of pos along axis_w (see drawing). Symmetric, negative indexes
+        means the other side
+        0: at the center of symmetry
+        1: at the bolt holes (only make sense if there are 2 bolt holes)
+           otherwise it will be like pos_w = 0
+        2: at the end of the rail along axis_w
+    pos_h : int
+        location of pos along axis_h (see drawing)
+        0: at the bottom
+        1: at the middle (it is not a specific place)
+        1: at the bolt head
+        3: at the top end
+    pos : FreeCAD.Vector
+        Position at the point defined by pos_d, pos_w, pos_h
+
+    """
+
+    def __init__ (self, rail_d, rail_w, rail_h,
+                  bolt_lsep, bolt_wsep, bolt_d,
+                  bolth_d, bolth_h, boltend_sep = 0,
+                  axis_d = VX, axis_w = V0, axis_h = VZ,
+                  pos_d = 0, pos_w = 0, pos_h = 0,
+                  pos = V0):
+
+
+        if (axis_w is None) or (axis_w == V0):
+            axis_w = axis_h.cross(axis_d)
+
+        shp_clss.Obj3D.__init__(self, axis_d, axis_w, axis_h)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i):
+                setattr(self, i, values[i])
+
+        self.d0_cen = 0
+        self.w0_cen = 1 # symmetric
+        self.h0_cen = 0
+
+        # calculation of the number of bolt holes along axis_d
+        if boltend_sep != 0:
+            nbolt_l = (rail_d - boltend_sep) // bolt_lsep #integer division
+            rail_rem = rail_d - boltend_sep - nbolt_l * bolt_lsep 
+            if rail_rem > bolth_d:
+                # one bolt more
+                nbolt_l = nbolt_l + 1
+            self.boltend_sep = boltend_sep
+        else: # leave even distance
+            # number of bolt lines, on the depth (length) axis
+            nbolt_l = rail_d // bolt_lsep # integer division
+            #dont use % in case is not int
+            rail_rem = rail_d - nbolt_l * bolt_lsep 
+            if rail_rem > 2* bolth_d :
+                # one bolt more
+                nbolt_l = nbolt_l + 1
+                # separation between the bolt and the end
+                self.boltend_sep = rail_rem / 2.
+            else:
+                self.boltend_sep = (bolt_lsep + rail_rem) / 2.
+        self.nbolt_l = int(nbolt_l)
+
+        # vectors from the origin to the points along axis_d:
+        self.d_o[0] = V0 # origin
+        self.d_o[1] = self.vec_d(self.boltend_sep)
+        self.d_o[2] = self.vec_d(rail_d/2.)
+        self.d_o[3] = self.vec_d((self.nbolt_l-1)*bolt_lsep + self.boltend_sep)
+        self.d_o[4] = self.vec_d(rail_d)
+
+        # vectors from the origin to the points along axis_w:
+        # symmetric: negative
+        self.w_o[0] = V0 # base: origin
+        self.w_o[1] = self.vec_w(-bolt_wsep/2.) #if 0: same as w_o[0]
+        self.w_o[2] = self.vec_w(-rail_w/2.)
+
+        # vectors from the origin to the points along axis_h:
+        self.h_o[0] = V0 # base: origin
+        self.h_o[1] = self.vec_h(rail_h/2.)
+        self.h_o[2] = self.vec_h(rail_h - bolth_h)
+        self.h_o[3] = self.vec_h(rail_h)
+
+
+        # calculates the position of the origin, and keeps it in attribute pos_o
+        self.set_pos_o()
+
+        wire_rail = fcfun.wire_lgrail( rail_w = rail_w,
+                                       rail_h = rail_h,
+                                       axis_w = self.axis_w,
+                                       axis_h = self.axis_h,
+                                       pos_w = 0, pos_h = 0,
+                                       pos = self.pos_o)
+
+        # make a face of the wire 
+        shp_face_rail = Part.Face(wire_rail)
+        shp_plainrail = shp_face_rail.extrude(self.vec_d(rail_d))
+
+        holes_list = []
+        # bolt holes
+        bolthole_pos = self.get_pos_dwh(1,0,3)
+        for i in range (0,self.nbolt_l):
+            if bolt_wsep == 0: # just one bolt
+                shp_bolt = fcfun.shp_bolt_dir (r_shank = bolt_d/2.,
+                                           l_bolt = rail_h,
+                                           r_head = bolth_d/2.,
+                                           l_head = bolth_h,
+                                           xtr_head = 1, xtr_shank = 1,
+                                           support = 0,
+                                           fc_normal = self.axis_h.negative(),
+                                           pos_n = 0, pos = bolthole_pos)
+                holes_list.append(shp_bolt)
+            else:
+                for i in (-1,1):
+                    bolthole_pos_i = bolthole_pos + self.get_pos_w(i)
+                    shp_bolt = fcfun.shp_bolt_dir (r_shank = bolt_d/2.,
+                                           l_bolt = rail_h,
+                                           r_head = bolth_d/2.,
+                                           l_head = bolth_h,
+                                           xtr_head = 1, xtr_shank = 1,
+                                           support = 0,
+                                           fc_normal = self.axis_h.negative(),
+                                           pos_n = 0, pos = bolthole_pos_i)
+                    holes_list.append(shp_bolt)
+            bolthole_pos = bolthole_pos + self.vec_d(bolt_lsep)
+
+        shp_holes = fcfun.fuseshplist(holes_list)
+        shp_rail = shp_plainrail.cut(shp_holes)
+        shp_rail = shp_rail.removeSplitter()
+
+        self.shp = shp_rail
+        #Part.show(shp_rail)
+        
+
+#shp_lgrail = ShpLinGuideRail( rail_d = 79., rail_w=40., rail_h=20.,
+#                  bolt_lsep=20., bolt_wsep=15, bolt_d=3.,
+#                  bolth_d=5., bolth_h=2., boltend_sep = 10,
+#                  axis_d = VX, axis_w = V0, axis_h = VZ,
+#                  pos_d = 0, pos_w = 0, pos_h = 0,
+#                  pos = V0)
+
+
+class PartLinGuideRail (fc_clss.SinglePart, ShpLinGuideRail):
+    """ Integration of a ShpLinGuideRail object into a PartLinGuideRail
+     object, so it is a FreeCAD object that can be visualized in FreeCAD
+    Instead of using all the arguments of ShpLinGuideRail, it will use
+    a dictionary
+
+    Parameters:
+    -----------
+    rail_d : float
+        length (depth) of the rail
+    rail_dict : dictionary
+        dictionary with all the information about the rail
+        in kcomp.py there are some dictionaries of linear guide rails that
+        can be used
+    boltend_sep : float
+        separation on one end, from the bolt to the end
+        it can be given by the dictionary as a default value
+        >0: the value that will be take
+        0: evenly distributed
+        <0: value from the dictionary
+    axis_d : FreeCAD.Vector
+        the axis along the depth (lenght) of the rail 
+    axis_w : FreeCAD.Vector
+        the axis along the width of the rail
+    axis_h : FreeCAD.Vector
+        the axis along the height of the rail, pointing up
+    pos_d : int
+        location of pos along axis_d (see drawing of ShpLinGuideRail)
+        0: at the beginning of the rail
+        1: at the first bolt hole
+        2: at the middle of the rail (not necessary at a bolt hole)
+        3: at the last bolt hole
+        4: at the end of the rail
+    pos_w : int
+        location of pos along axis_w (see drawing). Symmetric, negative indexes
+        means the other side
+        0: at the center of symmetry
+        1: at the bolt holes (only make sense if there are 2 bolt holes)
+           otherwise it will be like pos_w = 0
+        2: at the end of the rail along axis_w
+    pos_h : int
+        location of pos along axis_h (see drawing of ShpLinGuideRail)
+        0: at the bottom
+        1: at the middle (it is not a specific place)
+        1: at the bolt head
+        3: at the top end
+    pos : FreeCAD.Vector
+        Position at the point defined by pos_d, pos_w, pos_h
+    """
+
+    def __init__ (self, rail_d,
+                  rail_dict,
+                  boltend_sep = 0,
+                  axis_d = VX, axis_w = V0, axis_h = VZ,
+                  pos_d = 0, pos_w = 0, pos_h = 0,
+                  pos = V0,
+                  model_type = 1, # dimensional model,
+                  name = ''):
+
+        default_name = rail_dict['name']
+        self.set_name (name, default_name, change=0)
+
+        if boltend_sep == 0:
+            boltends = 0
+        elif boltend_sep < 0:
+            boltends = rail_dict['boltend_sep']
+        else:
+            boltends = boltend_sep
+
+        # creation of the shape
+        ShpLinGuideRail.__init__(self,
+                                 rail_d     = rail_d,
+                                 rail_w     = rail_dict['rw'],
+                                 rail_h     = rail_dict['rh'],
+                                 bolt_lsep  = rail_dict['boltlsep'],
+                                 bolt_wsep  = rail_dict['boltwsep'],
+                                 bolt_d     = rail_dict['boltd'],
+                                 bolth_d    = rail_dict['bolthd'],
+                                 bolth_h    = rail_dict['bolthh'],
+                                 boltend_sep = boltends,
+                                 axis_d     = axis_d,
+                                 axis_w     = axis_w,
+                                 axis_h     = axis_h,
+                                 pos_d      = pos_d,
+                                 pos_w      = pos_w,
+                                 pos_h      = pos_h,
+                                 pos        = pos)
+
+        # creation of the part
+        fc_clss.SinglePart.__init__(self)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): 
+                setattr(self, i, values[i])
+
+
+#doc = FreeCAD.newDocument()
+#partLinGuideRail = PartLinGuideRail (
+#                                     rail_d = 100.,
+#                                     rail_dict = kcomp.SEBWM16_R,
+#                                     boltend_sep = 0,
+#                                     axis_d = VX, axis_w = V0, axis_h = VZ,
+#                                     pos_d = 0, pos_w = 0, pos_h = 0,
+#                                     pos = V0)
+
+
+
 # ---------------------- LinGuideBlock -------------------------------
 # Creates the block of the linear guide
 # Arguments:
@@ -2980,7 +3666,7 @@ def f_linguiderail_bh (rail_l, d_rail, axis_l, axis_b, boltend_sep = 0,
 #             |                        |    |          |
 #             | 0 --- bolt_wsep ---  0 |    |          |
 #             | :                      |    |          |
-#             | :                      |    + block_sl + block_l
+#             | :                      |    + block_ls + block_l
 #             | + bolt_lsep            |    |          |
 #             | :                      |    |          |
 #             | 0                    0 |    |          |
@@ -3271,6 +3957,424 @@ class LinGuide(object):
 #                    boltend_sep = 8., bl_pos=0.5, name='lg_nx')
 
 
+class ShpLinGuideBlock (shp_clss.Obj3D):
+    """ Creates a shape of a linear guide rail
+    Creates a hole for the rail, no exact shape
+
+                       axis_h
+                          :
+                          :
+              ____________3_____________.........................         
+             |::|         2          |::|...bolt_l   :          :
+             |  |     ____1____      |  |            :          :+linguide_h
+             |  |    |    :    |     |  |            :+ block_h :
+             |  |     \   :   /      |  |            :          :
+             |__|_____/   o   \______|__|............:..........:..> axis_w
+               :     :         :      :                         :
+               :     :         :      :                         :
+               :     :....4....:      :.........................:
+               :          +           :
+               :       rail_w         :
+               :                      :
+               :......................:
+                          +
+                      bolt_wsep
+             
+                        
+                        axis_d (direction of the rail)
+                          :
+                          :
+                 _________3_________ ....................
+              __|____:____2____:____|__  ...            :
+             |       :         :       |    :           :
+             | 0     :    1    :     0 |    :           :
+             | :     :         :       |    :           :
+             | :     :         :       |    :           :
+             | :     :    o    1    32 4.......................> axis_w
+             | + bolt_dsep     :       |    :           :
+             | :     :         :       |    + block_ds  :
+             | 0     :         :     0 |    :           :+ block_d
+             |_______:_________:_______|....:           :
+             :  |____:_________:____|   ................:
+             :  :                  :  :
+             :  :.... block_ws ....:  :
+             :                        :
+             :....... block_w ........:
+
+
+    Origin at pos_o: pos_d = pos_w = pos_h = 0
+
+    Parameters:
+    -----------
+    block_d: float
+        Total length (depth) of the block
+    block_ds: float
+        Small length (depth) of the block. Usually there is a plastic end,
+        for lubricant or whatever
+    block_w: float
+        Total Width of the block
+    block_ws: float
+        Small width of the block (the plastic end)
+    block_h: float
+        Height of the block
+    bolt_dsep: float
+        separation of the bolts, on the depth (length) direction
+    bolt_wsep: float
+        separation of the bolts, on the width direction
+    bolt_d: float
+        diameter of the hole of the bolt
+    bolt_l: float
+        length of the hole. if 0, it is a thru-hole
+    linguide_h: float
+        Height of the linear guide. Total, Rail + Block
+        if 0: there will be internal hole for the rail
+    rail_h: float
+        Height of the rail
+        if 0: there will be internal hole for the rail
+    rail_w: float
+        width of the rail
+        if 0: there will be internal hole for the rail
+    axis_d : FreeCAD.Vector
+        the axis along the depth (lenght) of the block (and rail) 
+    axis_w : FreeCAD.Vector
+        the axis along the width of the block
+    axis_h : FreeCAD.Vector
+        the axis along the height of the block, pointing up
+    pos_d : int
+        location of pos along axis_d (see drawing). Symmetric, negative indexes
+        means the other side
+        0: at the center (symmetric)
+        1: at the bolt hole
+        2: at the end of the smaller part of the block
+        3: at the end of the end of the block
+    pos_w : int
+        location of pos along axis_w (see drawing). Symmetric, negative indexes
+        means the other side
+        0: at the center of symmetry
+        1: at the inner hole of the rail
+        2: at the bolt holes (it can be after the smaller part of the block)
+        3: at the end of the smaller part of the block
+        4: at the end of the end of the block
+    pos_h : int
+        location of pos along axis_h (see drawing)
+        0: at the bottom (could make more sense to have 0 at the top instead
+        1: at the top of the rail hole
+        2: at the bottom of the bolt holes, if thruholes, same as 0
+        3: at the top end
+        4: at the bottom of the rail (not the block), if the rail has been
+           defined
+    pos : FreeCAD.Vector
+        Position at the point defined by pos_d, pos_w, pos_h
+
+
+                      axis_h
+                          :
+                          :
+              ____________3_____________.........................         
+             |::|         2          |::|                       :
+             |  |     ____1____      |  |................       :+linguide_h
+             |  |    |    :    |     |  |  :            :       :
+             |  |     \   :   /      |  |  :rail_ins_h  :       :
+             |__|_____/   o   \______|__|..:            :       :
+               :     :         :      :                 :rail_h :
+               :     :         :      :                 :       :
+               :     :....4....:      :.................:.......:
+               :          +           :
+               :       rail_w         :
+
+            rail_ins_h = block_h - (linguide_h - rail_h)
+    """
+
+    def __init__( self,
+                  block_d,
+                  block_ds,
+                  block_w,
+                  block_ws,
+                  block_h,
+
+                  bolt_dsep,
+                  bolt_wsep,
+                  bolt_d,
+                  bolt_l,
+
+                  linguide_h=0,
+                  rail_h=0,
+                  rail_w=0,
+
+                  axis_d = VX,
+                  axis_w = VY,
+                  axis_h = VZ,
+                  pos_d = 0,
+                  pos_w = 0,
+                  pos_h = 0,
+                  pos = V0):
+
+        if (axis_w is None) or (axis_w == V0):
+            axis_w = axis_h.cross(axis_d)
+
+        shp_clss.Obj3D.__init__(self, axis_d, axis_w, axis_h)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i):
+                setattr(self, i, values[i])
+
+        self.d0_cen = 1 # symmetric
+        self.w0_cen = 1 # symmetric
+        self.h0_cen = 0
+
+        if bolt_l == 0: # thruhole
+            self.bolt_l = block_h
+            self.thruhole = 1
+        else:
+            self.thruhole = 0
+
+        if rail_h == 0 or linguide_h == 0:
+            self.rail_h = 0
+            self.linguide_h = 0
+            self.rail_ins_h = 0
+            self.rail_bot_h = 0
+        else:
+            self.rail_ins_h = block_h - (linguide_h - rail_h)
+            self.rail_bot_h = rail_h - self.rail_ins_h
+
+
+        # vectors from the origin to the points along axis_d:
+        self.d_o[0] = V0 # Origin (center symmetric)
+        self.d_o[1] = self.vec_d(-self.bolt_dsep/2.)
+        self.d_o[2] = self.vec_d(-self.block_ds/2.)
+        self.d_o[3] = self.vec_d(-self.block_d/2.)
+ 
+        # vectors from the origin to the points along axis_w:
+        self.w_o[0] = V0 # Origin (center symmetric)
+        self.w_o[1] = self.vec_w(-self.rail_w/2.)
+        self.w_o[2] = self.vec_w(-self.bolt_wsep/2.)
+        self.w_o[3] = self.vec_w(-self.block_ws/2.)
+        self.w_o[4] = self.vec_w(-self.block_w/2.)
+ 
+        # vectors from the origin to the points along axis_h:
+        # could make more sense to have the origin at the top
+        self.h_o[0] = V0 # Origin at the bottom
+        self.h_o[1] = self.vec_h(self.rail_ins_h)
+        self.h_o[2] = self.vec_h(self.block_h - self.bolt_l)
+        self.h_o[3] = self.vec_h(self.block_h)
+        self.h_o[4] = self.vec_h(-self.rail_bot_h)
+ 
+        # calculates the position of the origin, and keeps it in attribute pos_o
+        self.set_pos_o()
+
+        # the main block
+        shp_mblock = fcfun.shp_box_dir (box_w = self.block_w,
+                                        box_d = self.block_ds,
+                                        box_h = self.block_h,
+                                        fc_axis_w = self.axis_w,
+                                        fc_axis_d = self.axis_d,
+                                        fc_axis_h = self.axis_h,
+                                        cw = 1, cd = 1, ch = 0,
+                                        pos = self.pos_o)
+
+        # the extra block
+        shp_exblock = fcfun.shp_box_dir (box_w = self.block_ws,
+                                        box_d = self.block_d,
+                                        box_h = self.block_h,
+                                        fc_axis_w = self.axis_w,
+                                        fc_axis_d = self.axis_d,
+                                        fc_axis_h = self.axis_h,
+                                        cw = 1, cd = 1, ch = 0,
+                                        pos = self.pos_o)
+
+        # fusion of these blocks
+        shp_block = shp_mblock.fuse(shp_exblock)
+
+        holes_list = []
+
+        # rail hole:
+        if self.rail_h > 0 and rail_w > 0:
+            wire_rail = fcfun.wire_lgrail( rail_w = rail_w,
+                                           rail_h = self.rail_h,
+                                           axis_w = self.axis_w,
+                                           axis_h = self.axis_h,
+                                           pos_w = 0, pos_h = 0,
+                                           pos = self.get_pos_h(4))
+
+            face_rail = Part.Face(wire_rail)
+            shp_rail = fcfun.shp_extrud_face (face = face_rail,
+                                              length = self.block_d + 2,
+                                              vec_extr_axis = self.axis_d,
+                                              centered = 1)
+
+            #Part.show(shp_rail)
+            holes_list.append(shp_rail)
+
+        # bolt holes:
+        for d_i in (-1, 1): # positions of the holes along axis_d
+            for w_i in (-2, 2): # positions of the holes along axis_w
+                shp_bolt = fcfun.shp_cylcenxtr (
+                                        r = bolt_d/2.,
+                                        h = self.bolt_l,
+                                        normal = axis_h,
+                                        ch = 0,
+                                        xtr_top = 1,
+                                        xtr_bot = self.thruhole,
+                                        pos = self.get_pos_dwh(d_i, w_i, 2))
+                holes_list.append(shp_bolt)
+
+        shp_holes = fcfun.fuseshplist(holes_list)
+        shp_block = shp_block.cut(shp_holes)
+        shp_block = shp_block.removeSplitter()
+
+        self.shp = shp_block
+        #Part.show(shp_block)
+
+
+#shp_linguide_block = ShpLinGuideBlock (
+#                  block_d = kcomp.SEB10_B['bl'],
+#                  block_ds = kcomp.SEB10_B['bls'],
+#                  block_w = kcomp.SEB10_B['bw'],
+#                  block_ws = kcomp.SEB10_B['bws'],
+#                  block_h = kcomp.SEB10_B['bh'],
+#
+#                  #linguide_h = kcomp.SEB10_B['lh'],
+#                  #rail_h = kcomp.SEB10_R['rh'],
+#                  #rail_w = kcomp.SEB10_R['rw'],
+#
+#                  bolt_dsep = kcomp.SEB10_B['boltlsep'],
+#                  bolt_wsep = kcomp.SEB10_B['boltwsep'],
+#                  bolt_d = kcomp.SEB10_B['boltd'],
+#                  bolt_l = kcomp.SEB10_B['boltl'],
+#
+#                  axis_d = VX,
+#                  axis_w = VY,
+#                  axis_h = VZ,
+#                  pos_d = 0,
+#                  pos_w = 0,
+#                  pos_h = 0,
+#                  pos = V0)
+
+
+class PartLinGuideBlock (fc_clss.SinglePart, ShpLinGuideBlock):
+    """ Integration of a ShpLinGuideBlock object into a PartLinGuideBlock
+     object, so it is a FreeCAD object that can be visualized in FreeCAD
+    Instead of using all the arguments of ShpLinGuideBlock, it will use
+    a dictionary
+
+    Parameters:
+    -----------
+    block_dict : dictionary
+        dictionary with the information about the block
+    rail_dict : dictionary
+        dictionary with the information about the rail,
+        it is not necessary, but if not provided, the block will not have
+        the rail hole
+    axis_d : FreeCAD.Vector
+        the axis along the depth (lenght) of the block (and rail) 
+    axis_w : FreeCAD.Vector
+        the axis along the width of the block
+    axis_h : FreeCAD.Vector
+        the axis along the height of the block, pointing up
+    pos_d : int
+        location of pos along axis_d (see drawing). Symmetric, negative indexes
+        means the other side
+        0: at the center (symmetric)
+        1: at the bolt hole
+        2: at the end of the smaller part of the block
+        3: at the end of the end of the block
+    pos_w : int
+        location of pos along axis_w (see drawing). Symmetric, negative indexes
+        means the other side
+        0: at the center of symmetry
+        1: at the inner hole of the rail
+        2: at the bolt holes (it can be after the smaller part of the block)
+        3: at the end of the smaller part of the block
+        4: at the end of the end of the block
+    pos_h : int
+        location of pos along axis_h (see drawing)
+        0: at the bottom (could make more sense to have 0 at the top instead
+        1: at the top of the rail hole
+        2: at the bottom of the bolt holes, if thruholes, same as 0
+        3: at the top end
+        4: at the bottom of the rail (not the block), if the rail has been
+           defined
+    pos : FreeCAD.Vector
+        Position at the point defined by pos_d, pos_w, pos_h
+
+    """
+
+
+    def __init__ (self, block_dict, rail_dict,
+                  axis_d = VX, axis_w = V0, axis_h = VZ,
+                  pos_d = 0, pos_w = 0, pos_h = 0,
+                  pos = V0,
+                  model_type = 1, # dimensional model
+                  name = ''):
+
+
+        default_name = block_dict['name'] + '_block'
+        self.set_name (name, default_name, change=0)
+
+        if rail_dict is None:
+            self.rail_h = 0
+            self.rail_w = 0
+        else:
+            self.rail_h = rail_dict['rh']
+            self.rail_w = rail_dict['rw']
+
+
+        # creation of the shape
+        ShpLinGuideBlock.__init__( self,
+                  block_d  = block_dict['bl'],
+                  block_ds = block_dict['bls'],
+                  block_w  = block_dict['bw'],
+                  block_ws = block_dict['bws'],
+                  block_h  = block_dict['bh'],
+
+                  linguide_h = block_dict['lh'],
+                  rail_h = self.rail_h,
+                  rail_w = self.rail_w,
+
+                  bolt_dsep = block_dict['boltlsep'],
+                  bolt_wsep = block_dict['boltwsep'],
+                  bolt_d    = block_dict['boltd'],
+                  bolt_l    = block_dict['boltl'],
+
+                  axis_d = axis_d,
+                  axis_w = axis_w,
+                  axis_h = axis_h,
+                  pos_d = pos_d,
+                  pos_w = pos_w,
+                  pos_h = pos_h,
+                  pos = pos)
+
+
+        # creation of the part
+        fc_clss.SinglePart.__init__(self)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): 
+                setattr(self, i, values[i])
+
+
+#doc = FreeCAD.newDocument()
+#partLinGuideBlock = PartLinGuideBlock (
+#                                     block_dict = kcomp.SEBWM16_B,
+#                                     rail_dict  = kcomp.SEBWM16_R,
+#                                     axis_d = VX, axis_w = VY, axis_h = VZ,
+#                                     pos_d = 0, pos_w = -2, pos_h = 0,
+#                                     pos = V0)
+
+
+
+
+
+
+
+
+
 class ShpGtPulley (shp_clss.Obj3D):
     """ Creates a GT pulley, no exact dimensions, just for the model
 
@@ -3338,15 +4442,16 @@ class ShpGtPulley (shp_clss.Obj3D):
         4: at the end (top) of the toothed part
         5: at the end (top) of the pulley
     pos_d : int
-        location of pos along the axis_d (0,1,2,3,4,5)
+        location of pos along the axis_d (0,1,2,3,4,5,6)
         0: at the center of symmetry
-        1: at the inner radius
-        2: at the external radius
-        3: at the pitch radius (outside the toothed part)
-        4: at the end of the base (not the toothed part)
-        5: at the end of the flange (V0 is no flange)
+        1: at the shaft radius
+        2: at the inner radius
+        3: at the external radius
+        4: at the pitch radius (outside the toothed part)
+        5: at the end of the base (not the toothed part)
+        6: at the end of the flange (V0 is no flange)
     pos_w : int
-        location of pos along the axis_w (0,1,2,3,4,5)
+        location of pos along the axis_w (0,1,2,3,4,5,6)
         same as pos_d
     pos : FreeCAD.Vector
         position of the piece
@@ -3411,7 +4516,7 @@ class ShpGtPulley (shp_clss.Obj3D):
          |_____:o:_____|......0   
          :      :   :
          :      :   :
-                0...12345.......axis_d, axis_w
+                01..23456.......axis_d, axis_w
 
          pos_o (origin) is at pos_h=0, pos_d=0, pos_w=0 (marked with o)
 
@@ -3501,19 +4606,21 @@ class ShpGtPulley (shp_clss.Obj3D):
         # these are negative because actually the pos_d indicates a negative
         # position along axis_d (this happens when it is symmetrical)
         self.d_o[0] = V0
-        self.d_o[1] = self.vec_d(-self.tooth_in_r)
-        self.d_o[2] = self.vec_d(-self.tooth_out_r)
-        self.d_o[3] = self.vec_d(-self.pitch_r)
-        self.d_o[4] = self.vec_d(-self.base_r)
-        self.d_o[5] = self.vec_d(-self.flange_r)
+        self.d_o[1] = self.vec_d(-self.shaft_r)
+        self.d_o[2] = self.vec_d(-self.tooth_in_r)
+        self.d_o[3] = self.vec_d(-self.tooth_out_r)
+        self.d_o[4] = self.vec_d(-self.pitch_r)
+        self.d_o[5] = self.vec_d(-self.base_r)
+        self.d_o[6] = self.vec_d(-self.flange_r)
 
         # position along axis_w
         self.w_o[0] = V0
-        self.w_o[1] = self.vec_w(-self.tooth_in_r)
-        self.w_o[2] = self.vec_w(-self.tooth_out_r)
-        self.w_o[3] = self.vec_w(-self.pitch_r)
-        self.w_o[4] = self.vec_d(-self.base_r)
-        self.w_o[5] = self.vec_d(-self.flange_r)
+        self.w_o[1] = self.vec_w(-self.shaft_r)
+        self.w_o[2] = self.vec_w(-self.tooth_in_r)
+        self.w_o[3] = self.vec_w(-self.tooth_out_r)
+        self.w_o[4] = self.vec_w(-self.pitch_r)
+        self.w_o[5] = self.vec_w(-self.base_r)
+        self.w_o[6] = self.vec_w(-self.flange_r)
 
         # calculates the position of the origin, and keeps it in attribute pos_o
         self.set_pos_o()
