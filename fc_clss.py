@@ -110,7 +110,7 @@ class SinglePart (object):
         self.doc = FreeCAD.ActiveDocument
 
         # placement of the piece at V0, altough pos can set it anywhere
-        #self.place = V0
+        self.place = V0   #check this and rel_place
         #self.displacement = V0
         self.rel_place = V0
         self.extra_mov = V0
@@ -127,7 +127,6 @@ class SinglePart (object):
 
     def set_color (self, color = (1.,1.,1.)):
         """ Sets a new color for the piece
-        pieces
 
         Parameters:
         -----------
@@ -138,6 +137,46 @@ class SinglePart (object):
         # just in case the value is 0 or 1, and it is an int
         self.color = (float(color[0]),float(color[1]), float(color[2]))
         self.fco.ViewObject.ShapeColor = self.color
+
+    def set_line_color (self, color = (1.,1.,1.)):
+        """ Sets a new color for the vertex lines of the piece
+
+        Parameters:
+        -----------
+        color : tuple of 3 floats from 0. to 1.
+            RGB colors
+
+        """
+        # just in case the value is 0 or 1, and it is an int
+        self.line_color = (float(color[0]),float(color[1]), float(color[2]))
+        self.fco.ViewObject.LineColor = self.line_color
+
+
+    def set_line_width (self, width = 1.):
+        """ Sets the line width of the vertexes
+
+        Parameters:
+        -----------
+        width : float from 0. to 1.
+
+        """
+        # just in case the value is 0 or 1, and it is an int
+        self.line_width = float(width)
+        self.fco.ViewObject.LineWidth = self.line_width
+
+
+    def set_point_size (self, size = 1.):
+        """ Sets the point size
+
+        Parameters:
+        -----------
+        size : float
+            it seems it goes from 1. up to 64
+
+        """
+        self.point_size = size
+        self.fco.ViewObject.PointSize = self.point_size
+
 
     def set_name (self, name = '', default_name = '', change = 0):
         """ Sets the name attribute to the value of parameter name
@@ -209,7 +248,7 @@ class SinglePart (object):
             self.place = place
 
     # ----- Export to STL method
-    def export_stl(self, prefix = "", name = ""):
+    def export_stl(self, prefix = "", name = "", stl_path = ""):
         """ exports to stl the piece to print 
 
         Parameters:
@@ -220,13 +259,21 @@ class SinglePart (object):
             an underscore will be added between prefix and name
         name : str
             Name of the piece, if not given, it will take self.name
+        stl_path : the path to save the stl files
         """
         if not name:
             filename = self.name
         if prefix:
             filename = prefix + '_' + filename
+
+        if not stl_path:
+            stl_filename = filename + '.stl'
+        else:
+            stl_filename = stl_path + filename + '.stl'
         
-        pos0 = self.pos0
+        # I think this is a bug, before it may be called pos0, but
+        # now should be pos_o
+        pos_o = self.pos_o
         rotation = FreeCAD.Rotation(self.prnt_ax, VZ)
         shp = self.shp
         # ----------- moving the shape doesnt work:
@@ -239,12 +286,14 @@ class SinglePart (object):
         # ----------- option 1. making a copy of the shape
         # and then deleting it (nullify)
         #shp_cpy = shp.copy()
-        #shp_cpy.translate (pos0.negative() + self.place.negative())
+        #shp_cpy.translate (pos_o.negative() + self.place.negative())
         #shp_cpy.rotate (V0, rotation.Axis, math.degrees(rotation.Angle))
         #shp_cpy.exportStl(stl_path + filename + 'stl')
         #shp_cpy.nullify()
         # ----------- option 2. moving the freecad object
-        self.fco.Placement.Base = pos0.negative() + self.place.negative()
+        
+        # place is no longer used, it should be rel_place or abs_place
+        self.fco.Placement.Base = pos_o.negative() + self.place.negative()
         self.fco.Placement.Rotation = rotation
         self.doc.recompute()
 
@@ -253,7 +302,7 @@ class SinglePart (object):
         mesh_shp = MeshPart.meshFromShape(self.fco.Shape,
                                           LinearDeflection=kparts.LIN_DEFL, 
                                           AngularDeflection=kparts.ANG_DEFL)
-        mesh_shp.write(stlFileName)
+        mesh_shp.write(stl_filename)
         del mesh_shp
 
         self.fco.Placement.Base = self.place
@@ -314,6 +363,8 @@ class PartsSet (shp_clss.Obj3D):
         shp_clss.Obj3D.__init__(self, axis_d, axis_w, axis_h)
 
         self.parts_lst = [] # list of all the parts (SinglePart, ...)
+
+        self.place = V0  # check these places, unify them
         self.abs_place = V0
         self.rel_place = V0
         self.extra_mov = V0
@@ -345,16 +396,16 @@ class PartsSet (shp_clss.Obj3D):
         
     def get_abs_place (self):
         """ gets the placement of the object, with any adjustment
-        So the shape has been created at pos, and this is any movement done after this
-        Movement of the freecadobject
+        So the shape has been created at pos, and this is any movement done
+        after this movement of the freecadobject
         """
         
         return self.abs_place
 
     def get_rel_place (self):
         """ gets the placement of the object, with any adjustment
-        So the shape has been created at pos, and this is any movement done after this
-        Movement of the freecadobject
+        So the shape has been created at pos, and this is any movement done
+        after this movement of the freecadobject
         """
         
         return self.rel_place
@@ -374,7 +425,7 @@ class PartsSet (shp_clss.Obj3D):
         #child_part.abs_place = self.get_abs_place() + child_part.rel_place
         #try:
         #    child_part.fco.Placement.Base = child_part.abs_place
-        #except AttributeError: # only SimpleParts objects have fco, not PartsSet
+        #except AttributeError: # only SimpleParts objects have fco,not PartsSet
         #    pass
         # add this displacement to all the children
         #part_list = child_part.get_parts()
@@ -512,10 +563,6 @@ class PartsSet (shp_clss.Obj3D):
                 self.name = default_name
             else:
                 self.name = name
-
-
-
-
 
 
 class Washer (SinglePart, shp_clss.ShpCylHole):
@@ -825,4 +872,555 @@ class BearingOutl (SinglePart, shp_clss.ShpCylHole):
 #                    pos = washer.pos + DraftVecUtils.scale(VZN,washer.h),
 #                    name = '')
 
+class Nut (SinglePart, shp_clss.ShpPrismHole):
+    """
+    Creates a Nut, using shp_clss.ShpPrismHole
+    See comments of ShpPrismHole
 
+    Parameters:
+    -----------
+    r_out : float
+        circumradius of the hexagon (side)
+    h : float
+        height of the cylinder
+    r_in : float
+        radius of the inner hole
+    axis_d_apo : int
+        0: default: axis_d points to the vertex
+        1: axis_d points to the center of a side
+    h_offset : float
+        0: default
+        Distance from the top, just to place the nut, see pos_h
+        if negative, from the bottom
+    axis_h : FreeCAD.Vector
+        vector along the cylinder height
+    axis_d : FreeCAD.Vector
+        vector along the first vertex, a direction perpendicular to axis_h
+        it is not necessary if pos_d == 0
+        It can be None, but if None, axis_w has to be None
+    axis_w : FreeCAD.Vector
+        vector along the cylinder radius,
+        a direction perpendicular to axis_h and axis_d
+        it is not necessary if pos_w == 0
+        It can be None
+    pos_h : int
+        location of pos along axis_h
+         0: at the center
+        -1: at the base
+         1: at the top
+        -2: at the base + h_offset
+         2: at the top + h_offset
+    pos_d : int
+        location of pos along axis_d (-2, -1, 0, 1, 2)
+        0: pos is at the circunference center (axis)
+        1: pos is at the inner circunsference, on axis_d, at r_in from the
+           circle center
+        2: pos is at the apothem, on axis_d
+        3: pos is at the outer circunsference, on axis_d, at r_out from the
+           circle center
+    pos_w : int
+        location of pos along axis_w (-2, -1, 0, 1, 2)
+        0: pos is at the circunference center
+        1: pos is at the inner circunsference, on axis_w, at r_in from the
+           circle center
+        2: pos is at the apothem, on axis_w
+        3: pos is at the outer circunsference, on axis_w, at r_out from the
+           center
+    pos : FreeCAD.Vector
+        Position of the prism, taking into account where the center is
+
+
+    """
+
+    def __init__(self, r_out, h, r_in, 
+                axis_d_apo = 0, h_offset = 0,
+                axis_h = VZ, axis_d = None, axis_w = None,
+                pos_h = 0, pos_d = 0, pos_w = 0, pos = V0,
+                model_type = 0, name = ''):
+
+        # sets the object name if not already set by a child class
+        if not hasattr(self, 'metric'):
+            self.metric = int(2 * r_in)
+        default_name = 'nut_m' + str(self.metric)
+        self.set_name (name, default_name, change = 0)
+
+        # First the shape is created
+        shp_clss.ShpPrismHole.__init__(self, n_sides = 6,
+                                       r_out = r_out, h = h,
+                                       r_in = r_in,
+                                       axis_d_apo = axis_d_apo,
+                                       h_offset = h_offset,
+                                       axis_h = axis_h,
+                                       axis_d = axis_d,
+                                       axis_w = axis_w,
+                                       pos_h = pos_h,
+                                       pos_d = pos_d,
+                                       pos_w = pos_w,
+                                       pos   = pos)
+
+
+        # Then the Part
+        SinglePart.__init__(self)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): # so we keep the attributes by CylHole
+                setattr(self, i, values[i])
+
+
+#doc = FreeCAD.newDocument()
+#nut = Nut ( r_out   = 10,
+#            h       = 4,
+#            r_in   = 5,
+#            h_offset = 1,
+#            axis_d_apo = 0,
+#            axis_h = VZ, axis_d = VX, axis_w = VY,
+#            pos_h = 2, pos_d = 0, pos_w = 0,
+#            pos = V0)
+
+
+
+class Din934Nut (Nut):
+    """ Din 934 Nut
+
+    Parameters:
+    -----------
+    metric : int (maybe float: 2.5)
+
+    axis_h : 
+    axis_d_apo : int
+        0: default: axis_d points to the vertex
+        1: axis_d points to the center of a side
+    h_offset : float
+        0: default
+        Distance from the top, just to place the Nut, see pos_h
+        if negative, from the bottom
+    axis_h : FreeCAD.Vector
+        vector along the axis, height
+    axis_d : FreeCAD.Vector
+        vector along the first vertex, a direction perpendicular to axis_h
+        it is not necessary if pos_d == 0
+        It can be None, but if None, axis_w has to be None
+    axis_w : FreeCAD.Vector
+        vector along the cylinder radius,
+        a direction perpendicular to axis_h and axis_d
+        it is not necessary if pos_w == 0
+        It can be None
+    pos_h : int
+        location of pos along axis_h
+         0: at the center
+        -1: at the base
+         1: at the top
+        -2: at the base + h_offset
+         2: at the top + h_offset
+    pos_d : int
+        location of pos along axis_d (-2, -1, 0, 1, 2)
+        0: pos is at the circunference center (axis)
+        1: pos is at the inner circunsference, on axis_d, at r_in from the
+           circle center
+        2: pos is at the apothem, on axis_d
+        3: pos is at the outer circunsference, on axis_d, at r_out from the
+           circle center
+    pos_w : int
+        location of pos along axis_w (-2, -1, 0, 1, 2)
+        0: pos is at the circunference center
+        1: pos is at the inner circunsference, on axis_w, at r_in from the
+           circle center
+        2: pos is at the apothem, on axis_w
+        3: pos is at the outer circunsference, on axis_w, at r_out from the
+           center
+    pos : FreeCAD.Vector
+        Position of the prism, taking into account where the center is
+    model_type : 0 
+        not to print, just an outline
+    name : str
+        name of the bolt
+
+    """
+
+    def __init__(self, metric,
+                axis_d_apo = 0, h_offset = 0,
+                axis_h = VZ, axis_d = None, axis_w = None,
+                pos_h = 0, pos_d = 0, pos_w = 0, pos = V0,
+                model_type = 0, name = ''):
+
+        if metric >= 3:
+            str_metric = str(int(metric))
+        else:
+            str_metric = str(metric)
+        default_name = 'd934nut_m' + str_metric
+        self.set_name (name, default_name, change = 0)
+
+        try:
+            nut_dict = kcomp.D934[metric]
+            self.nut_dict = nut_dict
+        except KeyError:
+            logger.error('nut key not found: ' + str(metric))
+        else: #no exception
+            Nut.__init__(self, 
+                         r_out   = nut_dict['circ_r'],
+                         h       = nut_dict['l'],
+                         r_in    = metric/2.,
+                         h_offset = h_offset,
+                         axis_d_apo = axis_d_apo,
+                         axis_h = axis_h, axis_d = axis_d, axis_w = axis_w,
+                         pos_h = pos_h, pos_d = pos_d, pos_w = pos_w,
+                         pos = pos,
+                         model_type = model_type,
+                         name = name)
+
+#doc = FreeCAD.newDocument()
+#nut = Din934Nut ( metric   = 3,
+#                  h_offset = 0,
+#                  axis_d_apo = 0,
+#                  axis_h = VZ, axis_d = VX, axis_w = VY,
+#                  pos_h = 2, pos_d = 0, pos_w = 0,
+#                  pos = V0)
+
+
+
+
+
+class Bolt (SinglePart, shp_clss.ShpBolt):
+    """ Creates a FreeCAD object of a bolt, from ShpBolt.
+        different from fcfun.shp_bolt_dir (which is a function)
+
+    Makes a bolt with various locations and head types
+    It is an approximate model. The thread is not made, it is just a little
+    smaller just to see where it is
+
+    Parameters:
+    -----------
+    shank_r : float
+        radius of the shank
+    shank_l : float
+        length of the bolt, not including the head (different from shp_bolt_dir)
+    head_r : float
+        radius of the head, it it hexagonal, radius of the cirumradius
+    head_l : float
+        length of the head
+    thread_l : float
+        length of the shank that is threaded
+        if 0: all the shank is threaded
+    head_type : int
+        0: round (cylinder). Default
+        1: hexagonal
+    socket_l : float
+        depth of the hex socket, if 0, no hex socket
+    socket_2ap : float
+        socket: 2 x apotheme (usually S in the dimensinal drawings)
+        Iit is the wrench size, the diameter would be 2*apotheme / cos30
+        It is not the circumdiameter
+        if 0: no hex socket
+    shank_out : float
+        0: default
+        distance to the end of the shank, just for positioning, it doesnt
+        change shank_l
+        I dont think it is necessary, but just in case
+    head_out : float
+        0: default
+        distance to the end of the head, just for positioning, it doesnt
+        change head_l
+        I dont think it is necessary, but just in case
+    axis_h : FreeCAD.Vector
+        vector along the axis of the bolt, pointing from the head to the shank
+    axis_d : FreeCAD.Vector
+        vector along the radius, a direction perpendicular to axis_h
+        If the head is hexagonal, the direction of one vertex
+    axis_w : FreeCAD.Vector
+        vector along the cylinder radius,
+        a direction perpendicular to axis_h and axis_d
+        it is not necessary if pos_w == 0
+        It can be None
+    pos_h : int
+        location of pos along axis_h
+        0: top of the head, considering head_out,
+        1: position of the head not considering head_out
+           if head_out = 0, it will be the same as pos_h = 0
+        2: end of the socket, if no socket, will be the same as pos_h = 0
+        3: union of the head and the shank
+        4: where the screw starts, if all the shank is screwed, it will be
+           the same as pos_h = 2
+        5: end of the shank, not considering shank_out
+        6: end of the shank, if shank_out = 0, will be the same as pos_h = 5
+        6: top of the head, considering xtr_head_l, if xtr_head_l = 0
+           will be the same as pos_h = 0
+    pos_d : int
+        location of pos along axis_d (symmetric)
+        0: pos is at the central axis
+        1: radius of the shank
+        2: radius of the head
+    pos_w : int
+        location of pos along axis_d (symmetric)
+        0: pos is at the central axis
+        1: radius of the shank
+        2: radius of the head
+    pos : FreeCAD.Vector
+        Position of the bolt, taking into account where the pos_h, pos_d, pos_w
+        are
+    model_type : 0 
+        not to print, just an outline
+    name : str
+        name of the bolt
+
+    Attributes:
+    -----------
+    pos_o : FreeCAD.Vector
+        Position of the origin of the shape
+
+    self.tot_l : float
+        Total length of the bolt: head_l + shank_l
+    shp : OCC Topological Shape
+        The shape of this part
+
+
+
+                                   axis_h
+                                     :
+                                     : shank_r
+                                     :+
+                                     : :
+                                     : :
+                     ....6......... _:_:...................
+           shank_out+....5.........| : |    :             :
+                                   | : |    + thread_l    :
+                                   | : |    :             :
+                                   | : |    :             :
+                                   | : |    :             + shank_l
+                         4         |.:.|....:             :
+                                   | : |                  :
+                         3       __| : |__................:
+                                |    :    |               :
+                         2      |  ..:..  |...            + head_l
+                      ...1......|  : : :  |  :+socket_l   :
+             head_out+...0......|__:_:_:__|..:......:.....:.... axis_d
+                                     0 1  2 
+                                     :    :
+                                     :....:
+                                        + head_r
+
+
+    """
+ 
+    def __init__(self,
+                 shank_r,
+                 shank_l,
+                 head_r,
+                 head_l,
+                 thread_l = 0,
+                 head_type = 0, # cylindrical. 1: hexagonal
+                 socket_l = 0,
+                 socket_2ap = 0,
+                 shank_out = 0,
+                 head_out = 0,
+                 axis_h = VZ, axis_d = None, axis_w = None,
+                 pos_h = 0, pos_d = 0, pos_w = 0,
+                 pos = V0,
+                 model_type = 0,
+                 name = ''):
+    
+        if not hasattr(self, 'metric'):
+            metric = 2 * shank_r
+            if metric >= 3:
+                self.metric = int(metric)
+            else:
+                self.metric = metric
+        default_name = 'bolt_m' + str(self.metric) + 'l' + str(int(shank_l))
+        self.set_name (name, default_name, change = 0)
+
+        # First the shape is created
+        shp_clss.ShpBolt.__init__(self,
+                                  shank_r = shank_r,
+                                  shank_l = shank_l,
+                                  head_r  = head_r,
+                                  head_l  = head_l,
+                                  thread_l = thread_l,
+                                  head_type = head_type,
+                                  socket_l = socket_l,
+                                  socket_2ap = socket_2ap,
+                                  shank_out = shank_out,
+                                  head_out = head_out,
+                                  axis_h = axis_h,
+                                  axis_d = axis_d,
+                                  axis_w = axis_w,
+                                  pos_h = pos_h, pos_d = pos_d, pos_w = pos_w,
+                                  pos = pos)
+
+        # Then the Part
+        SinglePart.__init__(self)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): # so we keep the attributes by CylHole
+                setattr(self, i, values[i])
+                                  
+
+
+
+#metric = 3
+#bolt_dict = kcomp.D912[metric]
+#thread_l = 18
+#shank_l = 30
+#bolt = Bolt (
+#                 shank_r = bolt_dict['d']/2.,
+#                 shank_l = shank_l,
+#                 head_r  = bolt_dict['head_r'],
+#                 head_l  = bolt_dict['head_l'],
+#                 #thread_l = 0,
+#                 thread_l = thread_l,
+#                 head_type = 1, # cylindrical. 1: hexagonal
+#                 #socket_l = bolt_dict['head_l']/2., # not sure
+#                 socket_l = 0,
+#                 socket_2ap = bolt_dict['ap2'],
+#                 shank_out = 0,
+#                 head_out = 1,
+#                 axis_h = VX, axis_d = VY, axis_w = VZ,
+#                 pos_h = 2, pos_d = 2, pos_w = 0,
+#                 pos = FreeCAD.Vector(0,0,0))
+
+
+class Din912Bolt (Bolt):
+    """ Din 912 bolt. hex socket bolt
+
+    Parameters:
+    -----------
+    metric : int (may be float: 2.5
+
+    shank_l : float
+        length of the bolt, not including the head
+    shank_l_adjust : int
+         0: shank length will be the size of the parameter shank_l
+        -1: shank length will be the size of the closest shorter or equal
+            to shank_l available lengths for this type of bolts
+         1: shank length will be the size of the closest larger or equal
+            to shank_l available lengths for this type of bolts
+    shank_out : float
+        0: default
+        distance to the end of the shank, just for positioning, it doesnt
+        change shank_l
+        I dont think it is necessary, but just in case
+    head_out : float
+        0: default
+        distance to the end of the head, just for positioning, it doesnt
+        change head_l
+        I dont think it is necessary, but just in case
+    axis_h : FreeCAD.Vector
+        vector along the axis of the bolt, pointing from the head to the shank
+    axis_d : FreeCAD.Vector
+        vector along the radius, a direction perpendicular to axis_h
+        If the head is hexagonal, the direction of one vertex
+    axis_w : FreeCAD.Vector
+        vector along the cylinder radius,
+        a direction perpendicular to axis_h and axis_d
+        it is not necessary if pos_w == 0
+        It can be None
+    pos_h : int
+        location of pos along axis_h
+        0: top of the head, considering head_out,
+        1: position of the head not considering head_out
+           if head_out = 0, it will be the same as pos_h = 0
+        2: end of the socket, if no socket, will be the same as pos_h = 0
+        3: union of the head and the shank
+        4: where the screw starts, if all the shank is screwed, it will be
+           the same as pos_h = 2
+        5: end of the shank, not considering shank_out
+        6: end of the shank, if shank_out = 0, will be the same as pos_h = 5
+        6: top of the head, considering xtr_head_l, if xtr_head_l = 0
+           will be the same as pos_h = 0
+    pos_d : int
+        location of pos along axis_d (symmetric)
+        0: pos is at the central axis
+        1: radius of the shank
+        2: radius of the head
+    pos_w : int
+        location of pos along axis_d (symmetric)
+        0: pos is at the central axis
+        1: radius of the shank
+        2: radius of the head
+    pos : FreeCAD.Vector
+        Position of the bolt, taking into account where the pos_h, pos_d, pos_w
+        are
+    model_type : 0 
+        not to print, just an outline
+    name : str
+        name of the bolt
+    """
+
+    def __init__(self, metric, shank_l,
+                 shank_l_adjust = 0,
+                 shank_out = 0,
+                 head_out = 0,
+                 axis_h = VZ, axis_d = None, axis_w = None,
+                 pos_h = 0, pos_d = 0, pos_w = 0,
+                 pos = V0,
+                 model_type = 0,
+                 name = ''):
+
+        if metric >= 3:
+            str_metric = str(int(metric))
+        else:
+            str_metric = str(metric)
+
+
+        try:
+            bolt_dict = kcomp.D912[metric]
+            self.bolt_dict = bolt_dict
+        except KeyError:
+            logger.error('bolt key not found: ' + str(metric))
+        else: # no exception
+
+            if shank_l_adjust == 0:
+                self.shank_l = shank_l
+            else:
+                sh_l_list = self.bolt_dict['shank_l_list']
+                if shank_l_adjust == -1: # smaller closest to shank_l
+                    self.shank_l = [sh_l for sh_l in sh_l_list
+                                    if sh_l<=shank_l][-1]
+                elif shank_l_adjust == 1: # larger closest to shank_l
+                    self.shank_l = [sh_l for sh_l in sh_l_list
+                                    if sh_l>=shank_l][0]
+                else:
+                    logger.error('wrong value for parameter shank_l_adjust')
+                    self.shank_l = shank_l
+
+            default_name = (  'd912bolt_m' + str_metric + '_l'
+                            + str(int(self.shank_l)))
+            self.set_name (name, default_name, change = 0)
+
+
+            if bolt_dict['thread'] > self.shank_l:
+                thread_l = 0 # all threaded
+            else:
+                thread_l = bolt_dict['thread']
+
+            Bolt.__init__(self,
+                     shank_r = bolt_dict['d']/2.,
+                     shank_l = self.shank_l,
+                     head_r  = bolt_dict['head_r'],
+                     head_l  = bolt_dict['head_l'],
+                     thread_l = thread_l,
+                     head_type = 0, # cylindrical
+                     socket_l = bolt_dict['head_l']/2., # not sure
+                     socket_2ap = bolt_dict['ap2'],
+                     shank_out = shank_out,
+                     head_out = head_out,
+                     axis_h = axis_h, axis_d = axis_d, axis_w = axis_w,
+                     pos_h = pos_h, pos_d = pos_d, pos_w = pos_w,
+                     pos = pos,
+                     model_type = model_type)
+
+
+#doc = FreeCAD.newDocument()
+#bolt = Din912Bolt ( metric = 3, shank_l = 24,
+#                    shank_out = 0, head_out = 0,
+#                    axis_h = VY,
+#                    axis_d = VX,
+#                    axis_w = None,
+#                    pos_h = 5,
+#                    pos_d = 0,
+#                    pos_w = 0,
+#                    pos = V0)

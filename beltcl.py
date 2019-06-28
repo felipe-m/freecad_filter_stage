@@ -15,6 +15,7 @@ import Part
 import Draft
 import DraftVecUtils
 import logging
+import inspect
 import Mesh
 import MeshPart
 
@@ -28,20 +29,16 @@ import sys
 # In FreeCAD can be added: Preferences->General->Macro->Macro path
 sys.path.append(filepath)
 
-
-
 import kcomp  # import material constants and other constants
 import fcfun      # import my functions for freecad
 import kparts 
+import shp_clss
+import fc_clss
 
-
-
-from fcfun import V0, VX, VY, VZ, V0ROT, addBox, addCyl, fillet_len
-from fcfun import addBolt, addBoltNut_hole, NutHole
+from fcfun import V0, VX, VY, VZ, V0ROT, addBox, addCyl
 from kcomp import TOL
 
 stl_dir = "/stl/"
-
 
 logger = logging.getLogger(__name__)
 
@@ -209,7 +206,7 @@ class Gt2BeltClamp (object):
 		                                self.CBASE_H-1)
         gt2_clamp_list.append (gt2_cb_3)
  
-        gt2_cyl = addCyl (self.CCYL_R,  self.C_H + 1, name + "_cyl")
+        gt2_cyl = fcfun.addCyl (self.CCYL_R,  self.C_H + 1, name + "_cyl")
         gt2_cyl.Placement.Base = FreeCAD.Vector (self.CCYL_R, 
                                              self.CBASE_W/2 + self.extind,
                                              self.CBASE_H-1)
@@ -261,7 +258,7 @@ class Gt2BeltClamp (object):
         # hole for the leadscrew bolt
         # the head is longer because it can be inserted deeper into the piece
         # so a shorter bolt will be needed
-        gt2_base_lscrew = addBolt (kcomp.M3_SHANK_R_TOL, self.CBASE_L,
+        gt2_base_lscrew = fcfun.addBolt (kcomp.M3_SHANK_R_TOL, self.CBASE_L,
                                    kcomp.M3_HEAD_R_TOL, 2.5*kcomp.M3_HEAD_L,
                                    extra = 1, support = 0,
                                    name= name + "_base_lscrew")
@@ -495,7 +492,7 @@ class BeltClamp (object):
         Creates a shape of a belt clamp. Just the rail and the cylinder
         and may have a rectangular base
         just one way: 2 clamp blocks
-        It is references on the base of the clamp, but it may have 5 different
+        It is referenced on the base of the clamp, but it may have 5 different
         positions
 
     Arguments:
@@ -902,3 +899,410 @@ class BeltClamp (object):
 #BeltClamp (VX, VY, base_h = 0, bolt_d=3, bolt_csunk = 2)
 
 
+
+class ShpBeltClamped (shp_clss.WireBeltClamped):
+    """ Creates a belt from a wire of the trajectory of the belt and its
+    section. The shape is not toothed, it is just a rough shape
+
+
+      axis_w
+        :
+        :
+     pulley1                   pulley2
+          
+        -----------------------------------
+      (   )                             (   )--------> axis_d
+        ---------===  ( )  ( )  ===--------
+               clamp1          clamp2
+
+      1 0        2 3   45  67   8 9      10 11   pos_d
+        :          :            :         :
+        :          :            :         :
+        :          :............:         :
+        :                +                :
+        :             clamp_sep           :
+        :                                 :
+        :.................................:
+                       +
+                     pull_sep_d
+
+      pos_w points:
+
+      axis_w
+        :                                    pull2
+        :      clamp1                 clamp2
+       2_                                     3-
+                                             ( 1 )   - - pull_sep_w (positive)
+     (  0  )   - - - - - - - - - - - - - - -  5-     - -
+              6 ___ ...................___.............:+ clamp_pull1_w (neg)
+       4-     7       < )        ( >                   :+ clamp_w
+              8 ___ ...................___.............:
+
+
+
+      axis_w
+        :                                      pull2
+        :      clamp1                 clamp2
+        _                                         -
+                                                (   )   - - pull_sep_w(positive)
+     (     )   - - - - - - - - - - - - - - - - -  -     - -
+                ___ ...................___.............:+ clamp_pull1_w (neg)
+        -       x     < )        ( >                   :+ clamp_w
+                ___ ...................___.............:
+        :      :   :   ::         :   :   :       :
+        :      :   :   :cyl_r     :   :   :       :
+        :      :   :...:          :...:   :.......:
+        :      :   :  +            +  :   :   +
+        :      :   :  clamp_cyl_sep   :   :   +
+        :      :   :                  :   :  clamp_pull2_d
+        :      :   :                  :...:
+        :      :   :                  :  +
+        :      :   :..................: clamp_d
+        :      :   :        +
+        :      :   :       clamp_sep
+        :      :...:   
+        :      : +
+        :      : clamp_d
+        :      :
+        :......:
+           +
+         clamp_pull1_d
+         
+
+    Section of the belt. The belt starts at point x (see upper drawing)
+
+                    axis_h
+                       :
+                       :
+         _____         :    _____
+              |    1 __:__ |....................
+         clamp|     |  :  ||clamp               :
+              |     |  :  ||                    :
+              |     |  :  ||                    :+belt_width (can be confusing)
+              |     |  :  ||                    :   is the width of the belt
+              |    0|  :..||........ axis_w     :   but in the drawing is the
+              |     |     ||                    :   height
+              |     |     ||         axis_d is pointing out of the screen
+              |     |     ||                (to you)
+              |     |belt ||                    :
+              |     |_____||....................:
+              |        0 12|   for now, the belt will be at this pos_w 2
+                               because, there is alread a pos_w for the wire
+                    :     :
+                    :.....:
+                       +
+                      belt_thick
+                   
+    Parameters:
+    -----------
+    pull1_dm: float
+        diameter of pulley 1
+    pull2_dm: float
+        diameter of pulley 2
+    pull_sep_d : float
+        separation between the 2 pulleys centers along axis_d
+    pull_sep_w : float
+        separation between the 2 pulleys centers along axis_w
+        if positive, pulley 2 is further away in the direction of axis_w
+        if negative, pulley 2 is further away opposite to the direction of
+           axis_w
+    clamp_pull1_d : float
+        separation between the clamp (side closer to the center) and the center
+        of the pulley1 along axis d
+    clamp_pull1_w : float
+        separation between the center of the clamp and the center of the
+        pulley1 along axis w
+    clamp_pull2_d : float
+        separation between the clamp (side closer to the center) and the center
+        of the pulley1 along axis d
+        clamp_pull2_w can be calculated because the clamps are aligned along
+        axis_d, so it will be clamp_pull1_d + pull_sep_w
+    clamp_d : float
+        length of the clamp (same for each clamp)
+    clamp_w : float
+        width of inner space (same for each clamp)
+    clamp_cyl_sep : float
+        separation between clamp and the center of the cylinder (or the center)
+        of the larger cylinder (when is a belt shape)
+    cyl_r : float
+        Radius of the cylinder for the belt, if it is not a cylinder but a
+        shape of 2 cylinders: < ) , then the raidius of the larger one
+    belt_width : float
+        Width of the belt, can be consfusing becasue the width is along axis_h
+    belt_thick : float
+        Thickness of the belt, it doesnt take into account the teeth, or the
+        detailed shape (contour)
+    axis_d :  FreeCAD.Vector
+        Coordinate System Vector along the depth
+    axis_w :  FreeCAD.Vector
+        Coordinate System Vector along the width
+    axis_h :  FreeCAD.Vector
+        Coordinate System Vector along the height
+    pos_d : int
+        location of pos along the axis_d, see drawing
+        0: center of the pulley 1
+        1: end of pulley 1
+        2: end of clamp 1, closest end to pulley 1
+        3: other end of clamp 1, closest to cylinder
+        4: center of cylinder (or shape < ) 1
+        5: external radius of cylinder 1
+        6: external radius of cylinder 2
+        7: center of cylinder (or shape ( > 2
+        8: end of clamp 2, closest to cylinder
+        9: other end of clamp 2, closest end to pulley 2
+        10: center of pulley 2
+        11: end of pulley 2
+    pos_w : int
+        location of pos along the axis_w, see drawing
+        0: center of pulley 1
+        1: center of pulley 2
+        2: end (radius) of pulley 1 along axis_w
+        3: end (radius) of pulley 2 along axis_w
+        4: other end (radius) of pulley 1 opposite to axis_w
+        5: other end (radius) of pulley 2 opposite to axis_w
+        6: clamp space, closest to the pulley
+        7: center of clamp space
+        8: clamp space, far away from the pulley
+    pos_h : int
+        location of pos along the axis_h, see drawing
+        0: center of symmetry
+        1: top of the belt
+        since it is symmetric -1 will be at the bottom of the belt
+    pos: FreeCAD vector of the position of the reference
+
+    Attributes:
+    -----------
+    clamp_sep : float
+        separation between clamps, the closest ends
+
+    """
+
+    
+    def __init__(self,
+                 pull1_dm,
+                 pull2_dm,
+                 pull_sep_d,
+                 pull_sep_w,
+                 clamp_pull1_d,
+                 clamp_pull1_w,
+                 clamp_pull2_d,
+                 clamp_d,
+                 clamp_w,
+                 clamp_cyl_sep,
+                 cyl_r,
+                 belt_width = 6.,
+                 belt_thick = 1.38,
+                 axis_d = VY,
+                 axis_w = VX,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos=V0):
+
+        shp_clss.WireBeltClamped.__init__( self,
+                             pull1_dm      = pull1_dm,
+                             pull2_dm      = pull2_dm,
+                             pull_sep_d    = pull_sep_d,
+                             pull_sep_w    = pull_sep_w,
+                             clamp_pull1_d = clamp_pull1_d,
+                             clamp_pull1_w = clamp_pull1_w,
+                             clamp_pull2_d = clamp_pull2_d,
+                             clamp_d       = clamp_d,
+                             clamp_w       = clamp_w,
+                             clamp_cyl_sep = clamp_cyl_sep,
+                             cyl_r         = cyl_r,
+                             axis_d        = axis_d,
+                             axis_w        = axis_w,
+                             pos_d         = pos_d,
+                             pos_w         = pos_w,
+                             pos           = pos)
+
+        self.belt_thick = belt_thick
+        self.belt_width = belt_width
+
+        # vectors from the origin to the points along axis_h:
+        self.h0_cen = 1 # symmetric
+        self.axis_h = DraftVecUtils.scaleTo(axis_h,1)
+        self.h_o[0] = V0 # origin (center symmetric)
+        self.h_o[1] = self.vec_h(-self.belt_width/2.)
+        print str(self.h_o[1])
+
+        # calculates the position of the origin, and keeps it in attribute pos_o
+        self.set_pos_o()
+
+        # Four corners of the belt section
+        #
+        #    axis_h
+        #      :
+        #      :   ___
+        #    4_:_1|
+        #    |   ||
+        #    |   |.....> axis_w
+        #    |   ||
+        #    3___2| clamp
+        #         |
+        #
+
+        belt_sec_pt1 = self.get_pos_dwh(2,6,1)
+        belt_sec_pt2 = self.get_pos_dwh(2,6,-1)
+        belt_sec_pt3 = belt_sec_pt2 + self.vec_w(-belt_thick)
+        belt_sec_pt4 = belt_sec_pt1 + self.vec_w(-belt_thick)
+
+        wire_belt_sec = Part.makePolygon([belt_sec_pt1, belt_sec_pt2,
+                                          belt_sec_pt3, belt_sec_pt4,
+                                          belt_sec_pt1])
+        shp_belt = self.belt_wire.makePipeShell([wire_belt_sec],True, False,2)
+        shp_belt = shp_belt.removeSplitter()
+
+        self.shp = shp_belt
+        
+
+
+    # not using this yet
+    #def get_o_to_wb (self, pos_wb):
+    #    """ returns the vector from origin of the belt section to pos_wb
+    #    wb is related to the belt
+    #    If it is symmetrical, pos_wb == 0 will be at the middle
+    #    Then, pos_wb > 0 will be the points on the positive side of axis_w
+    #    Then, pos_wb < 0 will be the points on the negative side of axis_w
+    #    """
+    #    abs_pos_wb = abs(pos_wb)
+    #    if self.wb0_cen == 1:
+    #        if pos_wb <= 0:
+    #            try:
+    #                vec = self.wb_o[abs_pos_wb]
+    #            except KeyError:
+    #                logger.error('pos_wb key not defined ' + str(pos_wb))
+    #            else:
+    #                return vec
+    #        else:
+    #            try:
+    #                vec_0_to_wb = (self.wb_o[0]).sub(self.wb_o[pos_wb]) #D= B-C
+    #            except KeyError:
+    #                logger.error('pos_wb key not defined ' + str(pos_wb))
+    #            else:
+    #                vec_orig_to_wb = self.wb_o[0] + vec_0_to_wb # A = B + D
+    #                return vec_orig_to_wb
+    #    else: #pos_d == 0 is at the end, distances are calculated directly
+    #        try:
+    #            vec = self.wb_o[pos_wb]
+    #        except KeyError:
+    #            logger.error('pos_wb key not defined' + str(pos_wb))
+    #        else:
+    #            return vec
+
+       
+
+#belt = ShpBeltClamped (
+#                 pull1_dm = 5,
+#                 pull2_dm = 6,
+#                 pull_sep_d = 80,
+#                 pull_sep_w = 0,
+#                 clamp_pull1_d = 15,
+#                 clamp_pull1_w = 5,
+#                 clamp_pull2_d = 15,
+#                 clamp_d = 5,
+#                 clamp_w = 4,
+#                 clamp_cyl_sep = 8,
+#                 cyl_r = 3,
+#                 belt_width = 6.,
+#                 belt_thick = 1.38,
+#                 axis_d = VY,
+#                 axis_w = VX,
+#                 axis_h = VZ,
+#                 pos_d = 0,
+#                 pos_w = 0,
+#                 pos_h = 0,
+#                 pos=V0)
+
+class PartBeltClamped (fc_clss.SinglePart, ShpBeltClamped):
+    """ Integration of a ShpBeltClamped object into a PartBeltClamped object
+
+    Same parameters as ShpBeltClamped plus
+
+    model_type
+    name
+    """
+
+    def __init__(self,
+                 pull1_dm,
+                 pull2_dm,
+                 pull_sep_d,
+                 pull_sep_w,
+                 clamp_pull1_d,
+                 clamp_pull1_w,
+                 clamp_pull2_d,
+                 clamp_d,
+                 clamp_w,
+                 clamp_cyl_sep,
+                 cyl_r,
+                 belt_width = 6.,
+                 belt_thick = 1.38,
+                 axis_d = VY,
+                 axis_w = VX,
+                 axis_h = VZ,
+                 pos_d = 0,
+                 pos_w = 0,
+                 pos_h = 0,
+                 pos=V0,
+                 model_type = 1, # dimensional model
+                 name = ''):
+
+        default_name = 'gt2_belt'
+        self.set_name (name, default_name, change=0)
+
+        ShpBeltClamped.__init__(self,
+                 pull1_dm = pull1_dm,
+                 pull2_dm = pull2_dm,
+                 pull_sep_d = pull_sep_d,
+                 pull_sep_w = pull_sep_w,
+                 clamp_pull1_d = clamp_pull1_d,
+                 clamp_pull1_w = clamp_pull1_w,
+                 clamp_pull2_d = clamp_pull2_d,
+                 clamp_d  = clamp_d,
+                 clamp_w  = clamp_w,
+                 clamp_cyl_sep = clamp_cyl_sep,
+                 cyl_r = cyl_r,
+                 belt_width = belt_width,
+                 belt_thick = belt_thick,
+                 axis_d = axis_d,
+                 axis_w = axis_w,
+                 axis_h = axis_h,
+                 pos_d = pos_d,
+                 pos_w = pos_w,
+                 pos_h = pos_h,
+                 pos = pos)
+
+        # creation of the part
+        fc_clss.SinglePart.__init__(self)
+
+        # save the arguments as attributes:
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        for i in args:
+            if not hasattr(self,i): 
+                setattr(self, i, values[i])
+                 
+
+#belt = PartBeltClamped (
+#                 pull1_dm = 5,
+#                 pull2_dm = 6,
+#                 pull_sep_d = 80,
+#                 pull_sep_w = 0,
+#                 clamp_pull1_d = 15,
+#                 clamp_pull1_w = 5,
+#                 clamp_pull2_d = 15,
+#                 clamp_d = 5,
+#                 clamp_w = 4,
+#                 clamp_cyl_sep = 8,
+#                 cyl_r = 3,
+#                 belt_width = 6.,
+#                 belt_thick = 1.38,
+#                 axis_d = VY,
+#                 axis_w = VX,
+#                 axis_h = VZ,
+#                 pos_d = 0,
+#                 pos_w = 0,
+#                 pos_h = 1,
+#                 pos=V0)

@@ -439,17 +439,17 @@ class AluProfBracketPerp (object):
 #                 name = 'bracket_lin3_1bolt_noreinfore')
 
 
-#AluProfBracketPerp ( alusize_lin = 25, alusize_perp = 20,
-#                 br_perp_thick = 4.,
-#                 br_lin_thick = 4.,
-#                 bolt_lin_d = 6,
-#                 bolt_perp_d = 4,
+#AluProfBracketPerp ( alusize_lin = 10, alusize_perp = 10,
+#                 br_perp_thick = 3.,
+#                 br_lin_thick = 3.,
+#                 bolt_lin_d = 4,
+#                 bolt_perp_d = 3,
 #                 nbolts_lin = 2,
-#                 bolts_lin_dist = 50,
+#                 bolts_lin_dist = 25,
 #                 bolts_lin_rail = 1,
 #                 xtr_bolt_head = 3,
 #                 xtr_bolt_head_d = 2*kcomp.TOL, # space for the nut
-#                 reinforce = 1,
+#                 reinforce = 0,
 #                 fc_perp_ax = VZ,
 #                 fc_lin_ax = VX,
 #                 pos = V0,
@@ -1941,6 +1941,17 @@ class SimpleEndstopHolder (object):
         #        mbolt_head_r ......|________________|_____|....:
 
 
+        #   it can have a second hole:
+        #                             :  :estop_topbolt_dist
+        #                                : holder_out
+        #      __:________:______________: :..................
+        #     |   _________      |       |                   :
+        #     |  (_________) ----| 0  0  |                   + tot_w
+        #     |   _________  ----|       |-----> fc_axis_d   :
+        #     |  (_________) ----| 0  0  |                   :
+        #     |__________________|_______|...................:
+        #     :  :     
+
         # mounting bolt data
         d_mbolt = kcomp.D912[int(mbolt_d)]  #dictionary of the mounting bolt
         #print(str(d_mbolt))
@@ -1956,6 +1967,12 @@ class SimpleEndstopHolder (object):
         estp_bolt_sep = d_endstop['BOLT_SEP']
         estp_bolt_d = d_endstop['BOLT_D']  #diameter, not depth
         estp_w = d_endstop['L']
+
+        # if there is a second bolt 
+        if 'BOLT_TOP_H' in d_endstop:
+           estop_2ndbolt_topdist = d_endstop['BOLT_TOP_H']
+        else:
+           estop_2ndbolt_topdist = 0
 
         # length of the pins:
         estp_pin_d  = estp_tot_d - estp_d
@@ -2016,11 +2033,18 @@ class SimpleEndstopHolder (object):
         #dis_2_3_d = rail_l
         dis_1_5_d = tot_d + holder_out
         dis_1_4_d = dis_1_5_d - (estp_d - estp_bolt_dist)
+        # distances to the new point, that is the second bolt hole, if exists
+        if estop_2ndbolt_topdist > 0 :
+            dis_1_6_d = dis_1_5_d - estop_2ndbolt_topdist
+        else:
+            # same as 4: (to avoid errors) it will be the same hole
+            dis_1_6_d = dis_1_4_d
 
         fc_1_2_d = DraftVecUtils.scale(axis_d, dis_1_2_d)
         fc_1_3_d = DraftVecUtils.scale(axis_d, dis_1_3_d)
         fc_1_4_d = DraftVecUtils.scale(axis_d, dis_1_4_d)
         fc_1_5_d = DraftVecUtils.scale(axis_d, dis_1_5_d)
+        fc_1_6_d = DraftVecUtils.scale(axis_d, dis_1_6_d)
         # vector from the reference point to point 1 on axis_d
         if ref_d == 1: 
             refto_1_d = V0
@@ -2107,16 +2131,36 @@ class SimpleEndstopHolder (object):
             pos_estpbolt = d1_w1_h1_pos + fc_1_4_d + fc_1_2_wi
             # hole with the nut hole
             shp_estpbolt = fcfun.shp_bolt_dir (
-                                r_shank= (estp_bolt_d+TOL)/2.,
-                                l_bolt = tot_h,
-                                r_head = (kcomp.NUT_D934_D[estp_bolt_d]+TOL)/2.,
-                                l_head = endstop_nut_l,
-                                hex_head = 1,
-                                xtr_head = 1, xtr_shank = 1,
-                                fc_normal = axis_h,
-                                fc_verx1 = hex_verx,
-                                pos = pos_estpbolt)
+                             r_shank= (estp_bolt_d+TOL)/2.,
+                             l_bolt = tot_h,
+                           # 1 TOL didnt fit
+                           r_head = (kcomp.NUT_D934_D[estp_bolt_d]+2*TOL)/2.,
+                             l_head = endstop_nut_l,
+                             hex_head = 1,
+                             xtr_head = 1, xtr_shank = 1,
+                             fc_normal = axis_h,
+                             fc_verx1 = hex_verx,
+                             pos = pos_estpbolt)
             holes.append(shp_estpbolt)
+            # it can have a second hole
+            if estop_2ndbolt_topdist >0:
+                pos_estp_top_bolt =  d1_w1_h1_pos + fc_1_6_d + fc_1_2_wi
+                # hole with the nut hole
+                shp_estpbolt = fcfun.shp_bolt_dir (
+                             r_shank= (estp_bolt_d+TOL)/2.,
+                             l_bolt = tot_h,
+                           # 1 TOL didnt fit
+                           r_head = (kcomp.NUT_D934_D[estp_bolt_d]+2*TOL)/2.,
+                             l_head = endstop_nut_l,
+                             hex_head = 1,
+                             xtr_head = 1, xtr_shank = 1,
+                             fc_normal = axis_h,
+                             fc_verx1 = hex_verx,
+                             pos = pos_estp_top_bolt)
+                holes.append(shp_estpbolt)
+
+
+
         # holes for the rails, point d2 w3 h2
         for fc_1_3_wi in [fc_1_3_w, fc_1_3_w.negative()]:
             #hole for the rails, use the function stadium
@@ -2183,18 +2227,15 @@ class SimpleEndstopHolder (object):
         del mesh_shp
 
 
-
-
-
 #doc = FreeCAD.newDocument()
 #h_estp = SimpleEndstopHolder(
-#                 d_endstop = kcomp.ENDSTOP_A,
+#                 d_endstop = kcomp.ENDSTOP_D3V,
 #                 rail_l = 25,
-#                 base_h = 4.,
+#                 base_h = 3.,
 #                 h = 0,
-#                 holder_out = 2.,
+#                 holder_out = 0, 
 #                 #csunk = 1,
-#                 mbolt_d = 3.,
+#                 mbolt_d = 4.,
 #                 endstop_nut_dist = 2.,
 #                 min_d = 1,
 #                 fc_axis_d = VX,
@@ -2205,7 +2246,7 @@ class SimpleEndstopHolder (object):
 #                 ref_h = 1,
 #                 pos = V0,
 #                 wfco = 1,
-#                 name = 'simple_enstop_holder')
+#                 name = 'simple_endstop_holder')
 
 
 # ----------- thin linear bearing housing with one rail to be attached
@@ -2323,7 +2364,7 @@ class ThinLinBearHouse1rail (object):
     MIN2_SEP_WALL = 2. # min separation of a wall
     OUT_SEP_H = kparts.OUT_SEP_H
     MTOL = kparts.MTOL
-    MLTOL = kparts.MLTOL
+    MLTOL = kparts.MLTOL 
     TOL_BEARING_L = kparts.TOL_BEARING_L
     # Radius to fillet the sides
     FILLT_R = kparts.FILLT_R
@@ -2334,7 +2375,7 @@ class ThinLinBearHouse1rail (object):
                  axis_center = 1,
                  mid_center  = 1,
                  pos = V0,
-                 name = 'thinlinbearhouse'
+                 name = 'thinlinbearhouse1rail'
                 ):
 
         # normalize, just in case
@@ -2344,11 +2385,11 @@ class ThinLinBearHouse1rail (object):
         # vector perpendicular to the others
         n1_perp = n1_slide_axis.cross(n1_bot_axis)
 
-
+        rod_d =  d_lbear['Di']
         self.rod_r = d_lbear['Di']/2.
         rod_r = self.rod_r
         self.bear_r = d_lbear['Di']
-        if rod_r >= 6:
+        if rod_d >= 12:
             BOLT_D = 4
         else:
             BOLT_D = 3  # M3 bolts
@@ -2363,8 +2404,8 @@ class ThinLinBearHouse1rail (object):
         MLTOL = self.MLTOL
         BOLT_HEAD_R = kcomp.D912_HEAD_D[BOLT_D] / 2.0
         BOLT_HEAD_L = kcomp.D912_HEAD_L[BOLT_D] + MTOL
-        BOLT_HEAD_R_TOL = BOLT_HEAD_R + MTOL/2.0 
-        BOLT_SHANK_R_TOL = BOLT_D / 2.0 + MTOL/2.0
+        BOLT_HEAD_R_TOL = BOLT_HEAD_R + MTOL # More toler/2.0 
+        BOLT_SHANK_R_TOL = BOLT_D / 2.0 + MTOL # more tolerance: MTOL/2.
         BOLT_NUT_R = kcomp.NUT_D934_D[BOLT_D] / 2.0
         BOLT_NUT_L = kcomp.NUT_D934_L[BOLT_D] + MTOL
         #  1.5 TOL because diameter values are minimum, so they may be larger
@@ -2387,8 +2428,12 @@ class ThinLinBearHouse1rail (object):
         housing_l = bearing_l_tol + 2 * (2* bolt2wall)
         print "housing_l: %", housing_l
         # width of the housing (very tight)
-        housing_w = max ((bearing_d_tol + 2* MIN_SEP_WALL), 
-                         (d_lbear['Di'] + 4* MIN2_SEP_WALL + 2*BOLT_D))
+        if rod_d > 8 :
+          housing_w = max ((bearing_d_tol + 2* MIN_SEP_WALL), 
+                           (d_lbear['Di'] + 4* MIN2_SEP_WALL + 2*BOLT_D))
+        else: # 8 is very thight
+          housing_w = max ((bearing_d_tol + 2* MIN_SEP_WALL), 
+                           (d_lbear['Di'] + 4* MIN_SEP_WALL + 2*BOLT_D))
         print "housing_w: %", housing_w
 
         # dimensions of the base:
@@ -2484,6 +2529,7 @@ class ThinLinBearHouse1rail (object):
         bolt2_atch_pos = (  botcenter_pos
                          + DraftVecUtils.scale(n1_slide_axis,-boltrailcen_dist))
 
+        print 'shank tol' + str(BOLT_SHANK_R_TOL)
         shp_bolt1_atch = fcfun.shp_cylcenxtr(r=BOLT_SHANK_R_TOL,
                                              h = base_h,
                                              normal = n1_bot_axis_neg,
@@ -2557,7 +2603,8 @@ class ThinLinBearHouse1rail (object):
                                      pos = axiscenter_pos)
         shp_lbear_housing_top = shp_lbear_housing.common(shp_box_top)
         shp_lbear_housing_top = shp_lbear_housing_top.removeSplitter() 
-        fco_lbear_top = doc.addObject("Part::Feature", name + '_top') 
+        fco_lbear_top = doc.addObject("Part::Feature", name + '_'
+                                      + str(rod_d) + '_top') 
         fco_lbear_top.Shape = shp_lbear_housing_top
 
 
@@ -2572,7 +2619,8 @@ class ThinLinBearHouse1rail (object):
                                      pos = axiscenter_pos)
         shp_lbear_housing_bot = shp_lbear_housing.common(shp_box_bot)
         shp_lbear_housing_bot = shp_lbear_housing_bot.removeSplitter()
-        fco_lbear_bot = doc.addObject("Part::Feature", name + '_bot') 
+        fco_lbear_bot = doc.addObject("Part::Feature", name + '_'
+                                      + str(rod_d) + '_bot') 
         fco_lbear_bot.Shape = shp_lbear_housing_bot
 
         self.fco_top = fco_lbear_top
@@ -2585,7 +2633,7 @@ class ThinLinBearHouse1rail (object):
 
 
 #doc = FreeCAD.newDocument()
-#ThinLinBearHouse (kcomp.LMEUU[10])
+#ThinLinBearHouse1rail (kcomp.LMUU[8])
 #ThinLinBearHouse (kcomp.LMEUU[10], mid_center=0)
 
 # ----------- thin linear bearing housing with one rail to be attached
@@ -3821,9 +3869,9 @@ class NemaMotorHolder (object):
         ||________________|| .....
         ||_______2________|| ..... wall_thick
 
-                                      motor_xtr_space
-                                       ::
-         ________3_________        3___::____________ ....
+                                      motor_xtr_space_d
+                                     :  :
+         ________3_________        3_:__:____________ ....
         |  ::  :    :  ::  |       |      :     :    |    + motor_thick
         |__::__:_1__:__::__|       2......:..1..:....|....:..........> fc_axis_n
         ||                ||       | :              /
@@ -3854,6 +3902,8 @@ class NemaMotorHolder (object):
         :                  :
         :                  :
         :.....tot_w........:
+                         ::
+                          motor_xtr_space
 
         
        1: ref_axis = 1 & ref_bolt = 0 
@@ -3877,12 +3927,20 @@ class NemaMotorHolder (object):
         distance of from the inner top side to the bottom hole of the bolts to 
         attach the holder
     rail: int
+        2: the rail goes all the way to the end, not closed
         1: the holes for the bolts are not holes, there are 2 rails, from
            motor_min_h to motor_max_h
         0: just 2 pairs of holes. One pair at defined by motor_min_h and the
            other defined by motor_max_h
     motor_xtr_space: float
-        extra separation between the motor and the wall side
+        extra separation between the motor and the sides
+    motor_xtr_space_d: float
+        extra separation between the motor and the wall side (where the bolts)
+        it didn't exist before, so for compatibility
+        -1: same has motor_xtr_space (compatibility), considering bolt head
+            length
+        0: no separation
+        >0: exact separation
     bolt_wall_d: int/float
         metric of the bolts to attach the holder
     bolt_wall_sep: float
@@ -3915,6 +3973,7 @@ class NemaMotorHolder (object):
                   motor_max_h =20.,
                   rail = 1, # if there is a rail or not at the profile side
                   motor_xtr_space = 2., # counting on one side
+                  motor_xtr_space_d = -1, # same as motor_xtr_space
                   bolt_wall_d = 4., # Metric of the wall bolts
                   bolt_wall_sep = 30., # optional
                   chmf_r = 1.,
@@ -3955,31 +4014,38 @@ class NemaMotorHolder (object):
         washer_thick = kcomp.WASH_D125_T[bolt_wall_d]
 
         # calculation of the bolt wall separation
+        # if larger is not needed
         max_bolt_wall_sep = motor_w - 2 * boltwallhead_r
       
+        motor_box_w = motor_w
         if bolt_wall_sep == 0:
             bolt_wall_sep = max_bolt_wall_sep
         elif bolt_wall_sep > max_bolt_wall_sep:
-            logger.debug('bolt wall separtion too large: ' + str(bolt_wall_sep))
-            bolt_wall_sep = max_bolt_wall_sep
-            logger.debug('taking larges value: ' + str(bolt_wall_sep))
+            logger.debug('bolt wall separtion larger: ' + str(bolt_wall_sep))
+            logger.debug('making the box width larger')
+            motor_box_w = bolt_wall_sep + 2 * boltwallhead_r
+            logger.debug('taking large value: ' + str(bolt_wall_sep))
         elif bolt_wall_sep <  4 * boltwallhead_r:
             logger.debug('bolt wall separtion too short: ' + str(bolt_wall_sep))
             bolt_wall_sep = max_bolt_wall_sep
-            logger.debug('taking larges value: ' + str(bolt_wall_sep))
+            logger.debug('taking large value: ' + str(bolt_wall_sep))
         # else: the given separation is good
 
         # making the big box that will contain everything and will be cut
-        tot_h = motor_thick + motor_max_h + 2 * bolt_wall_d
-        tot_w = 2* reinf_thick + motor_w + 2 * motor_xtr_space
-        tot_d = (   wall_thick + motor_w + motor_xtr_space
-                  + boltwallhead_l + washer_thick)
+        if rail == 2:
+            tot_h = motor_thick + motor_max_h
+        else:
+            tot_h = motor_thick + motor_max_h + 2 * bolt_wall_d
+        tot_w = 2* reinf_thick + motor_box_w + 2 * motor_xtr_space
+
+        if motor_xtr_space_d == -1: # same as motor_xtr_space
+            motor_xtr_space_d = motor_xtr_space + boltwallhead_l + washer_thick
+        tot_d = wall_thick + motor_w + motor_xtr_space_d
 
 
         # getting the offset of the reference
         # distance of the motor axis to de wall
-        motax2wall_dist = (wall_thick + motor_w/2. + motor_xtr_space
-                               + boltwallhead_l + washer_thick)
+        motax2wall_dist = wall_thick + motor_w/2. + motor_xtr_space_d
         self.motax2wall_dist = motax2wall_dist
         if ref_axis == 1:
             ref2motax = V0  #point 1
@@ -4040,13 +4106,14 @@ class NemaMotorHolder (object):
         motaxinwall_pos = (motaxwall_pos
                            + DraftVecUtils.scale(axis_n, wall_thick))
         # the space for the motor
-        shp_motor = fcfun.shp_box_dir (box_w = motor_w +  2 * motor_xtr_space,
-                                       box_d = tot_d + chmf_r,
-                                       box_h = tot_h,
-                                       fc_axis_h = axis_h_n,
-                                       fc_axis_d = axis_n,
-                                       cw=1, cd=0, ch=0,
-                                       pos = motaxinwall_pos)
+        shp_motor = fcfun.shp_box_dir (
+                                   box_w = motor_box_w +  2 * motor_xtr_space,
+                                   box_d = tot_d + chmf_r,
+                                   box_h = tot_h,
+                                   fc_axis_h = axis_h_n,
+                                   fc_axis_d = axis_n,
+                                   cw=1, cd=0, ch=0,
+                                   pos = motaxinwall_pos)
 
         shp_motor = fcfun.shp_filletchamfer_dir(shp_motor, fc_axis=axis_h,
                                                 fillet=0, radius=chmf_r)
@@ -4084,7 +4151,7 @@ class NemaMotorHolder (object):
             # hole for the rails
             hole_pos = (motaxwall_pos + add_p
                         + DraftVecUtils.scale(axis_h_n, motor_min_h))
-            if rail == 1:
+            if rail > 0:
                 shp_hole = fcfun.shp_box_dir_xtr(
                                        box_w = boltwallshank_r_tol * 2.,
                                        box_d = wall_thick,
@@ -4144,9 +4211,9 @@ class NemaMotorHolder (object):
         #shp.Placement.Rotation = rotation
         #Part.show(shp)
         shp.Placement.Base = self.topwallcent_pos.negative()
-        Part.show(shp)
+        #Part.show(shp)
         shp.Placement.Rotation = rotation
-        Part.show(shp)
+        #Part.show(shp)
         
         if not name:
             name = self.name
@@ -4170,14 +4237,17 @@ class NemaMotorHolder (object):
 #doc = FreeCAD.newDocument()
 #h_nema = NemaMotorHolder ( 
 #                  nema_size = 17,
-#                  wall_thick = 5.,
+#                  wall_thick = 4.,
 #                  motor_thick = 4.,
-#                  reinf_thick = 4.,
-#                  motor_min_h =8.,
-#                  motor_max_h = 12.,
+#                  reinf_thick = 3.,
+#                  motor_min_h =8., 
+#                  motor_max_h = 35.,
 #                  motor_xtr_space = 2., # counting on one side
+#                  motor_xtr_space_d = -1, 
 #                  bolt_wall_d = 4.,
-#                  chmf_r = 1.,
+#                  chmf_r = 0.2,
+#                  #bolt_wall_sep = 40., # optional
+#                  rail = 1,
 #                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
 #                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
 #                  #fc_axis_p = VY,
@@ -4185,7 +4255,7 @@ class NemaMotorHolder (object):
 #                  #ref_bolt = 0,
 #                  pos = V0, # FreeCAD.Vector(3,2,5),
 #                  wfco = 1,
-#                  name = 'nema_holder')
+#                  name = 'nema17_holder_rail35_8')
 
 #doc = FreeCAD.newDocument()
 #h_nema = NemaMotorHolder ( 
@@ -4210,26 +4280,26 @@ class NemaMotorHolder (object):
 
 
 # a porras:
-doc = FreeCAD.newDocument()
-h_nema = NemaMotorHolder ( 
-                  nema_size = 17,
-                  wall_thick = 5.,
-                  motor_thick = 3.,
-                  reinf_thick = 4.,
-                  motor_min_h =8.,
-                  motor_max_h = 43.,
-                  rail = 1,
-                  motor_xtr_space = 2., # counting on one side
-                  bolt_wall_d = 3.,
-                  chmf_r = 1.,
-                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
-                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
-                  #fc_axis_p = VY,
-                  ref_axis = 1, 
-                  #ref_bolt = 0,
-                  pos = V0, # FreeCAD.Vector(3,2,5),
-                  wfco = 1,
-                  name = 'nema_holder_52h')
+#doc = FreeCAD.newDocument()
+#h_nema = NemaMotorHolder ( 
+#                  nema_size = 17,
+#                  wall_thick = 5.,
+#                  motor_thick = 3.,
+#                  reinf_thick = 4.,
+#                  motor_min_h =8.,
+#                  motor_max_h = 43.,
+#                  rail = 1,
+#                  motor_xtr_space = 2., # counting on one side
+#                  bolt_wall_d = 3.,
+#                  chmf_r = 1.,
+#                  fc_axis_h = VZN,#FreeCAD.Vector(1,1,0),
+#                  fc_axis_n = VX, #FreeCAD.Vector(1,-1,0),
+#                  #fc_axis_p = VY,
+#                  ref_axis = 1, 
+#                  #ref_bolt = 0,
+#                  pos = V0, # FreeCAD.Vector(3,2,5),
+#                  wfco = 1,
+#                  name = 'nema_holder_52h')
 
 
 
@@ -4573,13 +4643,13 @@ class ShpNemaMotorHolder (shp_clss.Obj3D):
 #doc = FreeCAD.newDocument()
 #shpob_nema = ShpNemaMotorHolder ( 
 #                  nema_size = 17,
-#                  wall_thick = 4.,
-#                  motorside_thick = 4.,
-#                  reinf_thick = 4.,
+#                  wall_thick = 6.,
+#                  motorside_thick = 6.,
+#                  reinf_thick = 1.,
 #                  motor_min_h =10.,
-#                  motor_max_h =20.,
+#                  motor_max_h =50.,
 #                  rail = 1, # if there is a rail or not at the profile side
-#                  motor_xtr_space = 2., # counting on one side
+#                  motor_xtr_space = 3., # counting on one side
 #                  bolt_wall_d = 4., # Metric of the wall bolts
 #                  #bolt_wall_sep = 30., # optional
 #                  chmf_r = 1.,
@@ -4673,6 +4743,122 @@ class PartNemaMotorHolder(fc_clss.SinglePart, ShpNemaMotorHolder):
 #                  pos_d = 3,  # 3: motor axis
 #                  pos_w = 0,  # 0: center of symmetry
 #                  pos = V0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ----------- ShpNemaMotorHolderVer
+# TODO
+#class ShpNemaMotorHolderVer (shp_clss.Obj3D):
+    """
+    Creates a VERTICAL holder for a Nema motor.
+
+              axis_h
+                 :
+                 :                     0 1
+         ________:_________             _........> axis_d
+        |                  |           | |
+        |  O     __     O  |           | |
+        |     /      \     |
+        |    |        |    |
+        |     \      /     |
+        |  O     __     O  |
+        |                  | .....
+        |  ||    ||    ||  |
+        |  ||    ||    ||  |
+        |  ||    ||    ||  |
+        |  ||    ||    ||  |
+        |  ||    ||    ||  |
+        |  ||    ||    ||  |
+        | ________________ | ..... > axis_w
+
+        0: just 2 pairs of holes. One pair at defined by motor_min_h and the
+           other defined by motor_max_h
+    motor_xtr_space: float
+        extra separation between the motor and the wall side
+        and also between the motor and each of the sides
+    bolt_wall_d: int/float
+        metric of the bolts to attach the holder
+    bolt_wall_sep: float
+        separation between the 2 bolt holes (or rails). Optional.
+    chmf_r: float
+        radius of the chamfer, whenever chamfer is done
+    axis_h: FreeCAD Vector
+        axis along the axis of the motor
+    axis_d: FreeCAD Vector
+        axis normal to surface where the holder will be attached to
+    axis_w: FreeCAD Vector
+        axis perpendicular to axis_h and axis_d, symmetrical (not necessary)
+    pos_d : int
+        location of pos along axis_d (0,1,2,3,4,5)
+        0: at the beginning, touching the wall where it is attached
+        1: at the inner side of the side where it will be screwed
+        2: bolts holes closed to the wall to attach the motor
+        3: at the motor axis
+        4: bolts holes away from to the wall to attach the motor
+        5: at the end of the piece
+    pos_w : int
+        location of pos along axis_w (0,1,2,3). Symmetrical
+        0: at the center of symmetry
+        1: at the center of the rails (or holes) to attach the holder
+        2: at the center of the holes to attach the motor
+        3: at the end of the piece
+    pos_h : int
+        location of pos along axis_h (0,1,2,3)
+        0: at the top (on the side of the motor axis)
+        1: inside the motor wall
+        2: Top end of the rail
+        3: Bottom end of the rail
+        4: Bottom end of the piece
+    pos : FreeCAD.Vector
+        position of the piece
+
+
+    def __init__ (self,
+                  nema_size = 17,
+                  wall_thick = 4.,
+                  motor_min_h =10.,
+                  motor_max_h =20.,
+                  rail = 1, # if there is a rail or not at the profile side
+                  axis_h = VZ,
+                  axis_d = VX,
+                  axis_w = None,
+                  pos_h = 0,  # 1: inner wall of the motor side
+                  pos_d = 0,  # 3: motor axis
+                  pos_w = 0,  # 0: center of symmetry
+                  pos = V0):
+
+    """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class Plate3CageCubes (object):
