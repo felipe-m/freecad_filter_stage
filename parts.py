@@ -2426,7 +2426,7 @@ class ThinLinBearHouse1rail (object):
         bolt2wall = fcfun.get_bolt_end_sep(BOLT_D, hasnut=1) 
         #housing_l = bearing_l_tol + 2 * (2*BOLT_HEAD_R_TOL + 2* MIN_SEP_WALL)
         housing_l = bearing_l_tol + 2 * (2* bolt2wall)
-        print "housing_l: %", housing_l
+        print ("housing_l: %", housing_l)
         # width of the housing (very tight)
         if rod_d > 8 :
           housing_w = max ((bearing_d_tol + 2* MIN_SEP_WALL), 
@@ -2434,22 +2434,22 @@ class ThinLinBearHouse1rail (object):
         else: # 8 is very thight
           housing_w = max ((bearing_d_tol + 2* MIN_SEP_WALL), 
                            (d_lbear['Di'] + 4* MIN_SEP_WALL + 2*BOLT_D))
-        print "housing_w: %", housing_w
+        print ("housing_w: %", housing_w)
 
         # dimensions of the base:
         # length on the direction of the sliding rod
         base_l = housing_l +  4* MIN_SEP_WALL + 4 * BOLT_HEAD_R_TOL
-        print "base_l: %", base_l
+        print ("base_l: %", base_l)
         # width of the base (very tight), the same as the housing
         base_w = housing_w
-        print "base_w: %", base_w
+        print ("base_w: %", base_w)
         # height of the base (not tight). twice the mininum height
         base_h = 2 * OUT_SEP_H 
-        print "base_h: %", base_h
+        print ("base_h: %", base_h)
 
         # height of the housing (not tight, can be large)
         housing_h = base_h +  2* BOLT_HEAD_L + bearing_d_tol
-        print "housing_h: %", housing_h
+        print ("housing_h: %", housing_h)
 
 
         # distance on the slide_axis from midcenter=0 to midcenter 1.
@@ -2529,7 +2529,7 @@ class ThinLinBearHouse1rail (object):
         bolt2_atch_pos = (  botcenter_pos
                          + DraftVecUtils.scale(n1_slide_axis,-boltrailcen_dist))
 
-        print 'shank tol' + str(BOLT_SHANK_R_TOL)
+        print('shank tol' + str(BOLT_SHANK_R_TOL))
         shp_bolt1_atch = fcfun.shp_cylcenxtr(r=BOLT_SHANK_R_TOL,
                                              h = base_h,
                                              normal = n1_bot_axis_neg,
@@ -2866,8 +2866,8 @@ class ThinLinBearHouse (object):
             housing_w = max ((bearing_d + 2* MIN_SEP_WALL), 
                               2 * (bolt2wall + bolt2axis))
 
-        print "housing_l: %", housing_l
-        print "housing_w: %", housing_w
+        print("housing_l: %", housing_l)
+        print("housing_w: %", housing_w)
 
         # bolt distance
         # distance of the bolts to the center, on n1_slide_axis dir
@@ -2878,7 +2878,7 @@ class ThinLinBearHouse (object):
         # minimum height of the housing 
         housing_min_h = bearing_d + 2 * OUT_SEP_H
         axis_min_h = housing_min_h / 2.
-        print "min housing_h: %", housing_min_h
+        print("min housing_h: %", housing_min_h)
         if axis_h == 0:
             # minimum values
             housing_h = housing_min_h
@@ -3638,8 +3638,8 @@ class ThinLinBearHouseAsim (object):
                               2 * bolt2wall + bolt2cen_wid_n + bolt2cen_wid_p)
 
 
-        print "housing_d: %", housing_d
-        print "housing_w: %", housing_w
+        print("housing_d: %", housing_d)
+        print("housing_w: %", housing_w)
 
         # bolt distance
         # distance of the bolts to the center, on nfro_ax dir
@@ -3648,7 +3648,7 @@ class ThinLinBearHouseAsim (object):
         # minimum height of the housing 
         housing_min_h = bearing_d + 2 * OUT_SEP_H
         axis_min_h = housing_min_h / 2.
-        print "min housing_h: %", housing_min_h
+        print("min housing_h: %", housing_min_h)
         if axis_h == 0:
             # minimum values
             housing_h = housing_min_h
@@ -5606,3 +5606,118 @@ class hallestop_holder (object):
 #                 pos = V0,
 #                 wfco=1,
 #                 name = 'holder')
+
+
+# for the optical sensor CNY70 and TR
+class sensor_holder (object):
+
+
+    def __init__(self,
+                 sensor_support_length = 10.,
+                 sensor_pin_sep = 2.54,
+                 sensor_pin_pos_h = 3,
+                 sensor_pin_pos_w = 2,
+                 sensor_pin_r_tol = 1.05,
+                 sensor_pin_rows = 6,
+                 sensor_pin_cols = 6,
+                 #sensor_clip_pos_h = 2.45, #position from center
+                 #sensor_clip_h_tol = 1.28,
+                 #sensor_clip_w_tol = 1.,
+                 base_height = 37., # height of the cd case
+                 base_width = 20., # width of the cd case
+                 flap_depth = 8.,
+                 flap_thick = 2.,
+                 base_thick = 2., #la altura
+                 basesensor_thick = 9., #la altura de la parte de los sensores
+                 pos = V0,
+                 axis_h = VZ,
+                 axis_d = VX,
+                 axis_w = VY,
+                 wfco=1,
+                 name = 'holder'):
+
+        axis_h = DraftVecUtils.scaleTo(axis_h,1)
+        axis_d = DraftVecUtils.scaleTo(axis_d,1)
+        axis_w = DraftVecUtils.scaleTo(axis_w,1)
+
+        axis_h_n = DraftVecUtils.scaleTo(axis_h,-1)
+        axis_d_n = DraftVecUtils.scaleTo(axis_d,-1)
+        axis_w_n = DraftVecUtils.scaleTo(axis_w,-1)
+
+        TOL = 0.4
+        base_h = base_height + TOL;
+        shp_list = []
+        shp_base = fcfun.shp_box_dir_xtr(box_w=base_width,
+                                     box_d=base_thick,
+                                     box_h=base_h,
+                                     fc_axis_h=axis_h,
+                                     fc_axis_d=axis_d,
+                                     fc_axis_w=axis_w_n,
+                                     cw=0,cd=0,ch=0,
+                                     xtr_h=1, xtr_nh=1,pos=V0)
+        shp_list.append(shp_base)
+
+        sup_sensor_w = (sensor_pin_cols ) * sensor_pin_sep + sensor_pin_pos_w
+        sup_sensor_h = (sensor_pin_rows ) * sensor_pin_sep + sensor_pin_pos_h
+        pos_sup_sensor = ( V0 + DraftVecUtils.scale(axis_d_n,
+                              basesensor_thick-base_thick))
+        shp_sup_sensor = fcfun.shp_box_dir_xtr(
+                                     box_w=sup_sensor_w,
+                                     box_d=basesensor_thick,
+                                     box_h=sup_sensor_h,
+                                     fc_axis_h=axis_h,
+                                     fc_axis_d=axis_d,
+                                     fc_axis_w=axis_w,
+                                     cw=0,cd=0,ch=0,
+                                     xtr_h=0, xtr_nw=1,pos=pos_sup_sensor)
+        shp_list.append(shp_sup_sensor)
+
+        shp_top_flap = fcfun.shp_box_dir_xtr(
+                                     box_w=base_width,
+                                     box_d=flap_depth,
+                                     box_h=flap_thick,
+                                     fc_axis_h=axis_h,
+                                     fc_axis_d=axis_d_n,
+                                     fc_axis_w=axis_w_n,
+                                     cw=0,cd=0,ch=0,
+                                     xtr_h=0, xtr_nd=base_thick,
+                                     pos=FreeCAD.Vector(0,0,base_h))
+        shp_list.append(shp_top_flap)
+
+        shp_bot_flap = fcfun.shp_box_dir_xtr(
+                                     box_w=base_width,
+                                     box_d=flap_depth,
+                                     box_h=flap_thick,
+                                     fc_axis_h=axis_h_n,
+                                     fc_axis_d=axis_d_n,
+                                     fc_axis_w=axis_w_n,
+                                     cw=0,cd=0,ch=0,
+                                     xtr_h=0, xtr_nd=base_thick,
+                                     pos=V0)
+        shp_list.append(shp_bot_flap)
+
+        pos_hole_w = sensor_pin_pos_w 
+        holes_list =[]
+        for w_i in range (sensor_pin_cols):
+            pos_hole_h = sensor_pin_pos_h 
+            for h_i in range (sensor_pin_rows):
+                pos_pin = (pos_sup_sensor 
+                              + DraftVecUtils.scale(axis_w, pos_hole_w)
+                              + DraftVecUtils.scale(axis_h, pos_hole_h))
+                shp_pin_hole = fcfun.shp_cylcenxtr(r=sensor_pin_r_tol,
+                                     h = basesensor_thick,
+                                     normal = axis_d,
+                                     ch=0, xtr_top = 1,xtr_bot=1,
+                                     pos = pos_pin)
+                pos_hole_h = pos_hole_h + sensor_pin_sep
+                holes_list.append(shp_pin_hole)
+            pos_hole_w = pos_hole_w + sensor_pin_sep
+
+        shp_holes = fcfun.fuseshplist(holes_list)
+        shp_solid = fcfun.fuseshplist(shp_list)
+        shp_final = shp_solid.cut(shp_holes)
+        shp_final = shp_final.removeSplitter()
+		
+        Part.show(shp_final)
+ 
+#sensor_holder()

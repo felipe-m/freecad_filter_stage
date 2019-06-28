@@ -1748,7 +1748,7 @@ class NemaMotor (object):
         #rot = DraftGeomUtils.getRotation(VZ,nnormal)
         #print rot
         rot = FreeCAD.Rotation(VZ,nnormal)
-        print rot
+        print(rot)
         motorwire.Placement.Rotation = rot
         motorwire.Placement.Base = pos
         motorface = Part.Face(motorwire)
@@ -3810,7 +3810,7 @@ def f_linguide (rail_l, dlg, axis_l, axis_b, boltend_sep = 0,
                 bl_pos = 0.,
                 name ='linguide'):
 
-    print axis_l
+    print(axis_l)
 
     d_rail = dlg['rail']
     if boltend_sep == 0:

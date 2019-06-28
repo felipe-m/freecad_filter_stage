@@ -1126,7 +1126,7 @@ class ShpBeltClamped (shp_clss.WireBeltClamped):
         self.axis_h = DraftVecUtils.scaleTo(axis_h,1)
         self.h_o[0] = V0 # origin (center symmetric)
         self.h_o[1] = self.vec_h(-self.belt_width/2.)
-        print str(self.h_o[1])
+        print(str(self.h_o[1]))
 
         # calculates the position of the origin, and keeps it in attribute pos_o
         self.set_pos_o()

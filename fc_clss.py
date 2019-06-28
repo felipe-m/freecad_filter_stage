@@ -326,7 +326,7 @@ class SinglePart (object):
             filename = prefix + '_' + filename
 
         fcad_filename = self.fcad_path + name + '.FCStd'
-        print fcad_filename
+        print(fcad_filename)
         self.doc.saveAs (fcad_filename)
 
 
@@ -534,7 +534,7 @@ class PartsSet (shp_clss.Obj3D):
             filename = prefix + '_' + filename
 
         fcad_filename = self.fcad_path + name + '.FCStd'
-        print fcad_filename
+        print(fcad_filename)
         self.doc.saveAs (fcad_filename)
 
     def set_name (self, name = '', default_name = '', change = 0):
@@ -833,8 +833,8 @@ class BearingOutl (SinglePart, shp_clss.ShpCylHole):
         self.set_name (name, default_name, change = 0)
         self.bearing_nb = bearing_nb
 
-        print bearing_nb
-        print default_name
+        print(bearing_nb)
+        print(default_name)
 
         try:
             bear_d = kcomp.BEARING[bearing_nb]
