@@ -200,7 +200,7 @@ You can compare the same pieces designed using OpenSCAD: https://github.com/feli
 
 There is no need to have supports as long as the parts are printed with the following orientation:
 
-![Print orientatio](imgs/small/filter_stage/filter_stage_printable_parts_2.jpg)
+![Print orientation](imgs/small/filter_stage/filter_stage_printable_parts_2.jpg)
 
 
 

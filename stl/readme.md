@@ -9,6 +9,8 @@
 
 ## Print orientation
 
+This sample parts are from the [filter stage example](../src/filter_stage.py).
+
 ![Print orientation](../imgs/filter_stage/filter_stage_printable_parts.jpg)
 
 ---
