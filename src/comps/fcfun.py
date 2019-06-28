@@ -110,9 +110,9 @@ def RotateView(axisX=1.0,axisY=0.0,axisZ=0.0,angle=45.0):
         rot.setValue(coin.SbVec3f(axisX,axisY,axisZ),math.radians(angle))
         nrot = cam.orientation.getValue() * rot
         cam.orientation = nrot
-        print axisX," ",axisY," ",axisZ," ",angle
+        print(axisX," ",axisY," ",axisZ," ",angle)
     except Exception:
-        print "Not ActiveView " 
+        print("Not ActiveView ")
 
 
 
@@ -3381,8 +3381,8 @@ def shp_belt_wire_dir (center_sep, rad1, rad2, fc_axis_l = VX,
     # the angle beta of the tanget is calculate from pythagoras:
     # the length (separation between centers) and dif_rad
     beta = math.atan (dif_rad/center_sep)
-    print ('beta %f', 180*beta/math.pi)
-    print ('beta %f', beta*math.pi/2)
+    print('beta %f', 180*beta/math.pi)
+    print('beta %f', beta*math.pi/2)
     # depending on who is larger rad1 or rad2, the negative angle will be either
     # on top or down of axis_s
 
@@ -3615,7 +3615,7 @@ def shpRndRectWire (x=1, y=1, r= 0.5, zpos = 0):
     #doc = FreeCAD.ActiveDocument
 
     if 2*r >= x or 2*r >= y:
-        print "Radius too large: addRoundRectan"
+        print("Radius too large: addRoundRectan")
         if x > y:
             r = y/2.0 - 0.1 # otherwise there will be a problem
         else:
@@ -7249,7 +7249,7 @@ def calc_rot (vec1, vec2):
         elif vec2 == (0,0,-1):
             roll  = 0
         else:
-            print "error 1 in yaw-pitch-roll"
+            print("error 1 in yaw-pitch-roll")
     elif vec1 == (-1,0,0):
         yaw = 180
         pitch = 0
@@ -7262,7 +7262,7 @@ def calc_rot (vec1, vec2):
         elif vec2 == (0,0,-1):
             roll  = 0
         else:
-            print "error 2 in yaw-pitch-roll"
+            print("error 2 in yaw-pitch-roll")
     elif vec1 == (0,1,0):
         yaw = 90
         pitch = 0
@@ -7275,7 +7275,7 @@ def calc_rot (vec1, vec2):
         elif vec2 == (0,0,-1):
             roll  = 0
         else:
-            print "error 3 in yaw-pitch-roll"
+            print("error 3 in yaw-pitch-roll")
     elif vec1 == (0,-1,0):
         yaw = -90
         pitch = 0
@@ -7288,7 +7288,7 @@ def calc_rot (vec1, vec2):
         elif vec2 == (0,0,-1):
             roll  = 0
         else:
-            print "error 4 in yaw-pitch-roll"
+            print("error 4 in yaw-pitch-roll")
     elif vec1 == (0,0,1):
         pitch = -90
         yaw = 0
@@ -7301,7 +7301,7 @@ def calc_rot (vec1, vec2):
         elif vec2 == (0,-1,0):
             roll  = -90
         else:
-            print "error 5 in yaw-pitch-roll"
+            print("error 5 in yaw-pitch-roll")
     elif vec1 == (0,0,-1):
         pitch = 90
         yaw = 0
@@ -7314,7 +7314,7 @@ def calc_rot (vec1, vec2):
         elif vec2 == (0,-1,0):
             roll  = -90
         else:
-            print "error 6 in yaw-pitch-roll"
+            print("error 6 in yaw-pitch-roll")
     elif vec1 == (0,0,0): # it doesn't matter the direction of vec1
         yaw = 0
         if vec2 == (1,0,0):
@@ -7336,7 +7336,7 @@ def calc_rot (vec1, vec2):
             pitch = 0
             roll  = 0 # the same position
         else:
-            print "error 7 in yaw-pitch-roll"
+            print("error 7 in yaw-pitch-roll")
 
 
 
@@ -7495,7 +7495,7 @@ def calc_desp_ncen (Length, Width, Height,
             if cz == False:
                 z = Height / 2.0
         else:
-            print "error 1 in calc_desp_ncen"
+            print("error 1 in calc_desp_ncen")
     elif abs(vec1[1]) == 1: # Y axis
         if abs(vec2[0]) == 1:   # X
             if cx == False:
@@ -7512,7 +7512,7 @@ def calc_desp_ncen (Length, Width, Height,
             if cz == False:
                 z = Height / 2.0
         else:
-            print "error 2 in calc_desp_ncen"
+            print("error 2 in calc_desp_ncen")
     elif abs(vec1[2]) == 1: # Z axis
         if abs(vec2[0]) == 1:   # X
             if cx == False:
@@ -7529,7 +7529,7 @@ def calc_desp_ncen (Length, Width, Height,
             if cz == False:
                 z = Length / 2.0
         else:
-            print "error 3 in calc_desp_ncen"
+            print("error 3 in calc_desp_ncen")
     elif (vec1[0]==0 and vec1[1]==0 and vec1[2]==0): 
         #It doesnt matter vec1. Probably it is symetrical on plane XY.
         # So Length and Width are the same
@@ -7557,9 +7557,9 @@ def calc_desp_ncen (Length, Width, Height,
             if cz == False:
                 z = Height / 2.0
         else:
-            print "error 4 in calc_desp_ncen"
+            print("error 4 in calc_desp_ncen")
     else:
-        print "error 5 in calc_desp_ncen"
+        print("error 5 in calc_desp_ncen")
 
 
     vdesp = FreeCAD.Vector(x,y,z)
@@ -7691,7 +7691,7 @@ def get_nameofbasevec (fcvec):
     elif fcvec.x==0 and fcvec.y==0 and fcvec.z==-1:
         return '-z'
     else:
-        print "Not a base vector"
+        print("Not a base vector")
 
 
 def get_fclist_4perp_vecname (vecname):
