@@ -24,7 +24,9 @@ It can be compared with the OpenSCAD version: https://github.com/felipe-m/oscad_
 ## License <a name="license"></a>
 
 Hardware License: CERN 1.2 (https://ohwr.org/cernohl)
+
 Software License: [LGPL 3.0](./License.md)
+
 Documentation License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
 
 ## Description <a name="description"></a>
