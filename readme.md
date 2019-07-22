@@ -5,21 +5,27 @@ The dimensions of the filter and the stage are parametrizable in order to change
 The printable pieces are described using [FreeCAD](http://freecadweb.org/) Python scripts.
 It can be compared with the OpenSCAD version: https://github.com/felipe-m/oscad_filter_stage
 
-1. [Description](#description)
-2. [Assembly](#assembly)
-3. [Main parameters](#main_parameters)
+1. [License](#license)
+2. [Description](#description)
+3. [Assembly](#assembly)
+4. [Main parameters](#main_parameters)
     1. [Filter Holder Parameters](#filter_holder_param)
     2. [Belt Tensioner](#belt_tensioner_param)
-4.  [Project organization](#directory)
-5.  [Printable Parts](#printed_parts)
+5.  [Project organization](#directory)
+6.  [Printable Parts](#printed_parts)
     1. [Parts with step by step tutorial](#tutorial_step)
     2. [The rest of the parts](#no_tutorial)
-6.  [Print settings](#print_set)
+7.  [Print settings](#print_set)
 
     
 **The pictures of this readme.md are reduced in size to make the document more readable** larger pictures can be found in the img folder (see [Project organization](#directory))
 
 ---
+## License <a name="license"></a>
+
+Hardware License: CERN 1.2 (https://ohwr.org/cernohl)
+Software License: [LGPL 3.0](./License.md)
+Documentation License: CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
 
 ## Description <a name="description"></a>
 

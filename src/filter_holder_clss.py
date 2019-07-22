@@ -51,6 +51,8 @@
 #
 #
 
+# to execute this file in FreeCAD V0.18
+# exec(open("filter_holder_clss.py").read())
 
 
 
@@ -365,7 +367,7 @@ class ShpFilterHolder (shp_clss.Obj3D):
                  filter_w = 25.,
                  filter_t = 2.5,
                  base_h = 6.,
-                 hold_d = 12.,
+                 hold_d = 10.,
                  filt_supp_in = 2.,
                  filt_rim = 3.,
                  filt_cen_d = 0,
