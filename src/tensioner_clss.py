@@ -1449,7 +1449,7 @@ class ShpTensionerHolder (shp_clss.Obj3D):
         chmf_rad = min(self.hold_d-self.hold_bas_d + self.hold_bas_h,
                        self.hold_h - (self.tens_h + 2*wall_thick))
         
-        print chmf_rad
+        #print (chmf_rad)
         # Find a point along the vertex that is going to be chamfered.
         # See drawings: Point C:
         if chmf_rad > 0:
@@ -2080,7 +2080,7 @@ class TensionerSet (fc_clss.PartsSet):
         max_tens_bolt_l =  (  idler_tensioner.tens_stroke
                             + idler_tensioner.nut_holder_tot
                             + tensioner_holder.wall_thick)
-        print 'max tens:' + str(max_tens_bolt_l)
+        #print ('max tens:' + str(max_tens_bolt_l))
         tens_bolt = partset.Din912BoltWashSet(
                                          metric  = bolttens_mtr,
                                          shank_l = max_tens_bolt_l,

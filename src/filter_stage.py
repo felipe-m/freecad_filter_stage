@@ -102,6 +102,8 @@ import FreeCADGui
 import Part
 import DraftVecUtils
 
+# exec(open("filter_stage.py").read())
+
 # to get the current directory. Freecad has to be executed from the same
 # directory this file is
 filepath = os.getcwd()
@@ -376,7 +378,7 @@ aluprof_tens_pos = tensioner.get_pos_dwh (2,-4,0)
 aluprof_tens_l = (  aluprof_tens_pos.distanceToPlane(pos_rail, axis_front)
                   + aluprof_w)
 
-print 'aluprof: ' + str(aluprof_tens_l)
+print ('aluprof: ' + str(aluprof_tens_l))
 
 # length of the aluminum profile that supports the tensioner
 #aluprof_tens_l = tensioner.get_tensioner_holder().hold_bas_w
@@ -398,7 +400,7 @@ aluprof_tens = comps.PartAluProf(depth = aluprof_tens_l,
 # Bolts for the belt tensioner
 max_tens_bolt_l = (aluprof_tens.get_h_ab(3,1).Length # space for bolt in profile
                 + tensioner.get_tensioner_holder().hold_bas_h) # base thickness
-print 'shank_l ' + str(max_tens_bolt_l)
+print ('shank_l ' + str(max_tens_bolt_l))
 for w_i in [-3, 3]: # position of bolts
     tens_bolt_i_pos = tensioner.get_pos_dwh(2,w_i,1)
     tens_bolt_i = partset.Din912BoltWashSet(
@@ -460,6 +462,25 @@ nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         pos = nemaholder_w_motor_pos)
 
 nemaholder_w_motor.set_color(fcfun.GREEN_05,2)   #2: the holder
+
+# 4 bolts to attach the motor to the motor holder
+# the bolt head has to be touching the hole for the bolt: pos_d = 5
+bolt_head_pos = filter_holder.get_o_to_d(5)
+motor_bolt_metric = nemaholder_w_motor.get_nema_motor_pulley().get_nema_motor().nemabolt_d
+for w_i in [-2, 2]:
+    for d_i in [2, 4]:
+        # positions of the motor bolts 
+        motor_bolt_pos_i = nemaholder_w_motor.get_pos_dwh(d_i, w_i, 0)
+       
+        fc_clss.Din912Bolt(metric = motor_bolt_metric,
+                           shank_l = 6,
+                           shank_l_adjust = -1, # shorter to shank_l
+                           axis_h = axis_up.negative(),
+                           pos_h = 3,
+                           pos = motor_bolt_pos_i,
+                           name = 'motor_bolt_w' + str(w_i) + '_d' + str(d_i)
+                           )
+
 
 # aluminum profile for the motor holder
 

@@ -92,13 +92,13 @@ import kparts
 
 # --------------- PARAMETERS (can be changed) -------------------------
 ## Nema Size, choose the NEMA size of your motor: 8, 11, 14, 17, 23, 34, 42
-nema_size = 17
+nema_size = 17 
 
 #  thickness in mm of the side where the holder will be screwed to
 wall_thick = 4.
 
 #  thickness in mm of the top side where the motor will be screwed to
-motor_thick = 4.
+motor_thick = 5.
 
 #  thickness of the reinforcement walls
 reinf_thick = 4.
@@ -112,10 +112,10 @@ motor_min_h = 10.
 motor_max_h = 40.
 
 # extra separation between the motor and the sides
-motor_xtr_space = 4.
+motor_xtr_space = 5.
 
 # extra separation between the motor and the side of the wall
-motor_xtr_space_d = 5.
+motor_xtr_space_d = 6.
 
 # extra space from the motor_max_h to the end
 xtr_down = 5.
@@ -125,10 +125,10 @@ xtr_down = 5.
 bolt_wall_sep = 0
 
 # metric of the bolts to attach the holder (diameter of the shank in mm)
-bolt_wall_d = 3.
+bolt_wall_d = 4.
 
 # radius of the chamfer
-chmf_r = 1.
+chmf_r = 2.
 
 # motor hole radius: the hole for the motor circle that is with the axis
 # if 0, will take the half of the distance of the bolts
