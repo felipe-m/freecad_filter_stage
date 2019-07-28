@@ -427,6 +427,7 @@ motor_holder_pos = (  belt_pos
 
 nema_size = 11
 
+hold_bolt_wall_d = 3 # size of the bolt to hold the motor
 nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         nema_size = nema_size, 
                         motor_base_l = 32.,
@@ -451,7 +452,7 @@ nemaholder_w_motor = partset.NemaMotorPulleyHolderSet(
                         hold_rail_min_h = 3.,
                         hold_rail_max_h = 20.,
                         hold_motor_xtr_space = 2.,
-                        hold_bolt_wall_d = 4.,
+                        hold_bolt_wall_d = hold_bolt_wall_d,
                         # hold_chmf_r = 1.,
                         axis_h = axis_up,
                         axis_d = axis_mov.negative(),
@@ -467,12 +468,13 @@ nemaholder_w_motor.set_color(fcfun.GREEN_05,2)   #2: the holder
 # the bolt head has to be touching the hole for the bolt: pos_d = 5
 bolt_head_pos = filter_holder.get_o_to_d(5)
 motor_bolt_metric = nemaholder_w_motor.get_nema_motor_pulley().get_nema_motor().nemabolt_d
+bolt_motor_list = []
 for w_i in [-2, 2]:
     for d_i in [2, 4]:
         # positions of the motor bolts 
         motor_bolt_pos_i = nemaholder_w_motor.get_pos_dwh(d_i, w_i, 0)
        
-        fc_clss.Din912Bolt(metric = motor_bolt_metric,
+        motor_bolt = fc_clss.Din912Bolt(metric = motor_bolt_metric,
                            shank_l = 6,
                            shank_l_adjust = -1, # shorter to shank_l
                            axis_h = axis_up.negative(),
@@ -480,6 +482,7 @@ for w_i in [-2, 2]:
                            pos = motor_bolt_pos_i,
                            name = 'motor_bolt_w' + str(w_i) + '_d' + str(d_i)
                            )
+        bolt_motor_list.append(motor_bolt)
 
 
 # aluminum profile for the motor holder
@@ -502,6 +505,31 @@ aluprof_motor = comps.PartAluProf(depth = aluprof_tens_l,
                                  pos_w = -3, #not centered, touching the holder
                                  pos_h = 3,
                                  pos = aluprof_motor_pos)
+
+# bolts to attach the motor holder to the profile
+# the height position (axis_up) will be given by the profile. Bolts are
+# in the middle (pos_h = 0) aluprof_motor.get_pos_h(0)
+# The other 2 positions will be given by the holder
+
+bolt_mothold_list = []
+bolt_mothold_max_l =( nemaholder_w_motor.hold_wall_thick + 
+                      aluprof_motor.get_w_ab(0,1).Length)
+for w_i in [-1, 1]:
+    bolt_mothold_pos = (  nemaholder_w_motor.get_w_pos_w(w_i) # axis_front
+                        + nemaholder_w_motor.get_d_pos_d(1) # axis_mov
+                        + aluprof_motor.get_h_pos_h(0)) #axis_up
+
+    bolt_mothold = partset.Din912BoltWashSet(metric = hold_bolt_wall_d,
+                                     shank_l = bolt_mothold_max_l,
+                                     # smaller considering the washer
+                                     shank_l_adjust = -2,
+                                     axis_h  = axis_mov,
+                                     pos_h   = 3,
+                                     pos_d   = 0,
+                                     pos_w   = 0,
+                                     pos     = bolt_mothold_pos)
+    bolt_mothold_list.append(bolt_mothold)
+
 
 # get the top-right-corner:
 aluprof_linguide_pos = aluprof_motor.get_pos_dwh(5,3,3)
