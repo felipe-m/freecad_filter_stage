@@ -474,7 +474,7 @@ for w_i in [-2, 2]:
         # positions of the motor bolts 
         motor_bolt_pos_i = nemaholder_w_motor.get_pos_dwh(d_i, w_i, 0)
        
-        motor_bolt = fc_clss.Din912Bolt(metric = motor_bolt_metric,
+        motor_bolt = partset.Din912BoltWashSet(metric = motor_bolt_metric,
                            shank_l = 6,
                            shank_l_adjust = -1, # shorter to shank_l
                            axis_h = axis_up.negative(),
