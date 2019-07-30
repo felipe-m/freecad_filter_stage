@@ -513,7 +513,7 @@ aluprof_motor = comps.PartAluProf(depth = aluprof_tens_l,
 
 bolt_mothold_list = []
 bolt_mothold_max_l =( nemaholder_w_motor.hold_wall_thick + 
-                      aluprof_motor.get_w_ab(0,1).Length)
+                      aluprof_motor.get_w_ab(1,3).Length)
 for w_i in [-1, 1]:
     bolt_mothold_pos = (  nemaholder_w_motor.get_w_pos_w(w_i) # axis_front
                         + nemaholder_w_motor.get_d_pos_d(1) # axis_mov
@@ -529,6 +529,18 @@ for w_i in [-1, 1]:
                                      pos_w   = 0,
                                      pos     = bolt_mothold_pos)
     bolt_mothold_list.append(bolt_mothold)
+
+
+    nut_mothold_pos =  (  nemaholder_w_motor.get_w_pos_w(w_i) # axis_front
+                        + aluprof_motor.get_w_pos_w(-2) # axis_mov
+                        + aluprof_motor.get_h_pos_h(0)) #axis_up
+
+    nut_mothold = fc_clss.Din934Nut(metric= hold_bolt_wall_d,
+                                  axis_h = axis_mov,
+                                  axis_d = axis_up,
+                                  pos_h = -1,
+                                  pos = nut_mothold_pos)
+    bolt_mothold_list.append(nut_mothold)
 
 
 # get the top-right-corner:
