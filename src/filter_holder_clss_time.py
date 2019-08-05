@@ -53,6 +53,9 @@
 
 
 
+#exec(open("filter_holder_clss_time.py").read())
+
+
 
 # the filter is referenced on 3 perpendicular axis:
 # - axis_d: depth
@@ -73,6 +76,8 @@ import FreeCAD
 import FreeCADGui
 import Part
 import DraftVecUtils
+import Mesh
+import MeshPart
 
 # to get the current directory. Freecad has to be executed from the same
 # directory this file is
@@ -931,7 +936,7 @@ class PartFilterHolder (fc_clss.SinglePart, ShpFilterHolder):
 
 doc = FreeCAD.newDocument()
 
-fco = PartFilterHolder(
+partFilter = PartFilterHolder(
                  filter_l = 60.,
                  filter_w = 25.,
                  filter_t = 2.5,
@@ -971,10 +976,38 @@ fco = PartFilterHolder(
                  pos = V0)
 
 
-print datetime.now() - startdatetime
-
-fco.set_color(fcfun.ORANGE_08)
+partFilter.set_color(fcfun.ORANGE_08)
 
 
+fcad_time = datetime.now()
 
-doc.recompute()
+
+#doc.recompute()
+
+# default values for exporting to STL
+LIN_DEFL_orig = 0.1
+ANG_DEFL_orig = 0.523599 # 30 degree
+
+LIN_DEFL = LIN_DEFL_orig/2.
+ANG_DEFL = ANG_DEFL_orig/2.
+
+mesh_shp = MeshPart.meshFromShape(partFilter.shp,
+                                  LinearDeflection=LIN_DEFL, 
+                                  AngularDeflection=ANG_DEFL)
+
+Mesh.show(mesh_shp)
+
+
+
+mesh_time = datetime.now()
+fcad_elapsed_time = fcad_time - startdatetime
+mesh_elapsed_time = mesh_time - fcad_time
+total_time = mesh_time - startdatetime
+print ('Lin Defl: ' + str(LIN_DEFL)) 
+print ('Ang Defl: ' + str(math.degrees(ANG_DEFL))) 
+print ('shape time: ' + str(fcad_elapsed_time))
+print ('mesh time: ' + str(mesh_elapsed_time))
+print ('total time: ' + str(total_time))
+print ('Points: ' + str(mesh_shp.CountPoints))
+print ('Edges: ' + str(mesh_shp.CountEdges))
+print ('Faces: ' + str(mesh_shp.CountFacets))

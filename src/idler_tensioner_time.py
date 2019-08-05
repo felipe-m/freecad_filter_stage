@@ -39,12 +39,15 @@
 #                +
 #               tens_w
 
+#exec(open("idler_tensioner_time.py").read())
+
 from datetime import datetime
 
 startdatetime = datetime.now()
 
 import os
 import sys
+import math
 import FreeCAD
 import Part
 import Mesh
@@ -381,7 +384,8 @@ doc = FreeCAD.newDocument()
 # creation of the idler tensioner
 fcd_idler_tens = idler_tens()
 
-print datetime.now() - startdatetime
+
+fcad_time = datetime.now()
 
 
 
@@ -398,18 +402,42 @@ fcd_idler_tens.Placement.Rotation = (
                     FreeCAD.Rotation(FreeCAD.Vector(0,1,0), -90))
 # exportStl is not working well with FreeCAD 0.17
 #fcd_idler_tens.Shape.exportStl(stlFileName)
+
+# default values for exporting to STL
+LIN_DEFL_orig = 0.1
+ANG_DEFL_orig = 0.523599 # 30 degree
+
+LIN_DEFL = LIN_DEFL_orig/10.
+ANG_DEFL = ANG_DEFL_orig/10.
+
 mesh_shp = MeshPart.meshFromShape(fcd_idler_tens.Shape,
-                                  LinearDeflection=kparts.LIN_DEFL, 
-                                  AngularDeflection=kparts.ANG_DEFL)
-mesh_shp.write(stlFileName)
-del mesh_shp
+                                  LinearDeflection=LIN_DEFL, 
+                                  AngularDeflection=ANG_DEFL)
+
+Mesh.show(mesh_shp)
+
+mesh_time = datetime.now()
+fcad_elapsed_time = fcad_time - startdatetime
+mesh_elapsed_time = mesh_time - fcad_time
+total_time = mesh_time - startdatetime
+print ('Lin Defl: ' + str(LIN_DEFL)) 
+print ('Ang Defl: ' + str(math.degrees(ANG_DEFL))) 
+print ('shape time: ' + str(fcad_elapsed_time))
+print ('mesh time: ' + str(mesh_elapsed_time))
+print ('total time: ' + str(total_time))
+print ('Points: ' + str(mesh_shp.CountPoints))
+print ('Edges: ' + str(mesh_shp.CountEdges))
+print ('Faces: ' + str(mesh_shp.CountFacets))
+
+#mesh_shp.write(stlFileName)
+#del mesh_shp
 
 # rotate back
 fcd_idler_tens.Placement.Rotation = (
                     FreeCAD.Rotation(FreeCAD.Vector(1,0,0), 0))
 
 # save the FreeCAD file
-freecadPath = filepath + '/../freecad/'
-freecadFileName = freecadPath + 'idler_tensioner' + '.FCStd'
-doc.saveAs (freecadFileName)
+#freecadPath = filepath + '/../freecad/'
+#freecadFileName = freecadPath + 'idler_tensioner' + '.FCStd'
+#doc.saveAs (freecadFileName)
 

@@ -10,6 +10,12 @@
 # --- LGPL Licence
 # ----------------------------------------------------------------------------
 
+from datetime import datetime
+#import time
+
+startdatetime = datetime.now()
+#starttime = time.time()
+
 import os
 import sys
 import FreeCAD
@@ -32,8 +38,9 @@ import fcfun   # import my functions for freecad. FreeCad Functions
 import comps   # import my CAD components
 import kidler  # import constants for the idler tensioner and holder
 import kparts
+import math
 
-#exec(open("nemamotor_holder.py").read())
+#exec(open("nemamotor_bracket_time.py").read())
 
 
 """
@@ -449,18 +456,43 @@ fcd_motor_holder = nemamotor_holder()
 
 fcd_motor_holder.ViewObject.ShapeColor = fcfun.GREEN_05
 
+fcad_time = datetime.now()
+
+# default values for exporting to STL
+LIN_DEFL_orig = 0.1
+ANG_DEFL_orig = 0.523599 # 30 degree
+
+#LIN_DEFL = LIN_DEFL_orig/2.
+#ANG_DEFL = ANG_DEFL_orig/2.
+LIN_DEFL = LIN_DEFL_orig
+ANG_DEFL = ANG_DEFL_orig
+
 
 # ---------- export to stl
 stlPath = filepath + '/../stl/'
 stlFileName = stlPath + 'simpler_motor_holder' + '.stl'
 mesh_shp = MeshPart.meshFromShape(fcd_motor_holder.Shape,
-                                  LinearDeflection=kparts.LIN_DEFL, 
-                                  AngularDeflection=kparts.ANG_DEFL)
-mesh_shp.write(stlFileName)
-del mesh_shp
+                                  LinearDeflection=LIN_DEFL, 
+                                  AngularDeflection=ANG_DEFL)
+
+mesh_time = datetime.now()
+fcad_elapsed_time = fcad_time - startdatetime
+mesh_elapsed_time = mesh_time - fcad_time
+total_time = mesh_time - startdatetime
+print ('Lin Defl: ' + str(LIN_DEFL)) 
+print ('Ang Defl: ' + str(math.degrees(ANG_DEFL))) 
+print ('shape time: ' + str(fcad_elapsed_time))
+print ('mesh time: ' + str(mesh_elapsed_time))
+print ('total time: ' + str(total_time))
+print ('Points: ' + str(mesh_shp.CountPoints))
+print ('Edges: ' + str(mesh_shp.CountEdges))
+print ('Faces: ' + str(mesh_shp.CountFacets))
+
+#mesh_shp.write(stlFileName)
+#del mesh_shp
 
 
 # save the FreeCAD file
-freecadPath = filepath + '/../freecad/'
-freecadFileName = freecadPath + 'simpler_motor_holder' + '.FCStd'
-doc.saveAs (freecadFileName)
+#freecadPath = filepath + '/../freecad/'
+#freecadFileName = freecadPath + 'simpler_motor_holder' + '.FCStd'
+#doc.saveAs (freecadFileName)
