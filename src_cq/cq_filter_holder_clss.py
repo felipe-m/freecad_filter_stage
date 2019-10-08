@@ -207,11 +207,13 @@ def belt_wire_dir (center_sep, rad1, rad2,
     #
     
     # cs_rad1 is point 2 (center of circle 1)
-    cs_rad1 = pos +  refto_2_l
+    #cs_rad1 = pos +  refto_2_l
+    # reference at point 3 (ln_s0)
+    cs_rad1 = refto_2_l + fc_2_3_l.negative()
     # cs_rad2 is point 4 (center of circle 2)
     cs_rad2 = cs_rad1 + fc_2_4_l
     # ln_s0 is point 3 
-    ln_s0_pos = cs_rad1 + fc_2_3_l
+    ln_s0_pos = cs_rad1 + fc_2_3_l # should be 0,0
     # lp_s0 is point 5 
     lp_s0_pos = cs_rad2 + fc_4_5_l
 
@@ -255,7 +257,8 @@ def belt_wire_dir (center_sep, rad1, rad2,
 
     #cq_plane = cq.Plane(origin=(pos.x,pos.y,pos.z), xDir=fc_axis_l,
     #                            normal=fc_axis_l.cross(fc_axis_s))
-    cq_plane = cq.Plane(origin=(lp_sp_pos.x,lp_sp_pos.y,pos.z),
+    #cq_plane = cq.Plane(origin=(lp_sp_pos.x,lp_sp_pos.y,pos.z),
+    cq_plane = cq.Plane(origin=(pos.x,pos.y,pos.z),
                                 xDir=fc_axis_s,
                                 normal=fc_axis_l.cross(fc_axis_s))
 
@@ -267,7 +270,7 @@ def belt_wire_dir (center_sep, rad1, rad2,
     print (ln_sp_pos)
     
     #result = cq.Workplane(cq_plane,origin=(ln_sp_pos.x, ln_sp_pos.y))\
-    result = cq.Workplane(cq_plane)\
+    result = cq.Workplane(cq_plane).move(lp_sp_pos.x,lp_sp_pos.y)\
                .threePointArc((lp_s0_pos.x, lp_s0_pos.y),
                               (lp_sn_pos.x, lp_sn_pos.y))\
                .lineTo(ln_sn_pos.x,ln_sn_pos.y)\
