@@ -1,0 +1,5 @@
+exec(open("F:/urjc/proyectos/cad/py_freecad/cq/example/workplane.py").read())
+
+exec(open("C:/Users/felipe/urjc/proyectos/cad/py_freecad/filter_stage/src_cq/cq_tensioner_holder_09.py").read())
+
+exec(open("C:/Users/felipe/urjc/proyectos/cad/py_freecad/filter_stage/src_cq/cq_nemamotor_bracket.py").read())
