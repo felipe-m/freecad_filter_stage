@@ -259,8 +259,8 @@ def belt_wire_dir (center_sep, rad1, rad2,
     #                            normal=fc_axis_l.cross(fc_axis_s))
     #cq_plane = cq.Plane(origin=(lp_sp_pos.x,lp_sp_pos.y,pos.z),
     cq_plane = cq.Plane(origin=(pos.x,pos.y,pos.z),
-                                xDir=fc_axis_s,
-                                normal=fc_axis_l.cross(fc_axis_s))
+                                xDir=axis_s.negative(),
+                                normal=axis_l.cross(axis_s))
 
     print (lp_sp_pos)
     print (lp_s0_pos)
@@ -268,14 +268,45 @@ def belt_wire_dir (center_sep, rad1, rad2,
     print (ln_sn_pos)
     print (ln_s0_pos)
     print (ln_sp_pos)
-    
+
+    lp_sp_pos_y = lp_sp_pos.dot(axis_l)
+    lp_sp_pos_x = lp_sp_pos.dot(axis_s)
+
+    lp_s0_pos_y = lp_s0_pos.dot(axis_l)
+    lp_s0_pos_x = lp_s0_pos.dot(axis_s)
+
+    lp_sn_pos_y = lp_sn_pos.dot(axis_l)
+    lp_sn_pos_x = lp_sn_pos.dot(axis_s)
+
+    ln_sp_pos_y = ln_sp_pos.dot(axis_l)
+    ln_sp_pos_x = ln_sp_pos.dot(axis_s)
+
+    ln_s0_pos_y = ln_s0_pos.dot(axis_l)
+    ln_s0_pos_x = ln_s0_pos.dot(axis_s)
+
+    ln_sn_pos_y = ln_sn_pos.dot(axis_l)
+    ln_sn_pos_x = ln_sn_pos.dot(axis_s)
+
+    print (lp_sp_pos)
+    print (lp_sp_pos_x, lp_sp_pos_y)
+    print (lp_s0_pos)
+    print (lp_s0_pos_x, lp_s0_pos_y)
+    print (lp_sn_pos)
+    print (lp_sn_pos_x, lp_sn_pos_y)
+    print (ln_sn_pos)
+    print (ln_sn_pos_x, ln_sn_pos_y)
+    print (ln_s0_pos)
+    print (ln_s0_pos_x, ln_s0_pos_y)
+    print (ln_sp_pos)
+    print (ln_sp_pos_x, ln_sp_pos_y)
+
     #result = cq.Workplane(cq_plane,origin=(ln_sp_pos.x, ln_sp_pos.y))\
-    result = cq.Workplane(cq_plane).move(lp_sp_pos.x,lp_sp_pos.y)\
-               .threePointArc((lp_s0_pos.x, lp_s0_pos.y),
-                              (lp_sn_pos.x, lp_sn_pos.y))\
-               .lineTo(ln_sn_pos.x,ln_sn_pos.y)\
-               .threePointArc((ln_s0_pos.x, ln_s0_pos.y),
-                              (ln_sp_pos.x, ln_sp_pos.y))\
+    result = cq.Workplane(cq_plane).move(lp_sp_pos_x,lp_sp_pos_y)\
+               .threePointArc((lp_s0_pos_x, lp_s0_pos_y),
+                              (lp_sn_pos_x, lp_sn_pos_y))\
+               .lineTo(ln_sn_pos_x,ln_sn_pos_y)\
+               .threePointArc((ln_s0_pos_x, ln_s0_pos_y),
+                              (ln_sp_pos_x, ln_sp_pos_y))\
                .close()
 
     #lin_p =  Part.LineSegment(ln_sp_pos, lp_sp_pos).toShape() 
@@ -860,13 +891,12 @@ def cq_filter_hoder (
 
     cq_holder = cq_holder.union(cq_clamps)
     
+    clamp_axis_s = FreeCAD.Vector(-1,0,0)
     for w_side in [-1,1]:
         if w_side == 1:
             clamp_axis_l = FreeCAD.Vector(0,-1,0)
-            clamp_axis_s = FreeCAD.Vector(1,0,0)
         else:
             clamp_axis_l = FreeCAD.Vector(0,1,0)
-            clamp_axis_s = FreeCAD.Vector(-1,0,0)
         beltpost_pos = FreeCAD.Vector(d_o[2], w_side*w_o[5], h_o[7])
         print ("w_side")
         print (w_side)
@@ -880,7 +910,7 @@ def cq_filter_hoder (
                                        ref_l = 3,
                                        pos = beltpost_pos)
 
-        cq_belt = cq_belt_wire.extrude(beltclamp_h)
+        cq_belt = cq_belt_wire.extrude(-w_side*beltclamp_h)
 
         cq_holder = cq_holder.union(cq_belt)
 
