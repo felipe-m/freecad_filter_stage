@@ -262,13 +262,6 @@ def belt_wire_dir (center_sep, rad1, rad2,
                                 xDir=axis_s.negative(),
                                 normal=axis_l.cross(axis_s))
 
-    print (lp_sp_pos)
-    print (lp_s0_pos)
-    print (lp_sn_pos)
-    print (ln_sn_pos)
-    print (ln_s0_pos)
-    print (ln_sp_pos)
-
     lp_sp_pos_y = lp_sp_pos.dot(axis_l)
     lp_sp_pos_x = lp_sp_pos.dot(axis_s)
 
@@ -287,20 +280,6 @@ def belt_wire_dir (center_sep, rad1, rad2,
     ln_sn_pos_y = ln_sn_pos.dot(axis_l)
     ln_sn_pos_x = ln_sn_pos.dot(axis_s)
 
-    print (lp_sp_pos)
-    print (lp_sp_pos_x, lp_sp_pos_y)
-    print (lp_s0_pos)
-    print (lp_s0_pos_x, lp_s0_pos_y)
-    print (lp_sn_pos)
-    print (lp_sn_pos_x, lp_sn_pos_y)
-    print (ln_sn_pos)
-    print (ln_sn_pos_x, ln_sn_pos_y)
-    print (ln_s0_pos)
-    print (ln_s0_pos_x, ln_s0_pos_y)
-    print (ln_sp_pos)
-    print (ln_sp_pos_x, ln_sp_pos_y)
-
-    #result = cq.Workplane(cq_plane,origin=(ln_sp_pos.x, ln_sp_pos.y))\
     result = cq.Workplane(cq_plane).move(lp_sp_pos_x,lp_sp_pos_y)\
                .threePointArc((lp_s0_pos_x, lp_s0_pos_y),
                               (lp_sn_pos_x, lp_sn_pos_y))\
@@ -920,33 +899,6 @@ def cq_filter_hoder (
     return(fcd)
 
     
-
-"""
-
-            # the belt post
-            shp_beltpost = fcfun.shp_belt_dir(
-                                       center_sep = 2 * lr_beltpost_r,
-                                       rad1 = sm_beltpost_r,
-                                       rad2 = lr_beltpost_r,
-                                       height = beltclamp_h,
-                                       fc_axis_h = axis_h,
-                                       fc_axis_l = clamp_axis_w,
-                                       ref_l = 3,
-                                       ref_h = 2,
-                                       xtr_h = 0, xtr_nh = 1,
-                                       pos = beltpost_pos)
-            
-            clamp_list.append (shp_beltpost)
-        shp_filterholder = shp_l.multiFuse(clamp_list)
-        shp_filterholder = shp_filterholder.removeSplitter()
-        #Part.show (shp_filterholder)
-            
-        
-        shp = shp_filterholder
-"""
-
-
-
 doc = FreeCAD.newDocument()
 
 cq = cq_filter_hoder(
