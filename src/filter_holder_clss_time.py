@@ -85,8 +85,8 @@ filepath = os.getcwd()
 # to get the components
 # In FreeCAD can be added: Preferences->General->Macro->Macro path
 sys.path.append(filepath) 
-#sys.path.append(filepath + '/' + 'comps')
-sys.path.append(filepath + '/../../' + 'comps')
+sys.path.append(filepath + '/' + 'comps')
+#sys.path.append(filepath + '/../../' + 'comps')
 
 # path to save the FreeCAD files
 fcad_path = filepath + '/../freecad/'
@@ -995,7 +995,7 @@ mesh_shp = MeshPart.meshFromShape(partFilter.shp,
                                   LinearDeflection=LIN_DEFL, 
                                   AngularDeflection=ANG_DEFL)
 
-Mesh.show(mesh_shp)
+#Mesh.show(mesh_shp)
 
 
 

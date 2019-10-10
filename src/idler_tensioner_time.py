@@ -414,7 +414,7 @@ mesh_shp = MeshPart.meshFromShape(fcd_idler_tens.Shape,
                                   LinearDeflection=LIN_DEFL, 
                                   AngularDeflection=ANG_DEFL)
 
-Mesh.show(mesh_shp)
+#Mesh.show(mesh_shp)
 
 mesh_time = datetime.now()
 fcad_elapsed_time = fcad_time - startdatetime

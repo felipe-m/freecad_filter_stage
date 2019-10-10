@@ -841,9 +841,6 @@ def cq_filter_hoder (
         else:
             clamp_axis_l = FreeCAD.Vector(0,1,0)
         beltpost_pos = FreeCAD.Vector(d_o[2], w_side*w_o[5], h_o[7])
-        print ("w_side")
-        print (w_side)
-        print (beltpost_pos)
         cq_belt_wire = belt_wire_dir(
                                        center_sep = 2 * lr_beltpost_r,
                                        rad1 = sm_beltpost_r,
