@@ -56,6 +56,8 @@
 #           ____/  |       |  \____ ...
 #          |_::____|___2___|____::_|..: holder_base_z
 #
+from datetime import datetime
+startdatetime = datetime.now()
 
 import math
 import FreeCAD
@@ -332,7 +334,6 @@ def tensioner_holder():
 doc = FreeCAD.newDocument()
 # creation of the tensioner holder
 cq_tens_holder = tensioner_holder()
-# change color to light sky blue:
 
 # ---------- export to stl
 #try:
@@ -341,6 +342,8 @@ cq_tens_holder = tensioner_holder()
 #    from . import ExportCQ
 # Not working
 #ExportCQ.exportShape(cq_tens_holder,"STL",'tensioner_holder.stl')
+
+fcad_time = datetime.now()
 
 # default values for exporting to STL
 LIN_DEFL_orig = 0.1
@@ -356,4 +359,17 @@ mesh_shp = MeshPart.meshFromShape(cq_tens_holder_toprint.toFreecad(),
 # change the path where you want to create it
 mesh_shp.write('C:/Users/Public/' + 'tensioner_holder' + '.stl')
 cq_tens_holder = cq_tens_holder.rotate((0.,0.,0.),(1.,0.,0.),-90.)
+
+mesh_time = datetime.now()
+fcad_elapsed_time = fcad_time - startdatetime
+mesh_elapsed_time = mesh_time - fcad_time
+total_time = mesh_time - startdatetime
+print ('Lin Defl: ' + str(LIN_DEFL)) 
+print ('Ang Defl: ' + str(math.degrees(ANG_DEFL))) 
+print ('shape time: ' + str(fcad_elapsed_time))
+print ('mesh time: ' + str(mesh_elapsed_time))
+print ('total time: ' + str(total_time))
+print ('Points: ' + str(mesh_shp.CountPoints))
+print ('Edges: ' + str(mesh_shp.CountEdges))
+print ('Faces: ' + str(mesh_shp.CountFacets))
 

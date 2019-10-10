@@ -40,9 +40,11 @@
 #            :........:
 #                +
 #               tens_w
-
+from datetime import datetime
+startdatetime = datetime.now()
 
 import FreeCAD
+import math
 import Part
 import Mesh
 import MeshPart
@@ -304,7 +306,6 @@ def idler_tens ():
     fcd09.ViewObject.ShapeColor = (1.0, 0.5, 0.0)
 
     return cq09
-    
 
 
 # creation of a new FreeCAD document
@@ -312,5 +313,33 @@ doc = FreeCAD.newDocument()
 # creation of the idler tensioner
 cq = idler_tens()
 
+fcad_time = datetime.now()
 
+# default values for exporting to STL
+LIN_DEFL_orig = 0.1
+ANG_DEFL_orig = 0.523599 # 30 degree
+
+LIN_DEFL = LIN_DEFL_orig/2.
+ANG_DEFL = ANG_DEFL_orig/2.
+
+cq_toprint = cq.rotate((0.,0.,0.),(0.,1.,0.),-90.)
+mesh_shp = MeshPart.meshFromShape(cq_toprint.toFreecad(),
+                                  LinearDeflection=LIN_DEFL, 
+                                  AngularDeflection=ANG_DEFL)
+# change the path where you want to create it
+mesh_shp.write('C:/Users/Public/' + 'idler_tensioner' + '.stl')
+cq = cq.rotate((0.,0.,0.),(0.,1.,0.),90.)
+
+mesh_time = datetime.now()
+fcad_elapsed_time = fcad_time - startdatetime
+mesh_elapsed_time = mesh_time - fcad_time
+total_time = mesh_time - startdatetime
+print ('Lin Defl: ' + str(LIN_DEFL)) 
+print ('Ang Defl: ' + str(math.degrees(ANG_DEFL))) 
+print ('shape time: ' + str(fcad_elapsed_time))
+print ('mesh time: ' + str(mesh_elapsed_time))
+print ('total time: ' + str(total_time))
+print ('Points: ' + str(mesh_shp.CountPoints))
+print ('Edges: ' + str(mesh_shp.CountEdges))
+print ('Faces: ' + str(mesh_shp.CountFacets))
 

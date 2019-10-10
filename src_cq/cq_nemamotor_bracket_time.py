@@ -9,6 +9,10 @@
 # --- LGPL Licence
 # ----------------------------------------------------------------------------
 
+from datetime import datetime
+startdatetime = datetime.now()
+
+import math
 import FreeCAD
 import Part
 import Mesh
@@ -396,5 +400,34 @@ def nemamotor_holder ():
 # creation of a new FreeCAD document
 doc = FreeCAD.newDocument()
 # creation of the idler tensioner
-cq06 = nemamotor_holder()
+cq = nemamotor_holder()
+
+fcad_time = datetime.now()
+
+# default values for exporting to STL
+LIN_DEFL_orig = 0.1
+ANG_DEFL_orig = 0.523599 # 30 degree
+
+LIN_DEFL = LIN_DEFL_orig/2.
+ANG_DEFL = ANG_DEFL_orig/2.
+
+mesh_shp = MeshPart.meshFromShape(cq.toFreecad(),
+                                  LinearDeflection=LIN_DEFL, 
+                                  AngularDeflection=ANG_DEFL)
+# change the path where you want to create it
+mesh_shp.write('C:/Users/Public/' + 'nemamotor_bracket' + '.stl')
+
+mesh_time = datetime.now()
+fcad_elapsed_time = fcad_time - startdatetime
+mesh_elapsed_time = mesh_time - fcad_time
+total_time = mesh_time - startdatetime
+print ('Lin Defl: ' + str(LIN_DEFL)) 
+print ('Ang Defl: ' + str(math.degrees(ANG_DEFL))) 
+print ('shape time: ' + str(fcad_elapsed_time))
+print ('mesh time: ' + str(mesh_elapsed_time))
+print ('total time: ' + str(total_time))
+print ('Points: ' + str(mesh_shp.CountPoints))
+print ('Edges: ' + str(mesh_shp.CountEdges))
+print ('Faces: ' + str(mesh_shp.CountFacets))
+
 

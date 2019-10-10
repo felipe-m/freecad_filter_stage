@@ -64,9 +64,14 @@
 #
 # The reference position is marked with a x in the drawing
 
+from datetime import datetime
+startdatetime = datetime.now()
+
 import math
 import FreeCAD
 import Part
+import Mesh
+import MeshPart
 import DraftVecUtils
 import cadquery as cq
 
@@ -861,7 +866,7 @@ def cq_filter_hoder (
     fcd.Shape = cq_holder.toFreecad()
     fcd.ViewObject.ShapeColor = (1.0, 0.8, 0.0) #ORANGE_08
 
-    return(fcd)
+    return(cq_holder)
 
     
 doc = FreeCAD.newDocument()
@@ -904,4 +909,32 @@ cq = cq_filter_hoder(
                  pos_w = 0,
                  pos_h = 0,
                  pos = V0)
+
+fcad_time = datetime.now()
+
+# default values for exporting to STL
+LIN_DEFL_orig = 0.1
+ANG_DEFL_orig = 0.523599 # 30 degree
+
+LIN_DEFL = LIN_DEFL_orig/2.
+ANG_DEFL = ANG_DEFL_orig/2.
+
+mesh_shp = MeshPart.meshFromShape(cq.toFreecad(),
+                                  LinearDeflection=LIN_DEFL, 
+                                  AngularDeflection=ANG_DEFL)
+# change the path where you want to create it
+mesh_shp.write('C:/Users/Public/' + 'filter_holder' + '.stl')
+
+mesh_time = datetime.now()
+fcad_elapsed_time = fcad_time - startdatetime
+mesh_elapsed_time = mesh_time - fcad_time
+total_time = mesh_time - startdatetime
+print ('Lin Defl: ' + str(LIN_DEFL)) 
+print ('Ang Defl: ' + str(math.degrees(ANG_DEFL))) 
+print ('shape time: ' + str(fcad_elapsed_time))
+print ('mesh time: ' + str(mesh_elapsed_time))
+print ('total time: ' + str(total_time))
+print ('Points: ' + str(mesh_shp.CountPoints))
+print ('Edges: ' + str(mesh_shp.CountEdges))
+print ('Faces: ' + str(mesh_shp.CountFacets))
 
