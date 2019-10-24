@@ -172,6 +172,7 @@ The base width, ie. the aluminum profile width, is parametrizable:
 ```
  +--- scr: Source files in Python
     +--- comps: functions in Python for FreeCAD, https://github.com/felipe-m/fcad-comps
+ +--- scr_cq: Source files in Python using CadQuery   
  +--- freecad: Saved FreeCAD designs
  +--- stl: Parts exported to STL
  +--- imgs: Images of the 4 parts in png format
@@ -193,10 +194,11 @@ The base width, ie. the aluminum profile width, is parametrizable:
 
 ### Step by step explanations <a name="tutorial_step"></a>:
 
+1. [tensioner_holder.md](./tensioner_holder.md) Detailed explanation for the tensioner holder. It also includes information on how to execute the Python scripts. 
+![Tensioner Holder](imgs/small/tens_holder.png )
 1. [idler_tensioner.md](./idler_tensioner.md) Detailed explanation for the idler tensioner
 ![Idler Tensioner](imgs/small/idler_tensioner.png )
-1. [tensioner_holder.md](./tensioner_holder.md) Detailed explanation for the tensioner holder
-![Tensioner Holder](imgs/small/tens_holder.png )
+
 
 You can compare the same pieces designed using OpenSCAD: https://github.com/felipe-m/oscad_filter_stage
 
@@ -209,7 +211,12 @@ You can compare the same pieces designed using OpenSCAD: https://github.com/feli
 ![Filter Holder](imgs/small/filter_holder.png )
 1. [filter_stage.py](src/filter_stage.py) In the same design includes the filter holder, the belt tensioner and the motor holder, and also some other non-printable models, such as the stepper motor, aluminum profile, linear guide, belt and pulleys
 ![Filter Stage](imgs/small/filter_stage_1.png )
-
+1. CadQuery designs have no step-by-step explanations, but there are comments in the code:
+ + [cq_idler_tensioner.py](src_cq/cq_idler_tensioner.py)
+ + [cq_tensioner_holder.py](src_cq/cq_tensioner_holder.py)
+ + [cq_nemamotor_bracket.py](src_cq/cq_nemamotor_bracket.py)
+ + [cq_filter_holder.py](src_cq/cq_filter_holder.py)
+ 
 ## Print settings <a name="print_set"></a>:
 
 There is no need to have supports as long as the parts are printed with the following orientation:
