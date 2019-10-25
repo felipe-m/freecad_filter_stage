@@ -56,6 +56,10 @@
 #           ____/  |       |  \____ ...
 #          |_::____|___2___|____::_|..: holder_base_z
 #
+
+# to execute this file in FreeCAD V0.18
+#exec(open("cq_tensioner_holder_time.py").read()) 
+
 from datetime import datetime
 startdatetime = datetime.now()
 

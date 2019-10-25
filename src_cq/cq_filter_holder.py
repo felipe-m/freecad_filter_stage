@@ -53,7 +53,7 @@
 #
 
 # to execute this file in FreeCAD V0.18
-# exec(open("filter_holder_clss.py").read())
+# exec(open("cq_filter_holder.py").read())
 
 
 

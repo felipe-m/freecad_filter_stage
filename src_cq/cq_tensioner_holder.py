@@ -57,6 +57,10 @@
 #          |_::____|___2___|____::_|..: holder_base_z
 #
 
+
+# to execute this file in FreeCAD V0.18
+#exec(open("cq_tensioner_holder.py").read()) 
+
 import math
 import FreeCAD
 import Part

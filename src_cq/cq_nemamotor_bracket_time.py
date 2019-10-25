@@ -19,7 +19,9 @@ import Mesh
 import MeshPart
 import cadquery as cq
 
-#exec(open("cq_nemamotor_bracket.py").read())
+
+# to execute this file in FreeCAD V0.18
+#exec(open("cq_nemamotor_bracket_time.py").read())
 
 
 """

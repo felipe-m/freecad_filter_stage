@@ -41,6 +41,8 @@
 #                +
 #               tens_w
 
+# to execute this file in FreeCAD V0.18
+# exec(open("cq_idler_tensioner.py").read())
 
 import FreeCAD
 import Part

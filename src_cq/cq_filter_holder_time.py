@@ -53,7 +53,15 @@
 #
 
 # to execute this file in FreeCAD V0.18
-# exec(open("filter_holder_clss.py").read())
+# exec(open("cq_filter_holder_time.py").read())
+# --------- if executed through command line, not CadQuery Workbench
+import os
+import sys
+# directory this file is
+filepath = os.getcwd()
+import sys
+# In FreeCAD can be added: Preferences->General->Macro->Macro path
+sys.path.append(filepath)
 
 
 
@@ -76,9 +84,16 @@ import DraftVecUtils
 import cadquery as cq
 
 import kcomp   # import material constants and other constants
-import fcfun   # import my functions for freecad. FreeCad Functions
 
-from fcfun import V0, VX, VY, VZ, V0ROT
+# vector constants
+V0 = FreeCAD.Vector(0,0,0)
+VX = FreeCAD.Vector(1,0,0)
+VY = FreeCAD.Vector(0,1,0)
+VZ = FreeCAD.Vector(0,0,1)
+VXN = FreeCAD.Vector(-1,0,0)
+VYN = FreeCAD.Vector(0,-1,0)
+VZN = FreeCAD.Vector(0,0,-1)
+
 
 # ------------------- def shp_belt_wire_dir
 

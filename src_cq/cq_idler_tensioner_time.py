@@ -40,6 +40,10 @@
 #            :........:
 #                +
 #               tens_w
+
+# to execute this file in FreeCAD V0.18
+# exec(open("cq_idler_tensioner_time.py").read())
+
 from datetime import datetime
 startdatetime = datetime.now()
 
